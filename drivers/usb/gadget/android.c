@@ -50,6 +50,7 @@
 
 #include "f_audio_source.c"
 #include "f_fs.c"
+#include "f_audio_source.c"
 #include "f_mass_storage.c"
 #include "u_serial.c"
 #include "f_serial.c"
