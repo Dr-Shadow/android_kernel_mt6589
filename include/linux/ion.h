@@ -107,7 +107,7 @@ struct ion_platform_heap {
  */
 struct ion_platform_data {
 	int nr;
-	struct ion_platform_heap heaps[];
+	struct ion_platform_heap *heaps;
 };
 
 /**
