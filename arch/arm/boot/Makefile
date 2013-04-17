@@ -50,6 +50,13 @@ define chk-kernel-img-size
   fi
 endef
 
+DTB_NAMES := $(subst $\",,$(CONFIG_BUILD_ARM_APPENDED_DTB_IMAGE_NAMES))
+ifneq ($(DTB_NAMES),)
+DTB_LIST := $(addsuffix .dtb,$(DTB_NAMES))
+else
+DTB_LIST := $(dtb-y)
+endif
+DTB_OBJS := $(addprefix $(obj)/,$(DTB_LIST))
 
 ifeq ($(CONFIG_XIP_KERNEL),y)
 
@@ -84,15 +91,19 @@ $(obj)/zImage:	$(obj)/zImageOld FORCE
 	$(shell $(MTK_ROOT)/build/tools/mkimage $(obj)/zImageOld KERNEL > $@)
 	@echo '  Kernel: $@ is ready with mtk header'
 
+$(obj)/zImage-dtb:	$(obj)/zImage $(DTB_OBJS) FORCE
+	$(call if_changed,cat)
+	@echo '  Kernel: $@ is ready'
+
 endif
 
-targets += $(dtb-y)
+targets += $(DTB_LIST)
 
 # Rule to build device tree blobs
 $(obj)/%.dtb: $(src)/dts/%.dts FORCE
 	$(call if_changed_dep,dtc)
 
-$(obj)/dtbs: $(addprefix $(obj)/, $(dtb-y))
+$(obj)/dtbs: $(DTB_OBJS)
 
 clean-files := *.dtb
 
