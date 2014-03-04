@@ -27,6 +27,8 @@
 #include <asm/localtimer.h>
 #include <asm/hardware/gic.h>
 
+#include <linux/mt_sched_mon.h>
+
 /* set up by the platform code */
 static void __iomem *twd_base;
 
@@ -60,6 +62,55 @@ static void twd_set_mode(enum clock_event_mode mode,
 
 	__raw_writel(ctrl, twd_base + TWD_TIMER_CONTROL);
 }
+#define LOCAL_TIME_DEBUG
+#ifdef LOCAL_TIME_DEBUG
+unsigned long long sched_clock(void);
+static unsigned long long save_data[4][4] = {{0},{0},{0},{0}};//max cpu 4
+void save_localtimer_register(unsigned long count, unsigned long ctrl, unsigned long dpidle)
+{
+	int cpu = smp_processor_id();
+	save_data[cpu][0] = count;
+	save_data[cpu][1] = ctrl;
+	save_data[cpu][2] = dpidle;
+	save_data[cpu][3] = sched_clock();
+}
+/*
+void dump_localtimer_register(void)
+{
+	int i;
+	for(i = 0; i < nr_cpu_ids; i++)
+		printk("[local timer]old:cpu:%d,count:0x%x, ctrl:0x%x,dpidle:%d, time:%llu\n", i, (int)save_data[i][0], (int)save_data[i][1], (int)save_data[i][2], save_data[i][3]);
+	printk("[local timer]new: count:0x%x,control:0x%x,load:0x%x\n", __raw_readl(twd_base + TWD_TIMER_COUNTER), __raw_readl(twd_base + TWD_TIMER_CONTROL), __raw_readl(twd_base + TWD_TIMER_LOAD));
+	printk("[local timer]NTSTAT:0x%x\n", __raw_readl(twd_base + TWD_TIMER_INTSTAT));
+	printk("[local timer]twd_timer_rate:%d\n", (int)twd_timer_rate);
+}
+*/
+int  dump_localtimer_register(char* buffer, int size)
+{
+	int i =0;
+	int len =0;
+	if(NULL == buffer)
+	{
+	    return -1;
+	}
+	
+	for(i = 0; i < nr_cpu_ids; i++)
+	{
+	     len += snprintf(buffer+len, size, "[local timer]old:cpu:%d,count:0x%x, ctrl:0x%x,dpidle:%d, time:%llu\n", i, (int)save_data[i][0], (int)save_data[i][1], (int)save_data[i][2], save_data[i][3]);
+	}
+	len += snprintf(buffer+len, size, "[local timer]new: count:0x%x,control:0x%x,load:0x%x\n", *((volatile u32*)(twd_base + TWD_TIMER_COUNTER)), *((volatile u32*)(twd_base + TWD_TIMER_CONTROL)), *((volatile u32*)(twd_base + TWD_TIMER_LOAD)));
+	len += snprintf(buffer+len, size, "[local timer]NTSTAT:0x%x\n",*((volatile u32*)(twd_base + TWD_TIMER_INTSTAT)));
+	len += snprintf(buffer+len, size, "[local timer]twd_timer_rate:%d\n", (int)twd_timer_rate);
+
+      if(len >= size)
+      	{
+      	   return -2;// buffer is full
+      	}
+	  
+	return len;
+}
+
+#endif
 
 static int twd_set_next_event(unsigned long evt,
 			struct clock_event_device *unused)
@@ -70,8 +121,24 @@ static int twd_set_next_event(unsigned long evt,
 
 	__raw_writel(evt, twd_base + TWD_TIMER_COUNTER);
 	__raw_writel(ctrl, twd_base + TWD_TIMER_CONTROL);
-
+#ifdef LOCAL_TIME_DEBUG
+	save_localtimer_register(evt, ctrl, 0);
+#endif
 	return 0;
+}
+
+int localtimer_set_next_event(unsigned long evt)
+{
+	twd_set_next_event(evt,NULL);
+#ifdef LOCAL_TIME_DEBUG	
+	save_localtimer_register(evt, 0, 1);
+#endif
+	return 0;
+}
+
+unsigned long localtimer_get_counter(void)
+{
+	return (__raw_readl(twd_base + TWD_TIMER_COUNTER));
 }
 
 /*
@@ -86,7 +153,7 @@ static int twd_timer_ack(void)
 		__raw_writel(1, twd_base + TWD_TIMER_INTSTAT);
 		return 1;
 	}
-
+	printk("warning: localtimer, bad news INTSTAT = 0, restart read:0x%x\n", __raw_readl(twd_base + TWD_TIMER_INTSTAT));
 	return 0;
 }
 
@@ -104,9 +171,12 @@ static void twd_timer_stop(struct clock_event_device *clk)
  */
 static void twd_update_frequency(void *data)
 {
+	/* remove it for not suport adjust time clock dynamic */
+#if 0	
 	twd_timer_rate = clk_get_rate(twd_clk);
-
+	
 	clockevents_update_freq(*__this_cpu_ptr(twd_evt), twd_timer_rate);
+#endif	
 }
 
 static int twd_cpufreq_transition(struct notifier_block *nb,
@@ -152,7 +222,7 @@ static void __cpuinit twd_calibrate_rate(void)
 	 * the timer ticks
 	 */
 	if (twd_timer_rate == 0) {
-		printk(KERN_INFO "Calibrating local timer... ");
+		printk("Calibrating local timer... ");
 
 		/* Wait for a tick to start */
 		waitjiffies = get_jiffies_64() + 1;
@@ -173,7 +243,6 @@ static void __cpuinit twd_calibrate_rate(void)
 			udelay(10);
 
 		count = __raw_readl(twd_base + TWD_TIMER_COUNTER);
-
 		twd_timer_rate = (0xFFFFFFFFU - count) * (HZ / 5);
 
 		printk("%lu.%02luMHz.\n", twd_timer_rate / 1000000,
@@ -184,15 +253,26 @@ static void __cpuinit twd_calibrate_rate(void)
 static irqreturn_t twd_handler(int irq, void *dev_id)
 {
 	struct clock_event_device *evt = *(struct clock_event_device **)dev_id;
-
+#ifdef CONFIG_MT_SCHED_MONITOR
+// add timer event tracer for wdt debug
+    __raw_get_cpu_var(local_timer_ts) = sched_clock();
+	if (twd_timer_ack()) {
+		evt->event_handler(evt);
+        __raw_get_cpu_var(local_timer_te) = sched_clock();
+		return IRQ_HANDLED;
+	}
+    __raw_get_cpu_var(local_timer_te) = sched_clock();
+	return IRQ_NONE;
+#else
 	if (twd_timer_ack()) {
 		evt->event_handler(evt);
 		return IRQ_HANDLED;
 	}
-
 	return IRQ_NONE;
+#endif
 }
 
+#if 0	
 static struct clk *twd_get_clock(void)
 {
 	struct clk *clk;
@@ -219,8 +299,9 @@ static struct clk *twd_get_clock(void)
 		return ERR_PTR(err);
 	}
 
-	return clk;
+	return clk;	
 }
+#endif
 
 /*
  * Setup the local clock events for a CPU.
@@ -229,6 +310,7 @@ static int __cpuinit twd_timer_setup(struct clock_event_device *clk)
 {
 	struct clock_event_device **this_cpu_clk;
 
+#if 0 // remove clj releated
 	if (!twd_clk)
 		twd_clk = twd_get_clock();
 
@@ -236,7 +318,9 @@ static int __cpuinit twd_timer_setup(struct clock_event_device *clk)
 		twd_timer_rate = clk_get_rate(twd_clk);
 	else
 		twd_calibrate_rate();
-
+#else
+  twd_calibrate_rate();
+#endif
 	__raw_writel(0, twd_base + TWD_TIMER_CONTROL);
 
 	clk->name = "local_timer";
@@ -249,7 +333,6 @@ static int __cpuinit twd_timer_setup(struct clock_event_device *clk)
 
 	this_cpu_clk = __this_cpu_ptr(twd_evt);
 	*this_cpu_clk = clk;
-
 	clockevents_config_and_register(clk, twd_timer_rate,
 					0xf, 0xffffffff);
 	enable_percpu_irq(clk->irq, 0);
@@ -301,7 +384,8 @@ int __init twd_local_timer_register(struct twd_local_timer *tlt)
 
 	twd_ppi	= tlt->res[1].start;
 
-	twd_base = ioremap(tlt->res[0].start, resource_size(&tlt->res[0]));
+	//twd_base = ioremap(tlt->res[0].start, resource_size(&tlt->res[0]));
+	twd_base = (void *)tlt->res[0].start;
 	if (!twd_base)
 		return -ENOMEM;
 

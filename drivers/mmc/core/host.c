@@ -26,7 +26,7 @@
 
 #include "core.h"
 #include "host.h"
-
+#define CARD_INIT_TIMEOUT (HZ * 5) //5s
 #define cls_dev_to_mmc_host(d)	container_of(d, struct mmc_host, class_dev)
 
 static void mmc_host_classdev_release(struct device *dev)
@@ -288,10 +288,24 @@ static inline void mmc_host_clk_exit(struct mmc_host *host)
 }
 
 static inline void mmc_host_clk_sysfs_init(struct mmc_host *host)
-{
+{}
+#endif
+static void mmc_card_init_wait(struct mmc_host *mmc)
+{	 
+    //if(mmc->card)
+    //    return;
+    if(!wait_for_completion_timeout(&mmc->card_init_done, CARD_INIT_TIMEOUT))
+    {    	
+        kasprintf(GFP_KERNEL, "[%s]:card initiation is timeout\n", __func__);
+    }
+    return;
 }
 
-#endif
+static void mmc_card_init_complete(struct mmc_host* mmc)
+{  
+    complete(&mmc->card_init_done);
+    return;
+}
 
 /**
  *	mmc_alloc_host - initialise the per-host structure.
@@ -326,6 +340,9 @@ struct mmc_host *mmc_alloc_host(int extra, struct device *dev)
 	device_initialize(&host->class_dev);
 
 	mmc_host_clk_init(host);
+	init_completion(&host->card_init_done);
+	host->card_init_wait = mmc_card_init_wait;
+	host->card_init_complete = mmc_card_init_complete;
 
 	spin_lock_init(&host->lock);
 	init_waitqueue_head(&host->wq);

@@ -286,6 +286,12 @@ do {									\
 		__trace_printk(ip, fmt, ##args);			\
 } while (0)
 
+#ifdef CONFIG_MTK_KERNEL_MARKER
+extern void mt_kernel_trace_begin(char *name);
+extern void mt_kernel_trace_counter(char *name, int count);
+extern void mt_kernel_trace_end();
+#endif
+
 #ifdef CONFIG_PERF_EVENTS
 struct perf_event;
 

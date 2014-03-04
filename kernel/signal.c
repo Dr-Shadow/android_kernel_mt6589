@@ -482,6 +482,9 @@ flush_signal_handlers(struct task_struct *t, int force_default)
 		if (force_default || ka->sa.sa_handler != SIG_IGN)
 			ka->sa.sa_handler = SIG_DFL;
 		ka->sa.sa_flags = 0;
+#ifdef __ARCH_HAS_SA_RESTORER
+		ka->sa.sa_restorer = NULL;
+#endif
 		sigemptyset(&ka->sa.sa_mask);
 		ka++;
 	}
@@ -864,6 +867,7 @@ static int prepare_signal(int sig, struct task_struct *p, bool force)
 		/*
 		 * The process is in the middle of dying, nothing to do.
 		 */
+		return 0;
 	} else if (sig_kernel_stop(sig)) {
 		/*
 		 * This is a stop signal.  Remove SIGCONT from all queues.
@@ -1056,6 +1060,7 @@ static int __send_signal(int sig, struct siginfo *info, struct task_struct *t,
 	int override_rlimit;
 	int ret = 0, result;
 
+    printk(KERN_DEBUG "[%d:%s] sig %d to [%d:%s]\n",current->pid, current->comm, sig, t->pid, t->comm);
 	assert_spin_locked(&t->sighand->siglock);
 
 	result = TRACE_SIGNAL_IGNORED;

@@ -26,9 +26,12 @@
 #include <linux/tty_flip.h>
 #include <linux/slab.h>
 #include <linux/export.h>
+#include <linux/ratelimit.h>
 
 #include "u_serial.h"
+#include "logger.h"
 
+#define ACM_LOG "USB_ACM"
 
 /*
  * This component encapsulates the TTY layer glue needed to provide basic
@@ -135,11 +138,15 @@ static unsigned	n_ports;
 
 
 #ifdef VERBOSE_DEBUG
+#ifndef pr_vdebug
 #define pr_vdebug(fmt, arg...) \
 	pr_debug(fmt, ##arg)
+#endif
 #else
+#ifndef pr_vdebug
 #define pr_vdebug(fmt, arg...) \
 	({ if (0) pr_debug(fmt, ##arg); })
+#endif
 #endif
 
 /*-------------------------------------------------------------------------*/
@@ -360,9 +367,16 @@ __acquires(&port->port_lock)
 */
 {
 	struct list_head	*pool = &port->write_pool;
-	struct usb_ep		*in = port->port_usb->in;
+	//struct usb_ep		*in = port->port_usb->in;
+	struct usb_ep		*in;
 	int			status = 0;
 	bool			do_tty_wake = false;
+	static unsigned int	skip = 0;
+	static DEFINE_RATELIMIT_STATE(ratelimit, 1 * HZ, 10);
+
+	if (!port->port_usb) /* abort immediately after disconnect */
+		return -EINVAL;
+	in = port->port_usb->in;
 
 	while (!list_empty(pool)) {
 		struct usb_request	*req;
@@ -386,6 +400,39 @@ __acquires(&port->port_lock)
 		pr_vdebug(PREFIX "%d: tx len=%d, 0x%02x 0x%02x 0x%02x ...\n",
 				port->port_num, len, *((u8 *)req->buf),
 				*((u8 *)req->buf+1), *((u8 *)req->buf+2));
+
+		if (__ratelimit(&ratelimit)) {
+			xlog_printk(ANDROID_LOG_VERBOSE, ACM_LOG, \
+				"%s: ttyGS%d: tx len=%d, 0x%02x 0x%02x 0x%02x ...\n", \
+				__func__, port->port_num, len, *((u8 *)req->buf), \
+				*((u8 *)req->buf+1), *((u8 *)req->buf+2));
+			if (skip > 0) {
+				xlog_printk(ANDROID_LOG_VERBOSE, ACM_LOG, "%s Too many data, skipped %d bytes", __func__, skip);
+				skip = 0;
+			}
+		} else
+			skip += req->actual;
+
+		USB_LOGGER(GS_START_TX, GS_START_TX, port->port_num, len);
+
+		#ifdef ENABLE_USB_LOGGER
+		#define OUTPUT_BTYE_NUM 5
+		{
+			int i,j = 0;
+			char* prefix[] = {"p1","p2","p3","p4","p5"};
+			char* suffix[] = {"s1","s2","s3","s4","s5"};
+			for (i = 0; i < req->actual && i < OUTPUT_BTYE_NUM; i++)
+				USB_LOGGER(HEX_NUM, GS_START_TX, prefix[i], *((u8 *)req->buf+i));
+
+			if (req->actual >= OUTPUT_BTYE_NUM*2) {
+				for(i = req->actual-1, j = 1; i >= (req->actual - OUTPUT_BTYE_NUM) \
+					&& i >= OUTPUT_BTYE_NUM; i--,j++) {
+					USB_LOGGER(HEX_NUM, GS_START_TX, suffix[OUTPUT_BTYE_NUM-j], \
+							*((u8 *)req->buf+i));
+				}
+			}
+		}
+		#endif
 
 		/* Drop lock while we call out of driver; completions
 		 * could be issued while we do so.  Disconnection may
@@ -485,6 +532,8 @@ static void gs_rx_push(unsigned long _port)
 	struct list_head	*queue = &port->read_queue;
 	bool			disconnect = false;
 	bool			do_push = false;
+	static unsigned int	skip = 0;
+	static DEFINE_RATELIMIT_STATE(ratelimit, 1 * HZ, 10);
 
 	/* hand any queued data to the tty */
 	spin_lock_irq(&port->port_lock);
@@ -517,6 +566,39 @@ static void gs_rx_push(unsigned long _port)
 			/* normal completion */
 			break;
 		}
+
+		USB_LOGGER(GS_RX_PUSH, GS_RX_PUSH, port->port_num, req->actual, port->n_read);
+
+		if (__ratelimit(&ratelimit)) {
+			xlog_printk(ANDROID_LOG_INFO, ACM_LOG, \
+				"%s: ttyGS%d: actual=%d, n_read=%d 0x%02x 0x%02x 0x%02x ...\n", \
+				__func__, port->port_num, req->actual, port->n_read,
+				*((u8 *)req->buf), *((u8 *)req->buf+1), *((u8 *)req->buf+2));
+			if (skip > 0) {
+				xlog_printk(ANDROID_LOG_VERBOSE, ACM_LOG, "%s Too many data, skipped %d bytes", __func__, skip);
+				skip = 0;
+			}
+		} else
+			skip += req->actual;
+
+		#ifdef ENABLE_USB_LOGGER
+		#define OUTPUT_BTYE_NUM 5
+		{
+			int i,j = 0;
+			char* prefix[] = {"p1","p2","p3","p4","p5"};
+			char* suffix[] = {"s1","s2","s3","s4","s5"};
+			for (i = 0; i < req->actual && i < OUTPUT_BTYE_NUM; i++)
+				USB_LOGGER(HEX_NUM, GS_RX_PUSH, prefix[i], *((u8 *)req->buf+i));
+
+			if (req->actual >= OUTPUT_BTYE_NUM*2) {
+				for(i = req->actual-1, j = 1; i >= (req->actual - OUTPUT_BTYE_NUM) \
+					&& i >= OUTPUT_BTYE_NUM; i--,j++) {
+					USB_LOGGER(HEX_NUM, GS_RX_PUSH, suffix[OUTPUT_BTYE_NUM-j], \
+							*((u8 *)req->buf+i));
+				}
+			}
+		}
+		#endif
 
 		/* push data to (open) tty */
 		if (req->actual) {
@@ -811,6 +893,11 @@ static int gs_open(struct tty_struct *tty, struct file *file)
 
 	pr_debug("gs_open: ttyGS%d (%p,%p)\n", port->port_num, tty, file);
 
+	xlog_printk(ANDROID_LOG_INFO, ACM_LOG, \
+		"gs_open: ttyGS%d (%p,%p)\n", port->port_num, tty, file);
+
+	USB_LOGGER(GS_OPEN, GS_OPEN, port->port_num, tty, file);
+
 	status = 0;
 
 exit_unlock_port:
@@ -846,6 +933,11 @@ static void gs_close(struct tty_struct *tty, struct file *file)
 	}
 
 	pr_debug("gs_close: ttyGS%d (%p,%p) ...\n", port->port_num, tty, file);
+
+	xlog_printk(ANDROID_LOG_INFO, ACM_LOG, \
+		"gs_close: ttyGS%d (%p,%p) ...\n", port->port_num, tty, file);
+
+	USB_LOGGER(GS_CLOSE,GS_CLOSE, port->port_num, tty, file);
 
 	/* mark port as closing but in use; we can drop port lock
 	 * and sleep if necessary
@@ -896,6 +988,14 @@ static int gs_write(struct tty_struct *tty, const unsigned char *buf, int count)
 	struct gs_port	*port = tty->driver_data;
 	unsigned long	flags;
 	int		status;
+	//ALPS00423739
+	if(!port)
+	{
+		printk("ERROR!!! port is closed!! %s, line %d: port = %p\n", __func__, __LINE__, port);
+		/*abort immediately after disconnect */
+		return -EINVAL;
+	}
+	//ALPS00423739
 
 	pr_vdebug("gs_write: ttyGS%d (%p) writing %d bytes\n",
 			port->port_num, tty, count);
@@ -917,6 +1017,15 @@ static int gs_put_char(struct tty_struct *tty, unsigned char ch)
 	unsigned long	flags;
 	int		status;
 
+	//ALPS00423739
+	if(!port)
+	{
+		printk("ERROR!!! port is closed!! %s, line %d: port = %p\n", __func__, __LINE__, port);
+		/*abort immediately after disconnect */
+		return -EINVAL;
+	}
+	//ALPS00423739
+
 	pr_vdebug("gs_put_char: (%d,%p) char=0x%x, called from %p\n",
 		port->port_num, tty, ch, __builtin_return_address(0));
 
@@ -932,6 +1041,15 @@ static void gs_flush_chars(struct tty_struct *tty)
 	struct gs_port	*port = tty->driver_data;
 	unsigned long	flags;
 
+	//ALPS00423739
+	if(!port)
+	{
+		printk("ERROR!!! port is closed!! %s, line %d: port = %p\n", __func__, __LINE__, port);
+		/*abort immediately after disconnect */
+		return;
+	}
+	//ALPS00423739
+
 	pr_vdebug("gs_flush_chars: (%d,%p)\n", port->port_num, tty);
 
 	spin_lock_irqsave(&port->port_lock, flags);
@@ -945,6 +1063,15 @@ static int gs_write_room(struct tty_struct *tty)
 	struct gs_port	*port = tty->driver_data;
 	unsigned long	flags;
 	int		room = 0;
+
+	//ALPS00423739
+	if(!port)
+	{
+		printk("ERROR!!! port is closed!! %s, line %d: port = %p\n", __func__, __LINE__, port);
+		/*abort immediately after disconnect */
+		return -EINVAL;
+	}
+	//ALPS00423739
 
 	spin_lock_irqsave(&port->port_lock, flags);
 	if (port->port_usb)
@@ -963,6 +1090,15 @@ static int gs_chars_in_buffer(struct tty_struct *tty)
 	unsigned long	flags;
 	int		chars = 0;
 
+	//ALPS00423739
+	if(!port)
+	{
+		printk("ERROR!!! port is closed!! %s, line %d: port = %p\n", __func__, __LINE__, port);
+		/*abort immediately after disconnect */
+		return -EINVAL;
+	}
+	//ALPS00423739
+
 	spin_lock_irqsave(&port->port_lock, flags);
 	chars = gs_buf_data_avail(&port->port_write_buf);
 	spin_unlock_irqrestore(&port->port_lock, flags);
@@ -978,6 +1114,15 @@ static void gs_unthrottle(struct tty_struct *tty)
 {
 	struct gs_port		*port = tty->driver_data;
 	unsigned long		flags;
+
+	//ALPS00423739
+	if(!port)
+	{
+		printk("ERROR!!! port is closed!! %s, line %d: port = %p\n", __func__, __LINE__, port);
+		/*abort immediately after disconnect */
+		return;
+	}
+	//ALPS00423739
 
 	spin_lock_irqsave(&port->port_lock, flags);
 	if (port->port_usb) {
@@ -996,6 +1141,15 @@ static int gs_break_ctl(struct tty_struct *tty, int duration)
 	struct gs_port	*port = tty->driver_data;
 	int		status = 0;
 	struct gserial	*gser;
+
+	//ALPS00423739
+	if(!port)
+	{
+		printk("ERROR!!! port is closed!! %s, line %d: port = %p\n", __func__, __LINE__, port);
+		/*abort immediately after disconnect */
+		return -EINVAL;
+	}
+	//ALPS00423739
 
 	pr_vdebug("gs_break_ctl: ttyGS%d, send break (%d) \n",
 			port->port_num, duration);

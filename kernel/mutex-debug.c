@@ -37,9 +37,15 @@ void debug_mutex_lock_common(struct mutex *lock, struct mutex_waiter *waiter)
 void debug_mutex_wake_waiter(struct mutex *lock, struct mutex_waiter *waiter)
 {
 	SMP_DEBUG_LOCKS_WARN_ON(!spin_is_locked(&lock->wait_lock));
-	DEBUG_LOCKS_WARN_ON(list_empty(&lock->wait_list));
-	DEBUG_LOCKS_WARN_ON(waiter->magic != waiter);
-	DEBUG_LOCKS_WARN_ON(list_empty(&waiter->list));
+	if(DEBUG_LOCKS_WARN_ON(list_empty(&lock->wait_list))){
+        printk("[MUTEX WARN!!]\n");
+    }
+	if(DEBUG_LOCKS_WARN_ON(waiter->magic != waiter)){
+        printk("[MUTEX WARN!!] bad magic number 0x%x:0x%x\n", (unsigned int)waiter->magic,(unsigned int) waiter);
+    }
+	if(DEBUG_LOCKS_WARN_ON(list_empty(&waiter->list))){
+        printk("[MUTEX WARN!!] empt waiter list\n");
+    }
 }
 
 void debug_mutex_free_waiter(struct mutex_waiter *waiter)
@@ -55,28 +61,49 @@ void debug_mutex_add_waiter(struct mutex *lock, struct mutex_waiter *waiter,
 
 	/* Mark the current thread as blocked on the lock: */
 	ti->task->blocked_on = waiter;
+#ifdef CONFIG_MT_DEBUG_MUTEXES
+    waiter->task_wait_on = lock->owner;
+#endif
 }
-
 void mutex_remove_waiter(struct mutex *lock, struct mutex_waiter *waiter,
 			 struct thread_info *ti)
 {
-	DEBUG_LOCKS_WARN_ON(list_empty(&waiter->list));
-	DEBUG_LOCKS_WARN_ON(waiter->task != ti->task);
-	DEBUG_LOCKS_WARN_ON(ti->task->blocked_on != waiter);
+	if(DEBUG_LOCKS_WARN_ON(list_empty(&waiter->list))){
+        printk("[MUTEX WARN!!] empty waiter list\n");
+    }
+	if(DEBUG_LOCKS_WARN_ON(waiter->task != ti->task)){
+        printk("[MUTEX WARN!!] waiter task is not the same![%d:%s] != [%d:%s]\n", waiter->task->pid, waiter->task->comm, ti->task->pid, ti->task->comm);
+    }
+	if(DEBUG_LOCKS_WARN_ON(ti->task->blocked_on != waiter)){
+        printk("[MUTEX WARN!!] blocked on different waiter\n");
+    }
 	ti->task->blocked_on = NULL;
 
 	list_del_init(&waiter->list);
 	waiter->task = NULL;
+#ifdef CONFIG_MT_DEBUG_MUTEXES
+    waiter->task_wait_on = NULL;
+#endif
 }
 
 void debug_mutex_unlock(struct mutex *lock)
 {
-	if (unlikely(!debug_locks))
-		return;
+//	if (unlikely(!debug_locks))
+//		return;
 
-	DEBUG_LOCKS_WARN_ON(lock->magic != lock);
-	DEBUG_LOCKS_WARN_ON(lock->owner != current);
-	DEBUG_LOCKS_WARN_ON(!lock->wait_list.prev && !lock->wait_list.next);
+	if(DEBUG_LOCKS_WARN_ON(lock->magic != lock)){
+        printk("[MUTEX WARN!!] bad lock magic:0x%x\n", (unsigned int)lock->magic);
+    }
+    if(DEBUG_LOCKS_WARN_ON(lock->owner != current)){
+        if(lock->owner != NULL){
+            printk("[MUTEX WARN!!] releasing mutex which is hold by another process, 0x%x\n", (unsigned int)lock->owner);
+            printk("[MUTEX WARN!!] current process[%d:%s] is trying to release lock\n But it should be released by lock owner-process[%d:%s]\n", current->pid, current->comm, lock->owner->pid, lock->owner->comm);
+        }else
+            printk("\n[MUTEX WARN!!] imbalanced unlock\n");
+    }
+	if(DEBUG_LOCKS_WARN_ON(!lock->wait_list.prev && !lock->wait_list.next)){
+        printk("[MUTEX WARN!!] wait_list both empty in prev and next \n");
+    }
 	mutex_clear_owner(lock);
 }
 
@@ -89,6 +116,9 @@ void debug_mutex_init(struct mutex *lock, const char *name,
 	 */
 	debug_check_no_locks_freed((void *)lock, sizeof(*lock));
 	lockdep_init_map(&lock->dep_map, name, key, 0);
+#endif
+#ifdef CONFIG_DEBUG_MUTEXES
+    lock->name = name;
 #endif
 	lock->magic = lock;
 }

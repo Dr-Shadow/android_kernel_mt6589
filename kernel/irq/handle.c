@@ -15,10 +15,17 @@
 #include <linux/sched.h>
 #include <linux/interrupt.h>
 #include <linux/kernel_stat.h>
+#include <linux/slab.h>
 
 #include <trace/events/irq.h>
 
 #include "internals.h"
+#define TIME_6MS 6000000
+#define TIME_3MS 3000000
+#ifdef CONFIG_MTPROF_CPUTIME
+/*  cputime monitor en/disable value */
+extern int mtsched_enabled;
+#endif
 
 /**
  * handle_bad_irq - handle spurious and unhandled irqs
@@ -135,11 +142,84 @@ handle_irq_event_percpu(struct irq_desc *desc, struct irqaction *action)
 	irqreturn_t retval = IRQ_NONE;
 	unsigned int random = 0, irq = desc->irq_data.irq;
 
+#ifdef CONFIG_MTPROF_IRQ_DURATION
+	unsigned long long t1, t2, dur;
+#endif
 	do {
 		irqreturn_t res;
 
 		trace_irq_handler_entry(irq, action);
+#ifdef CONFIG_MTPROF_IRQ_DURATION
+		t1 = sched_clock();
 		res = action->handler(irq, action->dev_id);
+		t2 = sched_clock();
+		dur = t2 - t1;
+		action->duration += dur;
+		action->count++;
+		action->dur_max = max(dur,action->dur_max);
+		action->dur_min = min(dur,action->dur_min);
+#ifdef CONFIG_MTPROF_CPUTIME
+		if(mtsched_enabled == 1)
+		{
+			int isr_find = 0;
+			struct mtk_isr_info *mtk_isr_point = current->se.mtk_isr;
+			struct mtk_isr_info *mtk_isr_current = mtk_isr_point;
+			char *isr_name = NULL;
+			
+			current->se.mtk_isr_time += dur;
+			while(mtk_isr_point != NULL)
+			{
+				if(mtk_isr_point->isr_num == irq)
+				{
+					mtk_isr_point->isr_time += dur;
+					mtk_isr_point->isr_count++;
+					isr_find = 1;
+					break;
+				}
+				mtk_isr_current = mtk_isr_point;
+				mtk_isr_point = mtk_isr_point -> next;
+			}
+
+			if(isr_find == 0)
+			{
+				mtk_isr_point =  kmalloc(sizeof(struct mtk_isr_info), GFP_ATOMIC);
+				if(mtk_isr_point == NULL)
+				{
+					printk(KERN_ERR"cant' alloc mtk_isr_info mem!\n");					
+				}
+				else
+				{
+					mtk_isr_point->isr_num = irq;
+					mtk_isr_point->isr_time = dur;
+					mtk_isr_point->isr_count = 1;
+					mtk_isr_point->next = NULL;
+					if(mtk_isr_current == NULL)
+					{
+						current->se.mtk_isr = mtk_isr_point;
+					}
+					else
+					{
+						mtk_isr_current->next  = mtk_isr_point;
+					}
+
+					isr_name = kmalloc(sizeof(action->name),GFP_ATOMIC);
+					if(isr_name != NULL)
+					{
+						strcpy(isr_name, action->name);
+						mtk_isr_point->isr_name = isr_name;
+					}
+					else
+					{
+						printk(KERN_ERR"cant' alloc isr_name mem!\n");
+					}
+					current->se.mtk_isr_count++;
+				}	
+			}
+		}
+#endif		
+#else
+		res = action->handler(irq, action->dev_id);
+#endif
 		trace_irq_handler_exit(irq, action, res);
 
 		if (WARN_ONCE(!irqs_disabled(),"irq %u handler %pF enabled interrupts\n",

@@ -308,6 +308,7 @@ static int tcp_v6_connect(struct sock *sk, struct sockaddr *uaddr,
 	if (err)
 		goto late_failure;
 
+  printk(KERN_INFO "net_sock IPV6 socket[%lu] sport:%lu \n", SOCK_INODE(sk->sk_socket)->i_ino, ntohs(inet->inet_sport));
 	if (!tp->write_seq)
 		tp->write_seq = secure_tcpv6_sequence_number(np->saddr.s6_addr32,
 							     np->daddr.s6_addr32,

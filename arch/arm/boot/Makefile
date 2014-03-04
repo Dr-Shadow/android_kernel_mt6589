@@ -27,6 +27,30 @@ export ZRELADDR INITRD_PHYS PARAMS_PHYS
 
 targets := Image zImage xipImage bootpImage uImage
 
+# [Mediatek]
+# Check if (sizeof(Image)+sizeof(zImage)-0x8000) > $(CONFIG_RAMDISK_OFFSET)
+# Remember to align the value of CONFIG_RAMDISK_OFFSET with CFG_RAMDISK_LOAD_ADDR
+# in mediatek/custom/<project>/uboot/inc/configs/ubconfigs.h
+# Ex. CFG_RAMDISK_LOAD_ADDR is configured in ubconfigs.h as below
+# '#define CFG_RAMDISK_LOAD_ADDR (RIL_SIZE + 0xD00000)'
+# so CONFIG_RAMDISK_OFFSET should be configured as '0xD00000' in kconfig
+define chk-kernel-img-size
+  Image_size=`stat --format=%s $(obj)/Image`; \
+  zImage_size=`stat --format=%s $(obj)/zImage`; \
+  offset=$$(($$Image_size + $$zImage_size - 32768)); \
+  ramdisk_offset=`printf %d $(CONFIG_RAMDISK_OFFSET)`; \
+  shortage=$$(($$offset - $$ramdisk_offset)); \
+  if [ $$offset -gt $$ramdisk_offset ]; then \
+    echo \[Kernel Size Expired\] Kernel size is too big that might overwrite Ramdisk, please optimize Kernel size.; \
+    echo \[Kernel Size Expired\] Current offset is \"`printf "0x%x" $$offset`\" \(Image + zImage - 0x8000\).; \
+    echo \[Kernel Size Expired\] The offset has to be less than \"`printf "0x%x" $$ramdisk_offset`\" \(RAMDISK_LOAD_ADDR\).; \
+    echo \[Kernel Size Expired\] The total size \(Image + zImage\) is over \"$$shortage\" bytes than expected.; \
+    echo \[Kernel Size Expired\] If the code size is hard to be optimized, please contact memory expert for code review.; \
+    exit 1; \
+  fi
+endef
+
+
 ifeq ($(CONFIG_XIP_KERNEL),y)
 
 $(obj)/xipImage: vmlinux FORCE
@@ -53,6 +77,7 @@ $(obj)/compressed/vmlinux: $(obj)/Image FORCE
 
 $(obj)/zImage:	$(obj)/compressed/vmlinux FORCE
 	$(call if_changed,objcopy)
+	$(Q)$(chk-kernel-img-size)
 	@echo '  Kernel: $@ is ready'
 
 endif

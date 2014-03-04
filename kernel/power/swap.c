@@ -232,6 +232,8 @@ static int mark_swapfiles(struct swap_map_handle *handle, unsigned int flags)
 			swsusp_header->crc32 = handle->crc32;
 		error = hib_bio_write_page(swsusp_resume_block,
 					swsusp_header, NULL);
+        hib_bio_read_page(128, swsusp_header, NULL);
+        error = hib_bio_write_page(128, swsusp_header, NULL);
 	} else {
 		printk(KERN_ERR "PM: Swap header not found!\n");
 		error = -ENODEV;

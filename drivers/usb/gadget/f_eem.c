@@ -40,7 +40,8 @@ static inline struct f_eem *func_to_eem(struct usb_function *f)
 
 /* interface descriptor: */
 
-static struct usb_interface_descriptor eem_intf __initdata = {
+//static struct usb_interface_descriptor eem_intf __initdata = {
+static struct usb_interface_descriptor eem_intf = {
 	.bLength =		sizeof eem_intf,
 	.bDescriptorType =	USB_DT_INTERFACE,
 
@@ -54,7 +55,8 @@ static struct usb_interface_descriptor eem_intf __initdata = {
 
 /* full speed support: */
 
-static struct usb_endpoint_descriptor eem_fs_in_desc __initdata = {
+//static struct usb_endpoint_descriptor eem_fs_in_desc __initdata = {
+static struct usb_endpoint_descriptor eem_fs_in_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
@@ -62,7 +64,8 @@ static struct usb_endpoint_descriptor eem_fs_in_desc __initdata = {
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 };
 
-static struct usb_endpoint_descriptor eem_fs_out_desc __initdata = {
+//static struct usb_endpoint_descriptor eem_fs_out_desc __initdata = {
+static struct usb_endpoint_descriptor eem_fs_out_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
@@ -70,7 +73,8 @@ static struct usb_endpoint_descriptor eem_fs_out_desc __initdata = {
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 };
 
-static struct usb_descriptor_header *eem_fs_function[] __initdata = {
+//static struct usb_descriptor_header *eem_fs_function[] __initdata = {
+static struct usb_descriptor_header *eem_fs_function[] = {
 	/* CDC EEM control descriptors */
 	(struct usb_descriptor_header *) &eem_intf,
 	(struct usb_descriptor_header *) &eem_fs_in_desc,
@@ -80,7 +84,8 @@ static struct usb_descriptor_header *eem_fs_function[] __initdata = {
 
 /* high speed support: */
 
-static struct usb_endpoint_descriptor eem_hs_in_desc __initdata = {
+//static struct usb_endpoint_descriptor eem_hs_in_desc __initdata = {
+static struct usb_endpoint_descriptor eem_hs_in_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
@@ -89,7 +94,8 @@ static struct usb_endpoint_descriptor eem_hs_in_desc __initdata = {
 	.wMaxPacketSize =	cpu_to_le16(512),
 };
 
-static struct usb_endpoint_descriptor eem_hs_out_desc __initdata = {
+//static struct usb_endpoint_descriptor eem_hs_out_desc __initdata = {
+static struct usb_endpoint_descriptor eem_hs_out_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
@@ -98,7 +104,8 @@ static struct usb_endpoint_descriptor eem_hs_out_desc __initdata = {
 	.wMaxPacketSize =	cpu_to_le16(512),
 };
 
-static struct usb_descriptor_header *eem_hs_function[] __initdata = {
+//static struct usb_descriptor_header *eem_hs_function[] __initdata = {
+static struct usb_descriptor_header *eem_hs_function[] = {
 	/* CDC EEM control descriptors */
 	(struct usb_descriptor_header *) &eem_intf,
 	(struct usb_descriptor_header *) &eem_hs_in_desc,
@@ -108,7 +115,8 @@ static struct usb_descriptor_header *eem_hs_function[] __initdata = {
 
 /* super speed support: */
 
-static struct usb_endpoint_descriptor eem_ss_in_desc __initdata = {
+//static struct usb_endpoint_descriptor eem_ss_in_desc __initdata = {
+static struct usb_endpoint_descriptor eem_ss_in_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
@@ -117,7 +125,8 @@ static struct usb_endpoint_descriptor eem_ss_in_desc __initdata = {
 	.wMaxPacketSize =	cpu_to_le16(1024),
 };
 
-static struct usb_endpoint_descriptor eem_ss_out_desc __initdata = {
+//static struct usb_endpoint_descriptor eem_ss_out_desc __initdata = {
+static struct usb_endpoint_descriptor eem_ss_out_desc = {
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
@@ -126,7 +135,8 @@ static struct usb_endpoint_descriptor eem_ss_out_desc __initdata = {
 	.wMaxPacketSize =	cpu_to_le16(1024),
 };
 
-static struct usb_ss_ep_comp_descriptor eem_ss_bulk_comp_desc __initdata = {
+//static struct usb_ss_ep_comp_descriptor eem_ss_bulk_comp_desc __initdata = {
+static struct usb_ss_ep_comp_descriptor eem_ss_bulk_comp_desc = {
 	.bLength =		sizeof eem_ss_bulk_comp_desc,
 	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
 
@@ -135,7 +145,8 @@ static struct usb_ss_ep_comp_descriptor eem_ss_bulk_comp_desc __initdata = {
 	/* .bmAttributes =	0, */
 };
 
-static struct usb_descriptor_header *eem_ss_function[] __initdata = {
+//static struct usb_descriptor_header *eem_ss_function[] __initdata = {
+static struct usb_descriptor_header *eem_ss_function[] = {
 	/* CDC EEM control descriptors */
 	(struct usb_descriptor_header *) &eem_intf,
 	(struct usb_descriptor_header *) &eem_ss_in_desc,
@@ -242,8 +253,9 @@ static void eem_disable(struct usb_function *f)
 
 /* EEM function driver setup/binding */
 
-static int __init
-eem_bind(struct usb_configuration *c, struct usb_function *f)
+//static int __init
+//eem_bind(struct usb_configuration *c, struct usb_function *f)
+int eem_bind(struct usb_configuration *c, struct usb_function *f)
 {
 	struct usb_composite_dev *cdev = c->cdev;
 	struct f_eem		*eem = func_to_eem(f);
@@ -555,7 +567,8 @@ error:
  * Caller must have called @gether_setup().  Caller is also responsible
  * for calling @gether_cleanup() before module unload.
  */
-int __init eem_bind_config(struct usb_configuration *c)
+//int __init eem_bind_config(struct usb_configuration *c)
+int eem_bind_config(struct usb_configuration *c)
 {
 	struct f_eem	*eem;
 	int		status;

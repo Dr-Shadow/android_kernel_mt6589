@@ -25,6 +25,38 @@
 #include <linux/posix-timers.h>
 #include <linux/workqueue.h>
 #include <linux/freezer.h>
+#include <linux/xlog.h>
+
+//#include <linux/wakelock.h>
+#include <mach/mtk_rtc.h>
+
+#include <linux/module.h>
+#define XLOG_MYTAG	"Power/Alarm"
+
+
+#define ANDROID_ALARM_PRINT_ERROR (1U << 0)
+#define ANDROID_ALARM_PRINT_INIT_STATUS (1U << 1)
+#define ANDROID_ALARM_PRINT_TSET (1U << 2)
+#define ANDROID_ALARM_PRINT_CALL (1U << 3)
+#define ANDROID_ALARM_PRINT_SUSPEND (1U << 4)
+#define ANDROID_ALARM_PRINT_INT (1U << 5)
+#define ANDROID_ALARM_PRINT_FLOW (1U << 6)
+#define ANDROID_ALARM_PRINT_HIDE (1U << 7)
+
+static int debug_mask = ANDROID_ALARM_PRINT_ERROR | \
+                        ANDROID_ALARM_PRINT_INIT_STATUS | \
+                        ANDROID_ALARM_PRINT_SUSPEND | \
+                        ANDROID_ALARM_PRINT_INT | \
+                        ANDROID_ALARM_PRINT_FLOW;
+module_param_named(debug_mask, debug_mask, int, S_IRUGO | S_IWUSR | S_IWGRP);
+
+#define pr_alarm(debug_level_mask, fmt, args...) \
+	do { \
+		if (debug_mask & ANDROID_ALARM_PRINT_##debug_level_mask) { \
+			xlog_printk(ANDROID_LOG_INFO, XLOG_MYTAG, fmt, ##args); \
+		} \
+	} while (0)
+
 
 /**
  * struct alarm_base - Alarm timer bases
@@ -45,6 +77,10 @@ static struct alarm_base {
 /* freezer delta & lock used to handle clock_nanosleep triggered wakeups */
 static ktime_t freezer_delta;
 static DEFINE_SPINLOCK(freezer_delta_lock);
+
+//static struct wake_lock alarmtimer_wake_lock;
+static struct wakeup_source *ws;
+
 
 #ifdef CONFIG_RTC_CLASS
 /* rtc timer and device for setting alarm wakeups at suspend */
@@ -71,7 +107,6 @@ struct rtc_device *alarmtimer_get_rtcdev(void)
 	return ret;
 }
 
-
 static int alarmtimer_rtc_add_device(struct device *dev,
 				struct class_interface *class_intf)
 {
@@ -83,9 +118,12 @@ static int alarmtimer_rtc_add_device(struct device *dev,
 
 	if (!rtc->ops->set_alarm)
 		return -1;
-	if (!device_may_wakeup(rtc->dev.parent))
-		return -1;
 
+//	printk("can_wakeup=%d, wakeup=%d\n",rtc->dev.parent->power.can_wakeup, rtc->dev.parent->power.wakeup);
+//	printk("111\n");
+//	if (!device_may_wakeup(rtc->dev.parent))
+//		return -1;
+//	printk("222\n");
 	spin_lock_irqsave(&rtcdev_lock, flags);
 	if (!rtcdev) {
 		rtcdev = rtc;
@@ -125,6 +163,52 @@ static inline void alarmtimer_rtc_interface_remove(void) { }
 static inline void alarmtimer_rtc_timer_init(void) { }
 #endif
 
+#if 1
+void alarm_set_power_on(struct timespec new_pwron_time, bool logo)
+{
+	unsigned long pwron_time;
+	struct rtc_wkalrm alm;
+	struct rtc_device *alarm_rtc_dev;
+//	ktime_t now;
+	
+	printk("alarm set power on\n");
+	
+#ifdef RTC_PWRON_SEC
+	/* round down the second */
+	new_pwron_time.tv_sec = (new_pwron_time.tv_sec / 60) * 60;
+#endif
+	if (new_pwron_time.tv_sec > 0) {
+		pwron_time = new_pwron_time.tv_sec;
+#ifdef RTC_PWRON_SEC
+		pwron_time += RTC_PWRON_SEC;
+#endif
+		alm.enabled = (logo ? 3 : 2);
+	} else {
+		pwron_time = 0;
+		alm.enabled = 4;
+	}
+	alarm_rtc_dev = alarmtimer_get_rtcdev();
+	rtc_time_to_tm(pwron_time, &alm.time);
+/*	
+	rtc_timer_cancel(alarm_rtc_dev, &rtctimer);
+	now = rtc_tm_to_ktime(alm.time);
+	rtc_timer_start(alarm_rtc_dev, &rtctimer, now, ktime_set(0, 0));
+*/
+	rtc_timer_cancel(alarm_rtc_dev, &rtctimer);
+	rtc_set_alarm(alarm_rtc_dev, &alm);
+	rtc_set_alarm_poweron(alarm_rtc_dev, &alm);
+}
+
+void alarm_get_power_on(struct rtc_wkalrm *alm)
+{
+	if (!alm)
+		return;
+
+	memset(alm, 0, sizeof(struct rtc_wkalrm));
+	rtc_read_pwron_alarm(alm);
+}
+#endif
+
 /**
  * alarmtimer_enqueue - Adds an alarm timer to an alarm_base timerqueue
  * @base: pointer to the base where the timer is being run
@@ -141,6 +225,7 @@ static void alarmtimer_enqueue(struct alarm_base *base, struct alarm *alarm)
 	alarm->state |= ALARMTIMER_STATE_ENQUEUED;
 
 	if (&alarm->node == timerqueue_getnext(&base->timerqueue)) {
+		pr_alarm(FLOW, "alarmtimer_enqueue \n");
 		hrtimer_try_to_cancel(&base->timer);
 		hrtimer_start(&base->timer, alarm->node.expires,
 				HRTIMER_MODE_ABS);
@@ -195,6 +280,10 @@ static enum hrtimer_restart alarmtimer_fired(struct hrtimer *timer)
 	int ret = HRTIMER_NORESTART;
 	int restart = ALARMTIMER_NORESTART;
 
+	//pr_alarm(INT, "alarmtimer_fired \n");
+	xlog_printk(ANDROID_LOG_DEBUG, "Power/Alarm", "alarmtimer_fired \n");
+		
+		
 	spin_lock_irqsave(&base->lock, flags);
 	now = base->gettime();
 	while ((next = timerqueue_getnext(&base->timerqueue))) {
@@ -223,8 +312,17 @@ static enum hrtimer_restart alarmtimer_fired(struct hrtimer *timer)
 	}
 
 	if (next) {
-		hrtimer_set_expires(&base->timer, next->expires);
-		ret = HRTIMER_RESTART;
+//		struct alarm *alarm;
+		//pr_alarm(INT, "alarmtimer_fired Next\n");
+		xlog_printk(ANDROID_LOG_DEBUG, "Power/Alarm", "alarmtimer_fired \n");
+		
+//		hrtimer_set_expires(&base->timer, next->expires);
+//		ret = HRTIMER_RESTART;
+
+//		alarm = container_of(next, struct alarm, node);
+		hrtimer_start(&base->timer, /*alarm->node.expires*/next->expires,
+				HRTIMER_MODE_ABS);
+
 	}
 	spin_unlock_irqrestore(&base->lock, flags);
 
@@ -250,6 +348,9 @@ static int alarmtimer_suspend(struct device *dev)
 	unsigned long flags;
 	struct rtc_device *rtc;
 	int i;
+	int ret;
+
+//	pr_alarm(SUSPEND, "alarm_suspend(%p)\n", dev);
 
 	spin_lock_irqsave(&freezer_delta_lock, flags);
 	min = freezer_delta;
@@ -274,23 +375,56 @@ static int alarmtimer_suspend(struct device *dev)
 			continue;
 		delta = ktime_sub(next->expires, base->gettime());
 		if (!min.tv64 || (delta.tv64 < min.tv64))
+		{
+//			pr_alarm(SUSPEND, "min update to %lld, ALARM_NUMTYPE=%d\n", delta.tv64, i);
 			min = delta;
+		}	
 	}
+	
 	if (min.tv64 == 0)
+	{
+		pr_alarm(SUSPEND, "min.tv64 == 0\n");
 		return 0;
+	}
 
 	/* XXX - Should we enforce a minimum sleep time? */
-	WARN_ON(min.tv64 < NSEC_PER_SEC);
+//	WARN_ON(min.tv64 < NSEC_PER_SEC);
+
+//	if(min.tv64 < NSEC_PER_SEC)
+//	{
+//		pr_alarm(SUSPEND, "min.tv64 < 1S, give up suspend\n");
+//		wake_lock_timeout(&alarmtimer_wake_lock, 2 * HZ);
+//		return -EBUSY;
+//	}
+	if (ktime_to_ns(min) < 2 * NSEC_PER_SEC) 
+	{
+		pr_alarm(SUSPEND, "min.tv64 < 2S, give up suspend\n");
+		__pm_wakeup_event(ws, 2 * MSEC_PER_SEC);
+		return -EBUSY;
+	}
+
+
 
 	/* Setup an rtc timer to fire that far in the future */
 	rtc_timer_cancel(rtc, &rtctimer);
 	rtc_read_time(rtc, &tm);
+
+	printk("now:%02d=%02d:%02d %02d/%02d/%04d. min.tv64=%lld\n",
+		tm.tm_hour, tm.tm_min,
+		tm.tm_sec, tm.tm_mon + 1,
+		tm.tm_mday,
+		tm.tm_year + 1900, min.tv64);
+
 	now = rtc_tm_to_ktime(tm);
 	now = ktime_add(now, min);
+	
+//	rtc_timer_start(rtc, &rtctimer, now, ktime_set(0, 0));
 
-	rtc_timer_start(rtc, &rtctimer, now, ktime_set(0, 0));
-
-	return 0;
+//	return 0;
+	ret = rtc_timer_start(rtc, &rtctimer, now, ktime_set(0, 0));
+	if (ret < 0)
+		__pm_wakeup_event(ws, 1 * MSEC_PER_SEC);
+	return ret;
 }
 #else
 static int alarmtimer_suspend(struct device *dev)
@@ -341,7 +475,10 @@ void alarm_start(struct alarm *alarm, ktime_t start)
 
 	spin_lock_irqsave(&base->lock, flags);
 	if (alarmtimer_active(alarm))
+	{	
+		pr_alarm(FLOW,"alarmtimer_active, alarm->state=%d", alarm->state);
 		alarmtimer_remove(base, alarm);
+	}
 	alarm->node.expires = start;
 	alarmtimer_enqueue(base, alarm);
 	spin_unlock_irqrestore(&base->lock, flags);
@@ -759,6 +896,7 @@ out:
 /* Suspend hook structures */
 static const struct dev_pm_ops alarmtimer_pm_ops = {
 	.suspend = alarmtimer_suspend,
+//	.resume = alarmtimer_resume,
 };
 
 static struct platform_driver alarmtimer_driver = {
@@ -788,7 +926,6 @@ static int __init alarmtimer_init(void)
 		.timer_get	= alarm_timer_get,
 		.nsleep		= alarm_timer_nsleep,
 	};
-
 	alarmtimer_rtc_timer_init();
 
 	posix_timers_register_clock(CLOCK_REALTIME_ALARM, &alarm_clock);
@@ -811,16 +948,17 @@ static int __init alarmtimer_init(void)
 	error = alarmtimer_rtc_interface_setup();
 	if (error)
 		return error;
-
 	error = platform_driver_register(&alarmtimer_driver);
 	if (error)
 		goto out_if;
-
 	pdev = platform_device_register_simple("alarmtimer", -1, NULL, 0);
 	if (IS_ERR(pdev)) {
 		error = PTR_ERR(pdev);
 		goto out_drv;
 	}
+	
+//	wake_lock_init(&alarmtimer_wake_lock, WAKE_LOCK_SUSPEND, "alarmtimer");
+	ws = wakeup_source_register("alarmtimer"); 
 	return 0;
 
 out_drv:

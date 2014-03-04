@@ -33,6 +33,7 @@ config ARM
 	select GENERIC_IRQ_SHOW
 	select CPU_PM if (SUSPEND || CPU_IDLE)
 	select GENERIC_PCI_IOMAP
+	select ARM_HAS_SG_CHAIN if (ARCH_MT6589)
 	select HAVE_BPF_JIT if NET
 	help
 	  The ARM series is a line of low-power-consumption RISC chip designs
@@ -262,6 +263,7 @@ config MMU
 # The "ARM system type" choice list is ordered alphabetically by option
 # text.  Please add new entries in the option alphabetic order.
 #
+if !MEDIATEK_SOLUTION
 choice
 	prompt "ARM system type"
 	default ARCH_VERSATILE
@@ -1010,7 +1012,7 @@ config ARCH_ZYNQ
 	help
 	  Support for Xilinx Zynq ARM Cortex A9 Platform
 endchoice
-
+endif
 #
 # This is sorted alphabetically by mach-* pathname.  However, plat-*
 # Kconfigs may be included either alphabetically (according to the
@@ -1599,7 +1601,7 @@ config LOCAL_TIMERS
 	bool "Use local timer interrupts"
 	depends on SMP
 	default y
-	select HAVE_ARM_TWD if (!ARCH_MSM_SCORPIONMP && !EXYNOS4_MCT)
+	select HAVE_ARM_TWD if (!ARCH_MSM_SCORPIONMP && !EXYNOS4_MCT && !ARCH_MT6589)
 	help
 	  Enable support for local timers on SMP platforms, rather then the
 	  legacy IPI broadcast method.  Local timers allows the system
@@ -2313,3 +2315,6 @@ source "security/Kconfig"
 source "crypto/Kconfig"
 
 source "lib/Kconfig"
+
+source "mediatek/kernel/Kconfig"
+

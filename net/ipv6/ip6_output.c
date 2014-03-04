@@ -439,6 +439,24 @@ int ip6_forward(struct sk_buff *skb)
 		return -ETIMEDOUT;
 	}
 
+#ifdef MTK_IPV6_TETHER_NDP_MODE
+	/* mtk80842: for unicast NA/NS/RA */
+	{
+		struct ipv6hdr *hdr = ipv6_hdr(skb);
+		if(hdr->nexthdr == NEXTHDR_ICMP){
+			struct icmp6hdr *ndhdr = icmp6_hdr(skb);		
+			printk(KERN_WARNING "%s: icmp6_type = %d\n",__FUNCTION__, ndhdr->icmp6_type);
+			if(ndhdr->icmp6_type == NDISC_ROUTER_ADVERTISEMENT || 
+				ndhdr->icmp6_type == NDISC_NEIGHBOUR_SOLICITATION ||
+				ndhdr->icmp6_type == NDISC_NEIGHBOUR_ADVERTISEMENT){
+				ndp_forward(skb);
+				kfree_skb(skb);
+				return 0;
+			}
+		}	
+	}
+#endif
+
 	/* XXX: idev->cnf.proxy_ndp? */
 	if (net->ipv6.devconf_all->proxy_ndp &&
 	    pneigh_lookup(&nd_tbl, net, &hdr->daddr, skb->dev, 0)) {

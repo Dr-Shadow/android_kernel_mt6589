@@ -20,6 +20,16 @@
 
 #define raw_smp_processor_id() (current_thread_info()->cpu)
 
+enum ipi_msg_type {
+	IPI_CPU_START = 1,
+	IPI_TIMER = 2,
+	IPI_RESCHEDULE,
+	IPI_CALL_FUNC,
+	IPI_CALL_FUNC_SINGLE,
+	IPI_CPU_STOP,
+	IPI_CPU_BACKTRACE,
+};
+
 struct seq_file;
 
 /*

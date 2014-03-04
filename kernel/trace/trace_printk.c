@@ -19,7 +19,7 @@
 
 #include "trace.h"
 
-#ifdef CONFIG_MODULES
+#if defined(CONFIG_MODULES) && defined(CONFIG_FTRACE_MODULE_SUPPORT)
 
 /*
  * modules trace_printk()'s formats are autosaved in struct trace_bprintk_fmt
@@ -161,12 +161,15 @@ static void format_mod_stop(void)
 }
 
 #else /* !CONFIG_MODULES */
+
+#ifdef CONFIG_FTRACE_MODULE_SUPPORT
 __init static int
 module_trace_bprintk_format_notify(struct notifier_block *self,
 		unsigned long val, void *data)
 {
 	return 0;
 }
+#endif
 static inline const char **
 find_next_mod_format(int start_index, void *v, const char **fmt, loff_t *pos)
 {
@@ -177,10 +180,12 @@ static inline void format_mod_stop(void) { }
 #endif /* CONFIG_MODULES */
 
 
+#ifdef CONFIG_FTRACE_MODULE_SUPPORT
 __initdata_or_module static
 struct notifier_block module_trace_bprintk_format_nb = {
 	.notifier_call = module_trace_bprintk_format_notify,
 };
+#endif
 
 int __trace_bprintk(unsigned long ip, const char *fmt, ...)
  {
@@ -339,7 +344,11 @@ fs_initcall(init_trace_printk_function_export);
 
 static __init int init_trace_printk(void)
 {
+#if defined(CONFIG_MODULES) && defined(CONFIG_FTRACE_MODULE_SUPPORT)
 	return register_module_notifier(&module_trace_bprintk_format_nb);
+#else
+    return 0;
+#endif
 }
 
 early_initcall(init_trace_printk);

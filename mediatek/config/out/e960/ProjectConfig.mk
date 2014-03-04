@@ -1,0 +1,1 @@
+../../e960/ProjectConfig.mk

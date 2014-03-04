@@ -92,6 +92,7 @@ struct sched_param {
 #include <linux/llist.h>
 
 #include <asm/processor.h>
+#include <linux/rtpm_prio.h>
 
 struct exec_domain;
 struct futex_pi_state;
@@ -141,6 +142,7 @@ extern unsigned long nr_uninterruptible(void);
 extern unsigned long nr_iowait(void);
 extern unsigned long nr_iowait_cpu(int cpu);
 extern unsigned long this_cpu_load(void);
+extern unsigned long get_cpu_load(int cpu);
 
 
 extern void calc_global_load(unsigned long ticks);
@@ -184,6 +186,7 @@ print_cfs_rq(struct seq_file *m, int cpu, struct cfs_rq *cfs_rq)
 #define TASK_UNINTERRUPTIBLE	2
 #define __TASK_STOPPED		4
 #define __TASK_TRACED		8
+#define MTK_TASK_IO_WAIT    12
 /* in tsk->exit_state */
 #define EXIT_ZOMBIE		16
 #define EXIT_DEAD		32
@@ -988,6 +991,9 @@ struct sched_domain {
 	unsigned long last_balance;	/* init to jiffies. units in jiffies */
 	unsigned int balance_interval;	/* initialise to 1. units in ms. */
 	unsigned int nr_balance_failed; /* initialise to 0 */
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER
+	unsigned int mt_lbprof_nr_balance_failed; /* initialise to 0 */
+#endif	
 
 	u64 last_update;
 
@@ -1204,6 +1210,15 @@ struct sched_statistics {
 };
 #endif
 
+#ifdef CONFIG_MTPROF_CPUTIME
+struct mtk_isr_info{
+	int     isr_num;
+	int	 isr_count;
+	u64   isr_time;
+	char *isr_name;
+	struct mtk_isr_info *next;
+} ;
+#endif
 struct sched_entity {
 	struct load_weight	load;		/* for load-balancing */
 	struct rb_node		run_node;
@@ -1228,6 +1243,13 @@ struct sched_entity {
 	/* rq "owned" by this entity/group: */
 	struct cfs_rq		*my_q;
 #endif
+#ifdef CONFIG_MTPROF_CPUTIME
+	u64			mtk_isr_time;
+	int			mtk_isr_count;
+	struct mtk_isr_info  *mtk_isr;
+#endif
+	/* prevent non monotonic increase min_vruntime */
+	u64			last_rq_min_vruntime;
 };
 
 struct sched_rt_entity {

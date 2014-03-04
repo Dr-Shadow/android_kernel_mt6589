@@ -568,7 +568,7 @@ redo1:
 			int error, atomic = 1;
 
 			if (!page) {
-				page = alloc_page(GFP_HIGHUSER);
+				page = alloc_page(GFP_HIGHUSER & ~__GFP_HIGHMEM);
 				if (unlikely(!page)) {
 					ret = ret ? : -ENOMEM;
 					break;

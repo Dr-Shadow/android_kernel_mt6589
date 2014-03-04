@@ -1416,7 +1416,6 @@ static void _dm_request(struct request_queue *q, struct bio *bio)
 	/* if we're suspended, we have to queue this io for later */
 	if (unlikely(test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags))) {
 		up_read(&md->io_lock);
-
 		if (bio_rw(bio) != READA)
 			queue_io(md, bio);
 		else

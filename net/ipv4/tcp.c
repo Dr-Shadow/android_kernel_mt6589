@@ -472,7 +472,7 @@ int tcp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 {
 	struct tcp_sock *tp = tcp_sk(sk);
 	int answ;
-
+	
 	switch (cmd) {
 	case SIOCINQ:
 		if (sk->sk_state == TCP_LISTEN)
@@ -518,6 +518,16 @@ int tcp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 		else
 			answ = tp->write_seq - tp->snd_nxt;
 		break;
+        case SIOCKILLSOCK:
+         {
+             struct uid_err uid_e;
+             if (copy_from_user(&uid_e, (char __user *)arg, sizeof(uid_e)))
+                 return -EFAULT;
+             printk(KERN_WARNING "SIOCKILLSOCK uid = %d , err = %d",
+			 	         uid_e.appuid, uid_e.errNum);
+             tcp_v4_reset_connections_by_uid(uid_e);
+	         return 0;
+         }
 	default:
 		return -ENOIOCTLCMD;
 	}
@@ -2279,7 +2289,19 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 		}
 		tp->rx_opt.user_mss = val;
 		break;
+		
+    case TCP_MAXRTO:
+		
+		if (val < 1 || val > TCP_RTO_MAX) {
+			err = -EINVAL;
+			break;
+		}
+		icsk->icsk_MaxRto= val * HZ;
 
+		printk(KERN_INFO "TCP:MaxRto %d\n",val);
+	       
+		break;
+		
 	case TCP_NODELAY:
 		if (val) {
 			/* TCP_NODELAY is weaker than TCP_CORK, so that
@@ -2382,7 +2404,7 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 		/* Translate value in seconds to number of retransmits */
 		icsk->icsk_accept_queue.rskq_defer_accept =
 			secs_to_retrans(val, TCP_TIMEOUT_INIT / HZ,
-					TCP_RTO_MAX / HZ);
+					(icsk->icsk_MaxRto ? icsk->icsk_MaxRto : TCP_RTO_MAX) / HZ);
 		break;
 
 	case TCP_WINDOW_CLAMP:
@@ -2545,6 +2567,9 @@ static int do_tcp_getsockopt(struct sock *sk, int level,
 		if (!val && ((1 << sk->sk_state) & (TCPF_CLOSE | TCPF_LISTEN)))
 			val = tp->rx_opt.user_mss;
 		break;
+	case TCP_MAXRTO:
+		val = icsk->icsk_MaxRto / HZ;
+		break;	
 	case TCP_NODELAY:
 		val = !!(tp->nonagle&TCP_NAGLE_OFF);
 		break;
@@ -2570,7 +2595,7 @@ static int do_tcp_getsockopt(struct sock *sk, int level,
 		break;
 	case TCP_DEFER_ACCEPT:
 		val = retrans_to_secs(icsk->icsk_accept_queue.rskq_defer_accept,
-				      TCP_TIMEOUT_INIT / HZ, TCP_RTO_MAX / HZ);
+				      TCP_TIMEOUT_INIT / HZ, (icsk->icsk_MaxRto ? icsk->icsk_MaxRto : TCP_RTO_MAX) / HZ);
 		break;
 	case TCP_WINDOW_CLAMP:
 		val = tp->window_clamp;

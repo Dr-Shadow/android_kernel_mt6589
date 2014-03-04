@@ -40,6 +40,10 @@
 #define FBIOGET_DISPINFO        0x4618
 #define FBIO_WAITFORVSYNC	_IOW('F', 0x20, __u32)
 
+#define FBIOLOCK_FB             0x4630
+#define FBIOUNLOCK_FB           0x4631
+#define FBIOLOCKED_IOCTL        0x4632
+
 #define FB_TYPE_PACKED_PIXELS		0	/* Packed Pixels	*/
 #define FB_TYPE_PLANES			1	/* Non interleaved planes */
 #define FB_TYPE_INTERLEAVED_PLANES	2	/* Interleaved planes	*/
@@ -628,8 +632,8 @@ struct fb_deferred_io {
 struct fb_ops {
 	/* open/release and usage marking */
 	struct module *owner;
-	int (*fb_open)(struct fb_info *info, int user);
-	int (*fb_release)(struct fb_info *info, int user);
+	int (*fb_open)(struct file *file, struct fb_info *info, int user);
+	int (*fb_release)(struct file *file, struct fb_info *info, int user);
 
 	/* For framebuffers with strange non linear layouts or that do not
 	 * work with normal memory mapped access
@@ -676,7 +680,7 @@ struct fb_ops {
 	int (*fb_sync)(struct fb_info *info);
 
 	/* perform fb specific ioctl (optional) */
-	int (*fb_ioctl)(struct fb_info *info, unsigned int cmd,
+	int (*fb_ioctl)(struct file *file, struct fb_info *info, unsigned int cmd,
 			unsigned long arg);
 
 	/* Handle 32bit compat ioctl (optional) */

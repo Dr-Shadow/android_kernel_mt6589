@@ -207,6 +207,9 @@ static int ftrace_event_enable_disable(struct ftrace_event_call *call,
 {
 	int ret = 0;
 
+    if(call->name && ((call->flags & TRACE_EVENT_FL_ENABLED) ^ enable))
+        printk("[ftrace]event '%s' is %s\n", call->name, enable?"enabled":"disabled");
+
 	switch (enable) {
 	case 0:
 		if (call->flags & TRACE_EVENT_FL_ENABLED) {
@@ -1297,7 +1300,7 @@ void trace_remove_event_call(struct ftrace_event_call *call)
 	     (unsigned long)event < (unsigned long)end;		\
 	     event++)
 
-#ifdef CONFIG_MODULES
+#if defined(CONFIG_MODULES) && defined(CONFIG_FTRACE_MODULE_SUPPORT)
 
 static LIST_HEAD(ftrace_module_file_list);
 
@@ -1450,6 +1453,18 @@ static __init int setup_trace_event(char *str)
 }
 __setup("trace_event=", setup_trace_event);
 
+#ifdef CONFIG_MTK_SCHED_TRACERS
+// collect boot time ftrace, disabled by default
+static int boot_time_ftrace = 0;
+
+static __init int setup_boot_time_ftrace(char *str)
+{
+    boot_time_ftrace = 1;
+    return 1;
+}
+__setup("boot_time_ftrace", setup_boot_time_ftrace);
+#endif
+
 static __init int event_trace_init(void)
 {
 	struct ftrace_event_call **call;
@@ -1517,6 +1532,29 @@ static __init int event_trace_init(void)
 			pr_warning("Failed to enable trace event: %s\n", token);
 	}
 
+#ifdef CONFIG_MTK_SCHED_TRACERS
+    ftrace_set_clr_event("sched_switch", 1);
+    ftrace_set_clr_event("sched_wakeup", 1);
+    ftrace_set_clr_event("sched_wakeup_new", 1);
+#ifdef CONFIG_SMP
+    ftrace_set_clr_event("sched_migrate_task", 1);
+#endif
+    ftrace_set_clr_event("irq_handler_entry", 1);
+    ftrace_set_clr_event("irq_handler_exit", 1);
+
+    // only update buffer eariler if we want to collect boot-time ftrace
+    // to avoid the boot time impacted by early-expanded ring buffer
+    if(boot_time_ftrace)
+        tracing_update_buffers();
+    else 
+        set_tracer_flags(TRACE_ITER_OVERWRITE, 1);
+        // trace_flags |= TRACE_ITER_OVERWRITE;
+		// ring_buffer_change_overwrite(global_trace.buffer, 1);
+
+
+    printk("[ftrace]mtk ftrace ready...\n");
+#endif
+
 	ret = register_module_notifier(&trace_module_nb);
 	if (ret)
 		pr_warning("Failed to register trace events module notifier\n");
@@ -1524,6 +1562,17 @@ static __init int event_trace_init(void)
 	return 0;
 }
 fs_initcall(event_trace_init);
+
+#ifdef CONFIG_MTK_SCHED_TRACERS
+// delay the ring buffer expand until lat_initcall stage
+// to avoid impacting the boot time
+static __init int expand_ring_buffer_init(void){
+    if(!boot_time_ftrace)
+        tracing_update_buffers();
+    return 0;
+}
+late_initcall(expand_ring_buffer_init);
+#endif
 
 #ifdef CONFIG_FTRACE_STARTUP_TEST
 

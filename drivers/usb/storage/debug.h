@@ -46,13 +46,30 @@
 
 #define USB_STORAGE "usb-storage: "
 
+extern bool usb_storage_debug;
+
 #ifdef CONFIG_USB_STORAGE_DEBUG
 void usb_stor_show_command(struct scsi_cmnd *srb);
 void usb_stor_show_sense( unsigned char key,
 		unsigned char asc, unsigned char ascq );
-#define US_DEBUGP(x...) printk( KERN_DEBUG USB_STORAGE x )
-#define US_DEBUGPX(x...) printk( x )
-#define US_DEBUG(x) x 
+#define US_DEBUGP(x...) \
+	do { \
+		if(usb_storage_debug) { \
+			printk( KERN_DEBUG USB_STORAGE x ); \
+		} \
+	} while(0)
+#define US_DEBUGPX(x...) \
+	do { \
+		if(usb_storage_debug) { \
+			printk( x ); \
+		} \
+	} while(0)
+#define US_DEBUG(x) \
+	do { \
+		if(usb_storage_debug) { \
+			x; \
+		} \
+	} while(0)
 #else
 #define US_DEBUGP(x...)
 #define US_DEBUGPX(x...)

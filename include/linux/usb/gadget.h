@@ -137,6 +137,10 @@ struct usb_ep_ops {
 
 	int (*fifo_status) (struct usb_ep *ep);
 	void (*fifo_flush) (struct usb_ep *ep);
+    //Added Modification for ALPS00255822, bug from WHQL test
+    int (*dequeue_all) (struct usb_ep *ep, struct usb_request *req);
+    int (*send_ZLP) (struct usb_ep *ep);
+    //Added Modification for ALPS00255822, bug from WHQL test
 };
 
 /**

@@ -11,9 +11,23 @@ extern int debug_locks;
 extern int debug_locks_silent;
 
 
+static inline void debug_locks_on(void)
+{
+    debug_locks = 1;
+    printk("[KERN Warning] DBGLKON!\n");
+}
 static inline int __debug_locks_off(void)
 {
-	return xchg(&debug_locks, 0);
+    int ret;
+    ret = xchg(&debug_locks, 0);
+    if(ret)
+    {
+        printk("[KERN Warning] Some Kernel ERROR or WARN occur and Force debug_lock off!\n");
+        printk("[KERN Warning] check below backtrace first:\n");
+        dump_stack();
+    }
+    return ret;
+	//return xchg(&debug_locks, 0);
 }
 
 /*

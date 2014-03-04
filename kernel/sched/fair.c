@@ -26,10 +26,16 @@
 #include <linux/slab.h>
 #include <linux/profile.h>
 #include <linux/interrupt.h>
-
 #include <trace/events/sched.h>
-
 #include "sched.h"
+
+#include <mtlbprof/mtlbprof.h>
+
+#ifdef CONFIG_MT_LOAD_BALANCE_ENHANCEMENT
+#ifdef CONFIG_LOCAL_TIMERS
+#include <asm/smp_twd.h>
+#endif
+#endif
 
 /*
  * Targeted preemption latency for CPU-bound tasks:
@@ -2888,6 +2894,17 @@ static void set_skip_buddy(struct sched_entity *se)
 		cfs_rq_of(se)->skip = se;
 }
 
+#ifdef CONFIG_MT_SCHED_DEBUG_ONLY
+static void debug_unlock_runqueue(struct task_struct *p, struct task_struct *curr)
+{
+	if(!raw_spin_is_locked(&task_rq(curr)->lock)){
+		printk(KERN_ERR "debug_unlock_runqueue in resched_task: p_rq:%d curr->rq:%d p_rq->lock:%d", 
+			task_rq(p)->cpu, task_rq(curr)->cpu, raw_spin_is_locked(&task_rq(p)->lock));
+		assert_raw_spin_locked(&task_rq(curr)->lock);	
+	}
+}
+#endif
+
 /*
  * Preempt the current task with a newly woken task if needed:
  */
@@ -2899,6 +2916,9 @@ static void check_preempt_wakeup(struct rq *rq, struct task_struct *p, int wake_
 	int scale = cfs_rq->nr_running >= sched_nr_latency;
 	int next_buddy_marked = 0;
 
+#ifdef CONFIG_MT_SCHED_DEBUG_ONLY
+	debug_unlock_runqueue(p, curr);
+#endif
 	if (unlikely(se == pse))
 		return;
 
@@ -2929,6 +2949,9 @@ static void check_preempt_wakeup(struct rq *rq, struct task_struct *p, int wake_
 	if (test_tsk_need_resched(curr))
 		return;
 
+#ifdef CONFIG_MT_SCHED_DEBUG_ONLY
+	debug_unlock_runqueue(p, curr);
+#endif
 	/* Idle tasks are by definition preempted by non-idle tasks. */
 	if (unlikely(curr->policy == SCHED_IDLE) &&
 	    likely(p->policy != SCHED_IDLE))
@@ -2941,6 +2964,9 @@ static void check_preempt_wakeup(struct rq *rq, struct task_struct *p, int wake_
 	if (unlikely(p->policy != SCHED_NORMAL))
 		return;
 
+#ifdef CONFIG_MT_SCHED_DEBUG_ONLY
+	debug_unlock_runqueue(p, curr);
+#endif
 	find_matching_se(&se, &pse);
 	update_curr(cfs_rq_of(se));
 	BUG_ON(!pse);
@@ -2957,6 +2983,9 @@ static void check_preempt_wakeup(struct rq *rq, struct task_struct *p, int wake_
 	return;
 
 preempt:
+#ifdef CONFIG_MT_SCHED_DEBUG_ONLY
+	debug_unlock_runqueue(p, curr);
+#endif
 	resched_task(curr);
 	/*
 	 * Only set the backward buddy when the current task is still
@@ -3088,6 +3117,12 @@ struct lb_env {
 	unsigned int		loop;
 	unsigned int		loop_break;
 	unsigned int		loop_max;
+#ifdef CONFIG_MT_LOAD_BALANCE_ENHANCEMENT
+	int			mt_check_cache_in_idle;
+#endif 	
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER
+	unsigned int 		fail_reason;
+#endif	
 };
 
 /*
@@ -3105,8 +3140,13 @@ static void move_task(struct task_struct *p, struct lb_env *env)
 /*
  * Is this task likely cache-hot:
  */
+#if defined(CONFIG_MT_LOAD_BALANCE_ENHANCEMENT)
+static int
+task_hot(struct task_struct *p, u64 now, struct sched_domain *sd, int mt_check_cache_in_idle)
+#else
 static int
 task_hot(struct task_struct *p, u64 now, struct sched_domain *sd)
+#endif
 {
 	s64 delta;
 
@@ -3119,6 +3159,12 @@ task_hot(struct task_struct *p, u64 now, struct sched_domain *sd)
 	/*
 	 * Buddy candidates are cache hot:
 	 */
+#ifdef CONFIG_MT_LOAD_BALANCE_ENHANCEMENT
+	if (!mt_check_cache_in_idle){
+		if ( !this_rq()->nr_running && (task_rq(p)->nr_running >= 2) )
+			return 0;
+	}
+#endif 	 
 	if (sched_feat(CACHE_HOT_BUDDY) && this_rq()->nr_running &&
 			(&p->se == cfs_rq_of(&p->se)->next ||
 			 &p->se == cfs_rq_of(&p->se)->last))
@@ -3149,12 +3195,30 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
 	 */
 	if (!cpumask_test_cpu(env->dst_cpu, tsk_cpus_allowed(p))) {
 		schedstat_inc(p, se.statistics.nr_failed_migrations_affine);
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER
+		mt_lbprof_stat_or(env->fail_reason, MT_LBPROF_AFFINITY);
+		if(mt_lbprof_lt (env->sd->mt_lbprof_nr_balance_failed, MT_LBPROF_NR_BALANCED_FAILED_UPPER_BOUND)){
+			char strings[128]="";
+			sprintf(strings, "%d:balance fail:affinity:%d:%d:%s:0x%lu"
+				, env->dst_cpu, env->src_cpu, p->pid, p->comm, p->cpus_allowed.bits[0]);
+			trace_sched_lbprof_log(strings);
+		}
+#endif		
 		return 0;
 	}
 	env->flags &= ~LBF_ALL_PINNED;
 
 	if (task_running(env->src_rq, p)) {
 		schedstat_inc(p, se.statistics.nr_failed_migrations_running);
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER
+		mt_lbprof_stat_or(env->fail_reason, MT_LBPROF_RUNNING);
+		if( mt_lbprof_lt (env->sd->mt_lbprof_nr_balance_failed, MT_LBPROF_NR_BALANCED_FAILED_UPPER_BOUND)){
+			char strings[128]="";
+			sprintf(strings, "%d:balance fail:running:%d:%d:%s"
+				, env->dst_cpu, env->src_cpu, p->pid, p->comm);
+			trace_sched_lbprof_log(strings);
+		}
+#endif		
 		return 0;
 	}
 
@@ -3163,8 +3227,11 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
 	 * 1) task is cache cold, or
 	 * 2) too many balance attempts have failed.
 	 */
-
+#if defined(CONFIG_MT_LOAD_BALANCE_ENHANCEMENT)
+	tsk_cache_hot = task_hot(p, env->src_rq->clock_task, env->sd, env->mt_check_cache_in_idle);
+#else
 	tsk_cache_hot = task_hot(p, env->src_rq->clock_task, env->sd);
+#endif 
 	if (!tsk_cache_hot ||
 		env->sd->nr_balance_failed > env->sd->cache_nice_tries) {
 #ifdef CONFIG_SCHEDSTATS
@@ -3178,6 +3245,15 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
 
 	if (tsk_cache_hot) {
 		schedstat_inc(p, se.statistics.nr_failed_migrations_hot);
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER
+		mt_lbprof_stat_or(env->fail_reason, MT_LBPROF_CACHEHOT);
+		if(mt_lbprof_lt (env->sd->mt_lbprof_nr_balance_failed, MT_LBPROF_NR_BALANCED_FAILED_UPPER_BOUND)){
+			char strings[128]="";
+			sprintf(strings, "%d:balance fail:cache hot:%d:%d:%s"
+				, env->dst_cpu, env->src_cpu, p->pid, p->comm);
+			trace_sched_lbprof_log(strings);
+		}
+#endif		
 		return 0;
 	}
 	return 1;
@@ -3193,6 +3269,12 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
 static int move_one_task(struct lb_env *env)
 {
 	struct task_struct *p, *n;
+#ifdef CONFIG_MT_LOAD_BALANCE_ENHANCEMENT
+	env->mt_check_cache_in_idle = 1;
+#endif
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER
+	mt_lbprof_stat_set(env->fail_reason, MT_LBPROF_NO_TRIGGER);
+#endif
 
 	list_for_each_entry_safe(p, n, &env->src_rq->cfs_tasks, se.group_node) {
 		if (throttled_lb_pair(task_group(p), env->src_rq->cpu, env->dst_cpu))
@@ -3773,11 +3855,19 @@ fix_small_capacity(struct sched_domain *sd, struct sched_group *group)
  * @balance: Should we balance.
  * @sgs: variable to hold the statistics for this group.
  */
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER  
+static inline void update_sg_lb_stats(struct sched_domain *sd,
+			struct sched_group *group, int this_cpu,
+			enum cpu_idle_type idle, int load_idx,
+			int local_group, const struct cpumask *cpus,
+			int *balance, struct sg_lb_stats *sgs, struct lb_env *env)
+#else
 static inline void update_sg_lb_stats(struct sched_domain *sd,
 			struct sched_group *group, int this_cpu,
 			enum cpu_idle_type idle, int load_idx,
 			int local_group, const struct cpumask *cpus,
 			int *balance, struct sg_lb_stats *sgs)
+#endif
 {
 	unsigned long load, max_cpu_load, min_cpu_load, max_nr_running;
 	int i;
@@ -3811,6 +3901,11 @@ static inline void update_sg_lb_stats(struct sched_domain *sd,
 			}
 			if (min_cpu_load > load)
 				min_cpu_load = load;
+
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER  
+			if((load_idx > 0) && (load == cpu_rq(i)->cpu_load[load_idx-1]))
+				mt_lbprof_stat_or(env->fail_reason, MT_LBPROF_HISTORY);
+#endif
 		}
 
 		sgs->group_load += load;
@@ -3876,14 +3971,24 @@ static inline void update_sg_lb_stats(struct sched_domain *sd,
  * Determine if @sg is a busier group than the previously selected
  * busiest group.
  */
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER
+static bool update_sd_pick_busiest(struct sched_domain *sd,
+				   struct sd_lb_stats *sds,
+				   struct sched_group *sg,
+				   struct sg_lb_stats *sgs,
+				   int this_cpu, struct lb_env *env)
+#else
 static bool update_sd_pick_busiest(struct sched_domain *sd,
 				   struct sd_lb_stats *sds,
 				   struct sched_group *sg,
 				   struct sg_lb_stats *sgs,
 				   int this_cpu)
+#endif
 {
-	if (sgs->avg_load <= sds->max_load)
+	if (sgs->avg_load <= sds->max_load) {
+		mt_lbprof_stat_or(env->fail_reason, MT_LBPROF_PICK_BUSIEST_FAIL_1);
 		return false;
+	}		
 
 	if (sgs->sum_nr_running > sgs->group_capacity)
 		return true;
@@ -3905,6 +4010,7 @@ static bool update_sd_pick_busiest(struct sched_domain *sd,
 			return true;
 	}
 
+	mt_lbprof_stat_or(env->fail_reason, MT_LBPROF_PICK_BUSIEST_FAIL_2);
 	return false;
 }
 
@@ -3917,9 +4023,15 @@ static bool update_sd_pick_busiest(struct sched_domain *sd,
  * @balance: Should we balance.
  * @sds: variable to hold the statistics for this sched_domain.
  */
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER 
+static inline void update_sd_lb_stats(struct sched_domain *sd, int this_cpu,
+			enum cpu_idle_type idle, const struct cpumask *cpus,
+			int *balance, struct sd_lb_stats *sds, struct lb_env *env)
+#else
 static inline void update_sd_lb_stats(struct sched_domain *sd, int this_cpu,
 			enum cpu_idle_type idle, const struct cpumask *cpus,
 			int *balance, struct sd_lb_stats *sds)
+#endif
 {
 	struct sched_domain *child = sd->child;
 	struct sched_group *sg = sd->groups;
@@ -3937,8 +4049,14 @@ static inline void update_sd_lb_stats(struct sched_domain *sd, int this_cpu,
 
 		local_group = cpumask_test_cpu(this_cpu, sched_group_cpus(sg));
 		memset(&sgs, 0, sizeof(sgs));
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER 				
+		update_sg_lb_stats(sd, sg, this_cpu, idle, load_idx,
+				local_group, cpus, balance, &sgs, env);
+#else
 		update_sg_lb_stats(sd, sg, this_cpu, idle, load_idx,
 				local_group, cpus, balance, &sgs);
+
+#endif
 
 		if (local_group && !(*balance))
 			return;
@@ -3966,7 +4084,11 @@ static inline void update_sd_lb_stats(struct sched_domain *sd, int this_cpu,
 			sds->this_load_per_task = sgs.sum_weighted_load;
 			sds->this_has_capacity = sgs.group_has_capacity;
 			sds->this_idle_cpus = sgs.idle_cpus;
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER				
+		} else if (update_sd_pick_busiest(sd, sds, sg, &sgs, this_cpu, env)) {
+#else
 		} else if (update_sd_pick_busiest(sd, sds, sg, &sgs, this_cpu)) {
+#endif 
 			sds->max_load = sgs.avg_load;
 			sds->busiest = sg;
 			sds->busiest_nr_running = sgs.sum_nr_running;
@@ -4193,10 +4315,17 @@ static inline void calculate_imbalance(struct sd_lb_stats *sds, int this_cpu,
  *		   return the least loaded group whose CPUs can be
  *		   put to idle by rebalancing its tasks onto our group.
  */
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER 
+static struct sched_group *
+find_busiest_group(struct sched_domain *sd, int this_cpu,
+		   unsigned long *imbalance, enum cpu_idle_type idle,
+		   const struct cpumask *cpus, int *balance, struct lb_env *env)
+#else
 static struct sched_group *
 find_busiest_group(struct sched_domain *sd, int this_cpu,
 		   unsigned long *imbalance, enum cpu_idle_type idle,
 		   const struct cpumask *cpus, int *balance)
+#endif
 {
 	struct sd_lb_stats sds;
 
@@ -4206,22 +4335,34 @@ find_busiest_group(struct sched_domain *sd, int this_cpu,
 	 * Compute the various statistics relavent for load balancing at
 	 * this level.
 	 */
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER 	 
+	update_sd_lb_stats(sd, this_cpu, idle, cpus, balance, &sds, env);
+#else
 	update_sd_lb_stats(sd, this_cpu, idle, cpus, balance, &sds);
+#endif
 
 	/*
 	 * this_cpu is not the appropriate cpu to perform load balancing at
 	 * this level.
 	 */
-	if (!(*balance))
+	if (!(*balance)){
+		mt_lbprof_stat_or(env->fail_reason, MT_LBPROF_BALANCE);
 		goto ret;
+	}
 
 	if ((idle == CPU_IDLE || idle == CPU_NEWLY_IDLE) &&
 	    check_asym_packing(sd, &sds, this_cpu, imbalance))
 		return sds.busiest;
 
 	/* There is no busy sibling group to pull tasks from */
-	if (!sds.busiest || sds.busiest_nr_running == 0)
+	if (!sds.busiest || sds.busiest_nr_running == 0){
+		if(!sds.busiest){
+			mt_lbprof_stat_or(env->fail_reason, MT_LBPROF_NOBUSYG_BUSIEST_NO_TASK);
+		}else{
+			mt_lbprof_stat_or(env->fail_reason, MT_LBPROF_NOBUSYG_NO_BUSIEST);
+		}		
 		goto out_balanced;
+	}
 
 	sds.avg_load = (SCHED_POWER_SCALE * sds.total_load) / sds.total_pwr;
 
@@ -4242,15 +4383,19 @@ find_busiest_group(struct sched_domain *sd, int this_cpu,
 	 * If the local group is more busy than the selected busiest group
 	 * don't try and pull any tasks.
 	 */
-	if (sds.this_load >= sds.max_load)
+	if (sds.this_load >= sds.max_load){
+		mt_lbprof_stat_or(env->fail_reason, MT_LBPROF_NOBUSYG_NO_LARGER_THAN);		
 		goto out_balanced;
+	}
 
 	/*
 	 * Don't pull any tasks if this group is already above the domain
 	 * average load.
 	 */
-	if (sds.this_load >= sds.avg_load)
+	if (sds.this_load >= sds.avg_load){		
+		mt_lbprof_stat_or(env->fail_reason, MT_LBPROF_NOBUSYG_NO_LARGER_THAN);
 		goto out_balanced;
+	}
 
 	if (idle == CPU_IDLE) {
 		/*
@@ -4267,8 +4412,10 @@ find_busiest_group(struct sched_domain *sd, int this_cpu,
 		 * In the CPU_NEWLY_IDLE, CPU_NOT_IDLE cases, use
 		 * imbalance_pct to be conservative.
 		 */
-		if (100 * sds.max_load <= sd->imbalance_pct * sds.this_load)
+		if (100 * sds.max_load <= sd->imbalance_pct * sds.this_load){
+			mt_lbprof_stat_or(env->fail_reason, MT_LBPROF_NOBUSYG_CHECK_FAIL);	
 			goto out_balanced;
+		}
 	}
 
 force_balance:
@@ -4410,6 +4557,9 @@ static int load_balance(int this_cpu, struct rq *this_rq,
 		.dst_rq		= this_rq,
 		.idle		= idle,
 		.loop_break	= sched_nr_migrate_break,
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER
+		.fail_reason= MT_LBPROF_NO_TRIGGER,
+#endif
 	};
 
 	cpumask_copy(cpus, cpu_active_mask);
@@ -4417,20 +4567,34 @@ static int load_balance(int this_cpu, struct rq *this_rq,
 	schedstat_inc(sd, lb_count[idle]);
 
 redo:
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER	
 	group = find_busiest_group(sd, this_cpu, &imbalance, idle,
-				   cpus, balance);
+				   cpus, balance, &env);
+#else
+	group = find_busiest_group(sd, this_cpu, &imbalance, idle,
+			 	   cpus, balance);
+#endif
 
 	if (*balance == 0)
 		goto out_balanced;
 
 	if (!group) {
 		schedstat_inc(sd, lb_nobusyg[idle]);
+		if(mt_lbprof_test(env.fail_reason, MT_LBPROF_HISTORY)){
+			int tmp_cpu;
+			for_each_cpu(tmp_cpu, cpu_possible_mask){
+				if (tmp_cpu == this_rq->cpu)
+					continue;
+				mt_lbprof_update_state(tmp_cpu, MT_LBPROF_BALANCE_FAIL_STATE);
+			}
+		}		
 		goto out_balanced;
 	}
 
 	busiest = find_busiest_queue(sd, group, idle, imbalance, cpus);
 	if (!busiest) {
 		schedstat_inc(sd, lb_nobusyq[idle]);
+		mt_lbprof_stat_or(env.fail_reason, MT_LBPROF_NOBUSYQ);
 		goto out_balanced;
 	}
 
@@ -4451,6 +4615,9 @@ redo:
 		env.src_cpu	= busiest->cpu;
 		env.src_rq	= busiest;
 		env.loop_max	= min_t(unsigned long, sysctl_sched_nr_migrate, busiest->nr_running);
+#ifdef CONFIG_MT_LOAD_BALANCE_ENHANCEMENT
+		env.mt_check_cache_in_idle = 1;
+#endif
 
 more_balance:
 		local_irq_save(flags);
@@ -4474,15 +4641,46 @@ more_balance:
 
 		/* All tasks on this runqueue were pinned by CPU affinity */
 		if (unlikely(env.flags & LBF_ALL_PINNED)) {
+			mt_lbprof_update_state(busiest->cpu, MT_LBPROF_ALLPINNED);
 			cpumask_clear_cpu(cpu_of(busiest), cpus);
 			if (!cpumask_empty(cpus))
 				goto redo;
 			goto out_balanced;
 		}
+		
+#ifdef CONFIG_MT_LOAD_BALANCE_ENHANCEMENT
+		if (!ld_moved && ((CPU_NEWLY_IDLE == idle) || (CPU_IDLE == idle) ) ) {
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER
+			mt_lbprof_stat_set(env.fail_reason, MT_LBPROF_DO_LB);
+#endif
+			env.mt_check_cache_in_idle = 0;	
+			env.loop = 0;
+			local_irq_save(flags);
+			double_rq_lock(this_rq, busiest);
+			if (!env.loop)
+				update_h_load(env.src_cpu);				
+			ld_moved = move_tasks(&env);
+			double_rq_unlock(this_rq, busiest);
+			local_irq_restore(flags);
+
+			/*
+		 	 * some other cpu did the load balance for us.
+		  	*/
+			if (ld_moved && this_cpu != smp_processor_id())
+				resched_cpu(this_cpu);			
+		}
+#endif		
 	}
 
 	if (!ld_moved) {
 		schedstat_inc(sd, lb_failed[idle]);
+		mt_lbprof_stat_or(env.fail_reason, MT_LBPROF_FAILED);
+		if ( mt_lbprof_test(env.fail_reason, MT_LBPROF_AFFINITY) ) {
+			mt_lbprof_update_state(busiest->cpu, MT_LBPROF_FAILURE_STATE);
+		}else if ( mt_lbprof_test(env.fail_reason, MT_LBPROF_CACHEHOT) ) {
+			mt_lbprof_update_state(busiest->cpu, MT_LBPROF_FAILURE_STATE);
+		}
+
 		/*
 		 * Increment the failure counter only on periodic balance.
 		 * We do not want newidle balance, which can be very
@@ -4491,6 +4689,7 @@ more_balance:
 		 */
 		if (idle != CPU_NEWLY_IDLE)
 			sd->nr_balance_failed++;
+		mt_lbprof_stat_inc(sd, mt_lbprof_nr_balance_failed);
 
 		if (need_active_balance(sd, idle, cpu_of(busiest), this_cpu)) {
 			raw_spin_lock_irqsave(&busiest->lock, flags);
@@ -4553,6 +4752,7 @@ out_balanced:
 	schedstat_inc(sd, lb_balanced[idle]);
 
 	sd->nr_balance_failed = 0;
+	mt_lbprof_stat_set(sd->mt_lbprof_nr_balance_failed, 0);
 
 out_one_pinned:
 	/* tune up the balancing interval */
@@ -4563,6 +4763,25 @@ out_one_pinned:
 
 	ld_moved = 0;
 out:
+	if (ld_moved){
+		mt_lbprof_stat_or(env.fail_reason, MT_LBPROF_SUCCESS);
+		mt_lbprof_stat_set(sd->mt_lbprof_nr_balance_failed, 0);
+	}	
+
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER
+	if( CPU_NEWLY_IDLE == idle){
+		char strings[128]="";
+		sprintf(strings, "%d:idle balance:%d:0x%x ", this_cpu, ld_moved, env.fail_reason);
+		mt_lbprof_rqinfo(strings);
+		trace_sched_lbprof_log(strings);
+	}else{
+		char strings[128]="";
+		sprintf(strings, "%d:periodic balance:%d:0x%x ", this_cpu, ld_moved, env.fail_reason);
+		mt_lbprof_rqinfo(strings);
+		trace_sched_lbprof_log(strings);
+	}
+#endif
+
 	return ld_moved;
 }
 
@@ -4574,18 +4793,45 @@ void idle_balance(int this_cpu, struct rq *this_rq)
 {
 	struct sched_domain *sd;
 	int pulled_task = 0;
-	unsigned long next_balance = jiffies + HZ;
+	unsigned long next_balance = jiffies + HZ;	
+#if defined(CONFIG_MT_LOAD_BALANCE_ENHANCEMENT) || defined(CONFIG_MT_LOAD_BALANCE_PROFILER)
+	unsigned long counter = 0;
+#endif
 
 	this_rq->idle_stamp = this_rq->clock;
 
-	if (this_rq->avg_idle < sysctl_sched_migration_cost)
+	mt_lbprof_update_state_has_lock(this_cpu, MT_LBPROF_UPDATE_STATE);
+#ifdef CONFIG_MT_LOAD_BALANCE_ENHANCEMENT
+	#ifdef CONFIG_LOCAL_TIMERS
+		counter = localtimer_get_counter();
+		if ( counter >= 260000 )  // 20ms
+			goto must_do;
+		if ( time_before(jiffies + 2, this_rq->next_balance) )	// 20ms
+			goto must_do;
+	#endif
+#endif
+
+	if (this_rq->avg_idle < sysctl_sched_migration_cost){
+#if defined(CONFIG_MT_LOAD_BALANCE_PROFILER)
+		char strings[128]="";
+		mt_lbprof_update_state_has_lock(this_cpu, MT_LBPROF_ALLOW_UNBLANCE_STATE);
+		sprintf(strings, "%d:idle balance bypass: %llu %lu ", this_cpu, this_rq->avg_idle, counter);
+		mt_lbprof_rqinfo(strings);
+		trace_sched_lbprof_log(strings);
+#endif		
 		return;
+	}
+
+#ifdef CONFIG_MT_LOAD_BALANCE_ENHANCEMENT
+	must_do:
+#endif
 
 	/*
 	 * Drop the rq->lock, but keep IRQ/preempt disabled.
 	 */
 	raw_spin_unlock(&this_rq->lock);
 
+	mt_lbprof_update_status();
 	update_shares(this_cpu);
 	rcu_read_lock();
 	for_each_domain(this_cpu, sd) {

@@ -128,7 +128,7 @@ static void __dma_free_buffer(struct page *page, size_t size)
  */
 static pte_t **consistent_pte;
 
-#define DEFAULT_CONSISTENT_DMA_SIZE SZ_2M
+#define DEFAULT_CONSISTENT_DMA_SIZE (SZ_8M + SZ_4M + SZ_2M) //Change from 4M to 14M for M4U debug
 
 unsigned long consistent_base = CONSISTENT_END - DEFAULT_CONSISTENT_DMA_SIZE;
 
@@ -176,6 +176,9 @@ static int __init consistent_init(void)
 		return -ENOMEM;
 	}
 
+	BUG_ON(base < VMALLOC_END);
+	printk(KERN_ALERT"DMA memory: 0x%08lx - 0x%08lx:\n", 
+                base, CONSISTENT_END);
 	pr_debug("DMA memory: 0x%08lx - 0x%08lx:\n", base, CONSISTENT_END);
 	consistent_head.vm_start = base;
 

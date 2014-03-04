@@ -92,7 +92,12 @@ static inline unsigned ecm_bitrate(struct usb_gadget *g)
  */
 
 #define LOG2_STATUS_INTERVAL_MSEC	5	/* 1 << 5 == 32 msec */
+
+#if 1
+#define ECM_STATUS_BYTECOUNT		64	/* 8 byte header + data */
+#else
 #define ECM_STATUS_BYTECOUNT		16	/* 8 byte header + data */
+#endif
 
 
 /* interface descriptor: */
@@ -192,7 +197,11 @@ static struct usb_endpoint_descriptor fs_ecm_notify_desc = {
 	.bEndpointAddress =	USB_DIR_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_INT,
 	.wMaxPacketSize =	cpu_to_le16(ECM_STATUS_BYTECOUNT),
+#if 1
+	.bInterval =		4,
+#else
 	.bInterval =		1 << LOG2_STATUS_INTERVAL_MSEC,
+#endif
 };
 
 static struct usb_endpoint_descriptor fs_ecm_in_desc = {
@@ -201,6 +210,9 @@ static struct usb_endpoint_descriptor fs_ecm_in_desc = {
 
 	.bEndpointAddress =	USB_DIR_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
+#if 1
+	.wMaxPacketSize =	cpu_to_le16(64),
+#endif
 };
 
 static struct usb_endpoint_descriptor fs_ecm_out_desc = {
@@ -209,6 +221,9 @@ static struct usb_endpoint_descriptor fs_ecm_out_desc = {
 
 	.bEndpointAddress =	USB_DIR_OUT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
+#if 1
+	.wMaxPacketSize =	cpu_to_le16(64),
+#endif
 };
 
 static struct usb_descriptor_header *ecm_fs_function[] = {
@@ -239,7 +254,11 @@ static struct usb_endpoint_descriptor hs_ecm_notify_desc = {
 	.bEndpointAddress =	USB_DIR_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_INT,
 	.wMaxPacketSize =	cpu_to_le16(ECM_STATUS_BYTECOUNT),
+#if 1
+	.bInterval =		4,
+#else
 	.bInterval =		LOG2_STATUS_INTERVAL_MSEC + 4,
+#endif
 };
 
 static struct usb_endpoint_descriptor hs_ecm_in_desc = {
@@ -581,8 +600,8 @@ static int ecm_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
 			/* Enable zlps by default for ECM conformance;
 			 * override for musb_hdrc (avoids txdma ovhead).
 			 */
-			ecm->port.is_zlp_ok = !(gadget_is_musbhdrc(cdev->gadget)
-				);
+			ecm->port.is_zlp_ok = false;
+
 			ecm->port.cdc_filter = DEFAULT_FILTER;
 			DBG(cdev, "activate ecm\n");
 			net = gether_connect(&ecm->port);
@@ -905,7 +924,7 @@ ecm_bind_config(struct usb_configuration *c, u8 ethaddr[ETH_ALEN])
 
 	ecm->port.cdc_filter = DEFAULT_FILTER;
 
-	ecm->port.func.name = "cdc_ethernet";
+	ecm->port.func.name = "ecm";
 	ecm->port.func.strings = ecm_strings;
 	/* descriptors are per-instance copies */
 	ecm->port.func.bind = ecm_bind;

@@ -97,6 +97,7 @@ static void timer_trig_activate(struct led_classdev *led_cdev)
 		      &led_cdev->blink_delay_off);
 
 	led_cdev->trigger_data = (void *)1;
+	kobject_uevent(&led_cdev->dev->kobj,KOBJ_ADD);
 
 	return;
 
