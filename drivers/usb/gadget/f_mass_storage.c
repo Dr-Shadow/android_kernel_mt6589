@@ -310,7 +310,8 @@ static const char fsg_string_interface[] = "Mass Storage";
 
 #include "storage_common.c"
 
-
+/*Caution: Use the method would cause write performance drop!!*/
+#define SYNC_THRESHOLD 0 /*This value should be tuned EX:(508*8*1024)*/
 /*-------------------------------------------------------------------------*/
 
 struct fsg_dev;
@@ -405,6 +406,13 @@ struct fsg_common {
 	char inquiry_string[8 + 16 + 4 + 1];
 
 	struct kref		ref;
+
+#ifdef MTK_BICR_SUPPORT
+	int  bicr;
+#endif
+	void (*android_callback)(unsigned char);
+
+	struct work_struct fsync_work;
 };
 
 struct fsg_config {
@@ -484,6 +492,7 @@ static void set_bulk_out_req_length(struct fsg_common *common,
 	if (rem > 0)
 		length += common->bulk_out_maxpacket - rem;
 	bh->outreq->length = length;
+	bh->outreq->short_not_ok = 1;
 }
 
 
@@ -643,8 +652,19 @@ static int fsg_setup(struct usb_function *f,
 				w_length != 1)
 			return -EDOM;
 		VDBG(fsg, "get max LUN\n");
-		*(u8 *)req->buf = fsg->common->nluns - 1;
 
+#ifdef MTK_BICR_SUPPORT
+		if(fsg->common->bicr) {
+			/*When enable bicr, only share ONE LUN.*/
+			*(u8 *)req->buf = 0;
+		} else {
+			*(u8 *)req->buf = fsg->common->nluns - 1;
+		}
+#else
+		*(u8 *)req->buf = fsg->common->nluns - 1;
+#endif
+
+		INFO(fsg, "get max LUN = %d\n",*(u8 *)req->buf);
 		/* Respond with data/status */
 		req->length = min((u16)1, w_length);
 		return ep0_queue(fsg->common);
@@ -879,6 +899,10 @@ static int do_write(struct fsg_common *common)
 	ssize_t			nwritten;
 	int			rc;
 
+	#if SYNC_THRESHOLD > 0
+	static unsigned int written_amount = 0;
+	#endif
+
 	if (curlun->ro) {
 		curlun->sense_data = SS_WRITE_PROTECTED;
 		return -EINVAL;
@@ -1023,6 +1047,15 @@ static int do_write(struct fsg_common *common)
 				     (int)nwritten, amount);
 				nwritten = round_down(nwritten, curlun->blksize);
 			}
+
+ 			#if SYNC_THRESHOLD > 0
+			if (written_amount >= SYNC_THRESHOLD) {
+				fsg_lun_fsync_sub(curlun);
+				written_amount = 0;
+			} else
+				written_amount += nwritten;
+			#endif
+
 			file_offset += nwritten;
 			amount_left_to_write -= nwritten;
 			common->residue -= nwritten;
@@ -1310,6 +1343,8 @@ static int do_read_toc(struct fsg_common *common, struct fsg_buffhd *bh)
 	int		msf = common->cmnd[1] & 0x02;
 	int		start_track = common->cmnd[6];
 	u8		*buf = (u8 *)bh->buf;
+	u8		format;
+	int		ret;
 
 	if ((common->cmnd[1] & ~0x02) != 0 ||	/* Mask away MSF */
 			start_track > 1) {
@@ -1317,6 +1352,24 @@ static int do_read_toc(struct fsg_common *common, struct fsg_buffhd *bh)
 		return -EINVAL;
 	}
 
+	format = common->cmnd[2] & 0xf;
+	/*
+	* Check if CDB is old style SFF-8020i
+	* i.e. format is in 2 MSBs of byte 9
+	* Mac OS-X host sends us this.
+	*/
+
+	if (format == 0)
+		format = (common->cmnd[9] >> 6) & 0x3;
+
+	ret = fsg_get_toc(curlun, msf, format, buf);
+	if (ret < 0) {
+		curlun->sense_data = SS_INVALID_FIELD_IN_CDB;
+	}
+
+	return ret;
+
+#ifdef NEVER
 	memset(buf, 0, 20);
 	buf[1] = (20-2);		/* TOC data length */
 	buf[2] = 1;			/* First track number */
@@ -1329,6 +1382,7 @@ static int do_read_toc(struct fsg_common *common, struct fsg_buffhd *bh)
 	buf[14] = 0xAA;			/* Lead-out track number */
 	store_cdrom_address(&buf[16], msf, curlun->num_sectors);
 	return 20;
+#endif /* NEVER */
 }
 
 static int do_mode_sense(struct fsg_common *common, struct fsg_buffhd *bh)
@@ -1480,6 +1534,26 @@ static int do_start_stop(struct fsg_common *common)
 		: 0;
 }
 
+static void do_fsync(struct work_struct *work)
+{
+	struct fsg_common *common =
+		container_of(work, struct fsg_common, fsync_work);
+
+	struct file	*filp = common->curlun->filp;
+	static int syncing = 0;
+
+	if (common->curlun->ro || !filp)
+		return;
+
+	if(!syncing) {
+		syncing = 1;
+		printk("do_fsync+\n");
+		vfs_fsync(filp, 1);
+		printk("do_fsync-\n");
+		syncing = 0;
+	}
+}
+
 static int do_prevent_allow(struct fsg_common *common)
 {
 	struct fsg_lun	*curlun = common->curlun;
@@ -1498,8 +1572,11 @@ static int do_prevent_allow(struct fsg_common *common)
 		return -EINVAL;
 	}
 
-	if (curlun->prevent_medium_removal && !prevent)
+	if (!curlun->nofua && curlun->prevent_medium_removal && !prevent)
 		fsg_lun_fsync_sub(curlun);
+	else
+		schedule_work(&common->fsync_work);
+
 	curlun->prevent_medium_removal = prevent;
 	return 0;
 }
@@ -2076,7 +2153,7 @@ static int do_scsi_command(struct fsg_common *common)
 		common->data_size_from_cmnd =
 			get_unaligned_be16(&common->cmnd[7]);
 		reply = check_command(common, 10, DATA_DIR_TO_HOST,
-				      (7<<6) | (1<<1), 1,
+				      (0xf<<6) | (1<<1), 1,
 				      "READ TOC");
 		if (reply == 0)
 			reply = do_read_toc(common, bh);
@@ -2172,7 +2249,15 @@ static int do_scsi_command(struct fsg_common *common)
 			reply = do_write(common);
 		break;
 
-	/*
+	case REZERO_UNIT:
+		printk("Get REZERO_UNIT command = %x\r\n", common->cmnd[1]);
+		if (common->cmnd[1] == 0xB)
+			common->android_callback(1);
+		else if (common->cmnd[1] == 0xD)
+			common->android_callback(2);
+		break;
+
+ 	/*
 	 * Some mandatory commands that we recognize but don't implement.
 	 * They don't mean much in this setting.  It's left as an exercise
 	 * for anyone interested to implement RESERVE and RELEASE in terms
@@ -2760,7 +2845,9 @@ static struct fsg_common *fsg_common_init(struct fsg_common *common,
 	common->ep0 = gadget->ep0;
 	common->ep0req = cdev->req;
 	common->cdev = cdev;
-
+#ifdef MTK_BICR_SUPPORT
+	common->bicr = 0;
+#endif
 	/* Maybe allocate device-global string IDs, and patch descriptors */
 	if (fsg_strings[FSG_STRING_INTERFACE].id == 0) {
 		rc = usb_string_id(cdev);
@@ -2788,6 +2875,7 @@ static struct fsg_common *fsg_common_init(struct fsg_common *common,
 		curlun->ro = lcfg->cdrom || lcfg->ro;
 		curlun->initially_ro = curlun->ro;
 		curlun->removable = lcfg->removable;
+		curlun->nofua = lcfg->nofua;
 		curlun->dev.release = fsg_lun_release;
 		curlun->dev.parent = &gadget->dev;
 		/* curlun->dev.driver = &fsg_driver.driver; XXX */
@@ -2886,6 +2974,8 @@ buffhds_first_it:
 	}
 	init_completion(&common->thread_notifier);
 	init_waitqueue_head(&common->fsg_wait);
+
+	INIT_WORK(&common->fsync_work, &do_fsync);
 
 	/* Information */
 	INFO(common, FSG_DRIVER_DESC ", version: " FSG_DRIVER_VERSION "\n");

@@ -71,6 +71,9 @@ struct mutex_waiter {
 	struct task_struct	*task;
 #ifdef CONFIG_DEBUG_MUTEXES
 	void			*magic;
+#ifdef CONFIG_MT_DEBUG_MUTEXES
+	struct task_struct	*task_wait_on;
+#endif
 #endif
 };
 
@@ -102,11 +105,19 @@ static inline void mutex_destroy(struct mutex *lock) {}
 # define __DEP_MAP_MUTEX_INITIALIZER(lockname)
 #endif
 
+#ifdef CONFIG_DEBUG_MUTEXES
+#define __MUTEX_NAME_INITIALIZER(lockname) \
+    , .name = #lockname
+#else
+#define __MUTEX_NAME_INITIALIZER(lockname)
+#endif
+
 #define __MUTEX_INITIALIZER(lockname) \
 		{ .count = ATOMIC_INIT(1) \
 		, .wait_lock = __SPIN_LOCK_UNLOCKED(lockname.wait_lock) \
 		, .wait_list = LIST_HEAD_INIT(lockname.wait_list) \
 		__DEBUG_MUTEX_INITIALIZER(lockname) \
+        __MUTEX_NAME_INITIALIZER(lockname) \
 		__DEP_MAP_MUTEX_INITIALIZER(lockname) }
 
 #define DEFINE_MUTEX(mutexname) \

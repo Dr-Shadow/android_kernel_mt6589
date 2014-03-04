@@ -1123,5 +1123,8 @@ static void __exit usb_stor_exit(void)
 	usb_usual_clear_present(USB_US_TYPE_STOR);
 }
 
+bool usb_storage_debug = false;
+module_param(usb_storage_debug, bool, 0644);
+
 module_init(usb_stor_init);
 module_exit(usb_stor_exit);

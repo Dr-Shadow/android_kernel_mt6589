@@ -36,6 +36,80 @@ struct bsg_job;
 #define BLKDEV_MIN_RQ	4
 #define BLKDEV_MAX_RQ	128	/* Default maximum */
 
+#if !defined(FEATURE_STORAGE_PERF_INDEX) && !defined(USER_BUILD_KERNEL)
+enum METADATA_OPERATION_MODE {
+	WAIT_READ_CNT	= 0,
+	NOWAIT_READ_CNT,
+	HIT_READ_CNT,
+	NOWAIT_DATA_READ_CNT,
+	HIT_DATA_READ_CNT,
+	WAIT_WRITE_CNT,
+	NOWAIT_WRITE_CNT,
+	HIT_WRITE_CNT,
+};
+
+struct metadata_rwlogger {
+	int metadata_rw_logger[8];
+	/*index
+	**0:metadata_wait_read_count
+	**1:metadata_nowait_read_count
+	**2:metadata_hit_read_count
+	**3:metadata_nowait_data_read_count
+	**4:metadata_hit_data_read_count
+	**5:metadata_wait_write_count
+	**6:metadata_nowait_write_count
+	**7:metadata_hit_write_count
+	 */
+};
+
+static inline void set_metadata_rw_status(int mmc_index, int type)
+{
+	extern int check_perdev_minors;
+	extern struct metadata_rwlogger metadata_logger[10];
+	metadata_logger[mmc_index/check_perdev_minors].metadata_rw_logger[type]++;
+}
+
+static inline void clear_metadata_rw_status(int mmc_index)
+{
+	extern int check_perdev_minors;
+	extern struct metadata_rwlogger metadata_logger[10];
+	memset(	&metadata_logger[mmc_index/check_perdev_minors].metadata_rw_logger, 0, sizeof(struct metadata_rwlogger));
+}
+#define FEATURE_STORAGE_PERF_INDEX
+#define FEATURE_STORAGE_META_LOG
+#endif
+
+
+
+#if !defined(FEATURE_STORAGE_PID_LOGGER) && !defined(USER_BUILD_KERNEL)
+#define FEATURE_STORAGE_PID_LOGGER
+struct page_pid_logger {
+        unsigned short pid1;
+	unsigned short pid2;
+};
+struct page_pid_locker {
+	spinlock_t lock;
+};
+
+
+#define PID_LOGGER_COUNT	20
+
+struct struct_pid_logger {
+	unsigned short current_pid;
+	unsigned short reserved;
+	unsigned short pid_logger[PID_LOGGER_COUNT];
+	unsigned short pid_logger_counter[PID_LOGGER_COUNT];
+	unsigned int pid_logger_length[PID_LOGGER_COUNT];
+	unsigned short pid_logger_r_counter[PID_LOGGER_COUNT];
+	unsigned int pid_logger_r_length[PID_LOGGER_COUNT];
+	char pid_buffer [512];
+};
+
+#define PAGE_LOCKER_SHIFT	0
+#define PID_ID_CNT 		10
+
+#endif /* FEATURE_STORAGE_PID_LOGGER */
+//#endif /* USER_BUILD_KERNEL */
 struct request;
 typedef void (rq_end_io_fn)(struct request *, int);
 

@@ -1066,6 +1066,7 @@ static const struct mmc_bus_ops mmc_sdio_ops = {
 /*
  * Starting point for SDIO card init.
  */
+extern int sdio_cd_result;
 int mmc_attach_sdio(struct mmc_host *host)
 {
 	int err, i, funcs;
@@ -1198,7 +1199,9 @@ int mmc_attach_sdio(struct mmc_host *host)
 		if (err)
 			goto remove_added;
 	}
-
+#ifndef CONFIG_EARLY_LINUX_PORTING
+	sdio_cd_result = 0;
+#endif
 	mmc_claim_host(host);
 	return 0;
 
@@ -1245,46 +1248,8 @@ int sdio_reset_comm(struct mmc_card *card)
 		goto err;
 	}
 
-	err = mmc_send_io_op_cond(host, host->ocr, &ocr);
-	if (err)
-		goto err;
-
-	if (mmc_host_is_spi(host)) {
-		err = mmc_spi_set_crc(host, use_spi_crc);
+	err = mmc_sdio_init_card(host, host->ocr, card, 0);
 		if (err)
-			goto err;
-	}
-
-	if (!mmc_host_is_spi(host)) {
-		err = mmc_send_relative_addr(host, &card->rca);
-		if (err)
-			goto err;
-		mmc_set_bus_mode(host, MMC_BUSMODE_PUSHPULL);
-	}
-	if (!mmc_host_is_spi(host)) {
-		err = mmc_select_card(card);
-		if (err)
-			goto err;
-	}
-
-	/*
-	 * Switch to high-speed (if supported).
-	 */
-	err = sdio_enable_hs(card);
-	if (err > 0)
-		mmc_sd_go_highspeed(card);
-	else if (err)
-		goto err;
-
-	/*
-	 * Change to the card's maximum speed.
-	 */
-	mmc_set_clock(host, mmc_sdio_get_max_clock(card));
-
-	err = sdio_enable_4bit_bus(card);
-	if (err > 0)
-		mmc_set_bus_width(host, MMC_BUS_WIDTH_4);
-	else if (err)
 		goto err;
 
 	mmc_release_host(host);

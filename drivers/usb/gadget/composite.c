@@ -17,9 +17,12 @@
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/utsname.h>
+#include <linux/xlog.h>
 
 #include <linux/usb/composite.h>
 #include <asm/unaligned.h>
+
+#include "logger.h"
 
 /*
  * The code in this file is utility code, used to build a gadget driver
@@ -209,9 +212,15 @@ int usb_add_function(struct usb_configuration *config,
 {
 	int	value = -EINVAL;
 
+	xlog_printk(ANDROID_LOG_DEBUG, "USB", "%s: \n", __func__);
+
+
 	DBG(config->cdev, "adding '%s'/%p to config '%s'/%p\n",
 			function->name, function,
 			config->label, config);
+
+	USB_LOGGER(USB_ADD_FUNCTION, USB_ADD_FUNCTION, function->name, function, \
+		config->label, config);
 
 	if (!function->set_alt || !function->disable)
 		goto done;
@@ -396,6 +405,9 @@ static int config_buf(struct usb_configuration *config,
 
 		if (!descriptors)
 			continue;
+
+		USB_LOGGER(STRING, CONFIG_BUF, "usbfn", f->name);
+
 		status = usb_descriptor_fillbuf(next, len,
 			(const struct usb_descriptor_header **) descriptors);
 		if (status < 0)
@@ -406,6 +418,12 @@ static int config_buf(struct usb_configuration *config,
 
 	len = next - buf;
 	c->wTotalLength = cpu_to_le16(len);
+
+	USB_LOGGER(DEVICE_DESCRIPTOR, CONFIG_BUF, c->bLength, \
+					   c->bDescriptorType, c->wTotalLength, \
+					   c->bNumInterfaces, c->bConfigurationValue,\
+					   c->iConfiguration, c->bmAttributes, \
+					   c->bMaxPower);
 	return len;
 }
 
@@ -665,6 +683,9 @@ static int set_config(struct usb_composite_dev *cdev,
 		}
 
 		result = f->set_alt(f, tmp, 0);
+
+		USB_LOGGER(STRING, SET_CONFIG, "func", f->name);
+
 		if (result < 0) {
 			DBG(cdev, "interface %d (%s/%p) alt 0 --> %d\n",
 					tmp, f->name, f, result);
@@ -739,6 +760,7 @@ int usb_add_config(struct usb_composite_dev *cdev,
 	status = bind(config);
 	if (status < 0) {
 		list_del(&config->list);
+		xlog_printk(ANDROID_LOG_DEBUG, "USB","%s: bind fialed and the list should be init because there is one entry only");
 		config->cdev = NULL;
 	} else {
 		unsigned	i;
@@ -790,11 +812,13 @@ static int unbind_config(struct usb_composite_dev *cdev,
 			/* may free memory for "f" */
 		}
 	}
+
 	if (config->unbind) {
 		DBG(cdev, "unbind config '%s'/%p\n", config->label, config);
 		config->unbind(config);
-			/* may free memory for "c" */
+		/* may free memory for "c" */
 	}
+
 	return 0;
 }
 
@@ -1090,6 +1114,9 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 	req->length = 0;
 	gadget->ep0->driver_data = cdev;
 
+	USB_LOGGER(COMPOSITE_SETUP, COMPOSITE_SETUP, ctrl->bRequestType, \
+		ctrl->bRequest, w_value, w_value, w_length);
+
 	switch (ctrl->bRequest) {
 
 	/* we handle all standard USB descriptors */
@@ -1114,6 +1141,8 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 
 			value = min(w_length, (u16) sizeof cdev->desc);
 			memcpy(req->buf, &cdev->desc, value);
+			xlog_printk(ANDROID_LOG_DEBUG, "USB", "USB_REQ_GET_DESCRIPTOR: "
+							"USB_DT_DEVICE, value=%d\n",value);
 			break;
 		case USB_DT_DEVICE_QUALIFIER:
 			if (!gadget_is_dualspeed(gadget) ||
@@ -1122,8 +1151,12 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 			device_qual(cdev);
 			value = min_t(int, w_length,
 				sizeof(struct usb_qualifier_descriptor));
+			xlog_printk(ANDROID_LOG_DEBUG, "USB", "USB_REQ_GET_DESCRIPTOR: "
+							"USB_DT_DEVICE_QUALIFIER, value=%d\n",value);
 			break;
 		case USB_DT_OTHER_SPEED_CONFIG:
+			xlog_printk(ANDROID_LOG_DEBUG, "USB", "USB_REQ_GET_DESCRIPTOR: "
+							"USB_DT_OTHER_SPEED_CONFIG\n");
 			if (!gadget_is_dualspeed(gadget) ||
 			    gadget->speed >= USB_SPEED_SUPER)
 				break;
@@ -1132,18 +1165,25 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 			value = config_desc(cdev, w_value);
 			if (value >= 0)
 				value = min(w_length, (u16) value);
+			xlog_printk(ANDROID_LOG_DEBUG, "USB", "USB_REQ_GET_DESCRIPTOR: "
+							"USB_DT_CONFIG, value=%d\n",value);
 			break;
 		case USB_DT_STRING:
 			value = get_string(cdev, req->buf,
 					w_index, w_value & 0xff);
-			if (value >= 0)
+			if (value >= 0) {
 				value = min(w_length, (u16) value);
+				xlog_printk(ANDROID_LOG_DEBUG, "USB", "USB_REQ_GET_DESCRIPTOR: "
+						"USB_DT_STRING, value=%d\n" ,value);
+			}
 			break;
 		case USB_DT_BOS:
 			if (gadget_is_superspeed(gadget)) {
 				value = bos_desc(cdev);
 				value = min(w_length, (u16) value);
 			}
+			xlog_printk(ANDROID_LOG_DEBUG, "USB", "USB_REQ_GET_DESCRIPTOR: "
+						"USB_DT_BOS, value=%d\n",value);
 			break;
 		}
 		break;
@@ -1163,6 +1203,8 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 		spin_lock(&cdev->lock);
 		value = set_config(cdev, ctrl, w_value);
 		spin_unlock(&cdev->lock);
+		xlog_printk(ANDROID_LOG_DEBUG, "USB", "USB_REQ_SET_CONFIGURATION: "
+						"value=%d\n",value);
 		break;
 	case USB_REQ_GET_CONFIGURATION:
 		if (ctrl->bRequestType != USB_DIR_IN)
@@ -1182,7 +1224,12 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 			goto unknown;
 		if (!cdev->config || intf >= MAX_CONFIG_INTERFACES)
 			break;
-		f = cdev->config->interface[intf];
+
+		if (cdev->config)
+			f = cdev->config->interface[intf];
+		else
+			printk("%s: cdev->config = NULL \n", __func__);
+
 		if (!f)
 			break;
 		if (w_value && !f->set_alt)
@@ -1300,14 +1347,17 @@ unknown:
 			break;
 		}
 
-		if (f && f->setup)
+		if (f && f->setup) {
+			USB_LOGGER(STRING, COMPOSITE_SETUP, "func", f->name);
 			value = f->setup(f, ctrl);
-		else {
+		} else {
 			struct usb_configuration	*c;
 
 			c = cdev->config;
-			if (c && c->setup)
+			if (c && c->setup) {
+				USB_LOGGER(STRING, COMPOSITE_SETUP, "config", c->label);
 				value = c->setup(c, ctrl);
+			}
 		}
 
 		goto done;
@@ -1330,6 +1380,12 @@ unknown:
 	}
 
 done:
+	USB_LOGGER(DEC_NUM, COMPOSITE_SETUP, "ret", value);
+	if(value < 0) {
+		xlog_printk(ANDROID_LOG_DEBUG, "USB", "composite_setup: value=%d,"
+				"bRequestType=0x%x, bRequest=0x%x, w_value=0x%x, w_length=0x%x \n", value,
+				ctrl->bRequestType,	ctrl->bRequest, w_value, w_value, w_length);
+	}
 	/* device either stalls (value < 0) or reports success */
 	return value;
 }
@@ -1347,6 +1403,14 @@ static void composite_disconnect(struct usb_gadget *gadget)
 		reset_config(cdev);
 	if (composite->disconnect)
 		composite->disconnect(cdev);
+
+	/* ALPS00235316 and ALPS00234976 */
+	/* reset the complet function */
+	if(cdev->req->complete)	{
+		xlog_printk(ANDROID_LOG_DEBUG, "USB", "%s:  reassign the complete function!!\n", __func__);
+		cdev->req->complete = composite_setup_complete;
+	}
+
 	spin_unlock_irqrestore(&cdev->lock, flags);
 }
 
@@ -1608,6 +1672,8 @@ int usb_composite_probe(struct usb_composite_driver *driver,
 {
 	if (!driver || !driver->dev || !bind || composite)
 		return -EINVAL;
+
+	xlog_printk(ANDROID_LOG_DEBUG, "USB", "%s: driver->name = %s", __func__, driver->name);
 
 	if (!driver->name)
 		driver->name = "composite";

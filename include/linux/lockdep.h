@@ -155,6 +155,8 @@ struct lockdep_map {
 	int				cpu;
 	unsigned long			ip;
 #endif
+    //add for dynamic ProveLocking
+    int in_checking;
 };
 
 /*

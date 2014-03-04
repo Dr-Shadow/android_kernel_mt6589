@@ -111,6 +111,19 @@ SECTIONS
 		*(.got)			/* Global offset table		*/
 			ARM_CPU_KEEP(PROC_INFO)
 	}
+	_sram_start = .;
+
+	.sram_start 0xF9000000 :  AT(_sram_start){
+                . = ALIGN(4);
+                __ssram_text = .;
+                *(.sram.func)
+                . = ALIGN(4);
+                __esram_text = .;
+        }
+
+	. = ADDR(.text) + SIZEOF(.text) + SIZEOF(.sram_start);
+	_sram_end = .;
+
 
 	RO_DATA(PAGE_SIZE)
 

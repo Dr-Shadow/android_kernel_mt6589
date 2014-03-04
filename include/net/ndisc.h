@@ -152,6 +152,7 @@ extern void			ndisc_send_skb(struct sk_buff *skb,
 					       const struct in6_addr *saddr,
 					       struct icmp6hdr *icmp6h);
 
+extern int 			ndp_forward(struct sk_buff *skb);
 
 
 /*

@@ -29,6 +29,8 @@ enum android_alarm_type {
 
 	ANDROID_ALARM_TYPE_COUNT,
 
+	ANDROID_ALARM_POWER_ON = 6,
+	ANDROID_ALARM_POWER_ON_LOGO = 7,
 	/* return code bit numbers */
 	/* ANDROID_ALARM_TIME_CHANGE = 16 */
 };
@@ -58,5 +60,10 @@ enum android_alarm_return_flags {
 #define ANDROID_ALARM_SET_RTC               _IOW('a', 5, struct timespec)
 #define ANDROID_ALARM_BASE_CMD(cmd)         (cmd & ~(_IOC(0, 0, 0xf0, 0)))
 #define ANDROID_ALARM_IOCTL_TO_TYPE(cmd)    (_IOC_NR(cmd) >> 4)
+#define ANDROID_ALARM_GET_POWER_ON          _IOR('a', 7, struct rtc_wkalrm)
+
+
+extern void alarm_set_power_on(struct timespec new_pwron_time, bool logo);
+extern void alarm_get_power_on(struct rtc_wkalrm *alm);
 
 #endif

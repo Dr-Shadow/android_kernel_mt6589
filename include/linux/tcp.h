@@ -84,7 +84,7 @@ enum {
 /*
  * TCP general constants
  */
-#define TCP_MSS_DEFAULT		 536U	/* IPv4 (RFC1122, RFC2581) */
+#define TCP_MSS_DEFAULT		 1220U	/* IPv4 (RFC1122, RFC2581) */
 #define TCP_MSS_DESIRED		1220U	/* IPv6 (tunneled), EDNS0 (RFC3226) */
 
 /* TCP socket options */
@@ -106,6 +106,7 @@ enum {
 #define TCP_THIN_LINEAR_TIMEOUTS 16      /* Use linear timeouts for thin streams*/
 #define TCP_THIN_DUPACK         17      /* Fast retrans. after 1 dupack */
 #define TCP_USER_TIMEOUT	18	/* How long for loss retry before timeout */
+#define TCP_MAXRTO	119	 /* Set the max rto for this socket */
 
 /* for TCP_INFO socket option */
 #define TCPI_OPT_TIMESTAMPS	1

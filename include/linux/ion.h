@@ -35,6 +35,7 @@ enum ion_heap_type {
 	ION_HEAP_TYPE_SYSTEM,
 	ION_HEAP_TYPE_SYSTEM_CONTIG,
 	ION_HEAP_TYPE_CARVEOUT,
+	ION_HEAP_TYPE_MULTIMEDIA,
 	ION_HEAP_TYPE_CUSTOM, /* must be last so device specific heaps always
 				 are at the end of this enum */
 	ION_NUM_HEAPS = 16,
@@ -43,6 +44,7 @@ enum ion_heap_type {
 #define ION_HEAP_SYSTEM_MASK		(1 << ION_HEAP_TYPE_SYSTEM)
 #define ION_HEAP_SYSTEM_CONTIG_MASK	(1 << ION_HEAP_TYPE_SYSTEM_CONTIG)
 #define ION_HEAP_CARVEOUT_MASK		(1 << ION_HEAP_TYPE_CARVEOUT)
+#define ION_HEAP_MULTIMEDIA_MASK    (1 << ION_HEAP_TYPE_MULTIMEDIA)
 
 /**
  * heap flags - the lower 16 bits are used by core ion, the upper 16
@@ -52,9 +54,9 @@ enum ion_heap_type {
 					   cached, ion will do cache
 					   maintenance when the buffer is
 					   mapped for dma */
-#define ION_FLAG_CACHED_NEEDS_SYNC 2	/* mappings of this buffer will created
-					   at mmap time, if this is set
-					   caches must be managed manually */
+#define ION_FLAG_CACHED_NEEDS_SYNC 2    /* mappings of this buffer will created
+                                           at mmap time, if this is set
+                                           caches must be managed manually */
 
 #ifdef __KERNEL__
 struct ion_device;

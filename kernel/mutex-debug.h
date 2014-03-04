@@ -37,11 +37,34 @@ static inline void mutex_clear_owner(struct mutex *lock)
 	lock->owner = NULL;
 }
 
+#include <linux/aee.h>
+#define MT_DEBUG_LOCKS_WARN_ON(c)						\
+({									\
+	int __ret = 0;							\
+									\
+	if (!oops_in_progress && unlikely(c)) {				\
+        aee_kernel_warning(#c,"Mutex Debug\n");\
+		if (debug_locks_off() && !debug_locks_silent)		\
+			WARN_ON(1);					\
+        else \
+            dump_stack();\
+		__ret = 1;						\
+	}								\
+	__ret;								\
+})
+
+#ifdef DEBUG_LOCKS_WARN_ON
+#undef DEBUG_LOCKS_WARN_ON
+#define DEBUG_LOCKS_WARN_ON(c) MT_DEBUG_LOCKS_WARN_ON(c)
+#endif
+
 #define spin_lock_mutex(lock, flags)			\
 	do {						\
 		struct mutex *l = container_of(lock, struct mutex, wait_lock); \
 							\
-		DEBUG_LOCKS_WARN_ON(in_interrupt());	\
+		if(DEBUG_LOCKS_WARN_ON(in_interrupt())){	\
+            printk("[MUTEX WARN!!] mutex lock in interrupt context!\n");\
+        }\
 		local_irq_save(flags);			\
 		arch_spin_lock(&(lock)->rlock.raw_lock);\
 		DEBUG_LOCKS_WARN_ON(l->magic != l);	\

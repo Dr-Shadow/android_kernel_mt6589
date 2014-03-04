@@ -27,11 +27,15 @@ static ssize_t kpagecount_read(struct file *file, char __user *buf,
 	struct page *ppage;
 	unsigned long src = *ppos;
 	unsigned long pfn;
+	unsigned long max_pfn_kpmsize = max_pfn * KPMSIZE;
 	ssize_t ret = 0;
 	u64 pcount;
 
 	pfn = src / KPMSIZE;
-	count = min_t(size_t, count, (max_pfn * KPMSIZE) - src);
+	if(src != max_pfn_kpmsize){
+        count = min_t(size_t, count, max_pfn_kpmsize - src);
+	}
+	
 	if (src & KPMMASK || count & KPMMASK)
 		return -EINVAL;
 
@@ -171,10 +175,14 @@ static ssize_t kpageflags_read(struct file *file, char __user *buf,
 	struct page *ppage;
 	unsigned long src = *ppos;
 	unsigned long pfn;
+	unsigned long max_pfn_kpmsize = max_pfn * KPMSIZE;
 	ssize_t ret = 0;
 
 	pfn = src / KPMSIZE;
-	count = min_t(unsigned long, count, (max_pfn * KPMSIZE) - src);
+	if(src != max_pfn_kpmsize){
+	    count = min_t(unsigned long, count, max_pfn_kpmsize - src);
+	}
+	
 	if (src & KPMMASK || count & KPMMASK)
 		return -EINVAL;
 

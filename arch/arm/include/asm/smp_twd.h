@@ -42,4 +42,6 @@ static inline void twd_local_timer_of_register(void)
 }
 #endif
 
+int localtimer_set_next_event(unsigned long evt);
+unsigned long localtimer_get_counter(void);
 #endif

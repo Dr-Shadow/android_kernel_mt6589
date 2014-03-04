@@ -83,6 +83,7 @@ struct work_struct {
 #ifdef CONFIG_LOCKDEP
 	struct lockdep_map lockdep_map;
 #endif
+     //void *caller_address
 };
 
 #define WORK_DATA_INIT()	ATOMIC_LONG_INIT(WORK_STRUCT_NO_CPU)
@@ -443,7 +444,7 @@ long work_on_cpu(unsigned int cpu, long (*fn)(void *), void *arg);
 
 #ifdef CONFIG_FREEZER
 extern void freeze_workqueues_begin(void);
-extern bool freeze_workqueues_busy(void);
+extern bool freeze_workqueues_busy(bool log);
 extern void thaw_workqueues(void);
 #endif /* CONFIG_FREEZER */
 

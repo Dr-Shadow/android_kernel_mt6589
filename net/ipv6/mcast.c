@@ -995,6 +995,14 @@ int ipv6_chk_mcast_addr(struct net_device *dev, const struct in6_addr *group,
 		read_unlock_bh(&idev->lock);
 	}
 	rcu_read_unlock();
+	
+#ifdef MTK_IPV6_TETHER_NDP_MODE
+    if(dev->flags & IFF_ALLMULTI){
+		printk(KERN_INFO "NDP: dev %s is all muticast mode\n", dev->name);
+        rv = 1;
+	}
+#endif
+
 	return rv;
 }
 

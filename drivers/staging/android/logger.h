@@ -51,6 +51,45 @@ struct logger_entry {
 	char		msg[0];		/* the entry's payload */
 };
 
+/*
+  SMP porting, we double the android buffer 
+* and kernel buffer size for dual core
+*/
+#ifdef CONFIG_SMP
+/* mingjian, 20101208: define buffer size based on different products {*/
+#ifndef __MAIN_BUF_SIZE
+#define __MAIN_BUF_SIZE 256*1024
+#endif
+
+#ifndef __EVENTS_BUF_SIZE
+#define __EVENTS_BUF_SIZE 256*1024
+#endif
+
+#ifndef __RADIO_BUF_SIZE
+#define __RADIO_BUF_SIZE 256*1024
+#endif
+
+#ifndef __SYSTEM_BUF_SIZE
+#define __SYSTEM_BUF_SIZE 256*1024
+#endif
+#else
+/* mingjian, 20101208: define buffer size based on different products {*/
+#ifndef __MAIN_BUF_SIZE
+#define __MAIN_BUF_SIZE 256*1024
+#endif
+
+#ifndef __EVENTS_BUF_SIZE
+#define __EVENTS_BUF_SIZE 256*1024 
+#endif
+
+#ifndef __RADIO_BUF_SIZE
+#define __RADIO_BUF_SIZE 64*1024
+#endif
+
+#ifndef __SYSTEM_BUF_SIZE
+#define __SYSTEM_BUF_SIZE 64*1024
+#endif
+#endif
 #define LOGGER_LOG_RADIO	"log_radio"	/* radio-related messages */
 #define LOGGER_LOG_EVENTS	"log_events"	/* system/hardware events */
 #define LOGGER_LOG_SYSTEM	"log_system"	/* system/framework messages */

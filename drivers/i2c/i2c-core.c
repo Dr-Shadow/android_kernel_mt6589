@@ -1382,9 +1382,10 @@ int i2c_master_send(const struct i2c_client *client, const char *buf, int count)
 
 	msg.addr = client->addr;
 	msg.flags = client->flags & I2C_M_TEN;
+	msg.timing = client->timing;
 	msg.len = count;
 	msg.buf = (char *)buf;
-
+	msg.ext_flag = client->ext_flag;
 	ret = i2c_transfer(adap, &msg, 1);
 
 	/*
@@ -1412,9 +1413,10 @@ int i2c_master_recv(const struct i2c_client *client, char *buf, int count)
 	msg.addr = client->addr;
 	msg.flags = client->flags & I2C_M_TEN;
 	msg.flags |= I2C_M_RD;
+	msg.timing = client->timing;
 	msg.len = count;
 	msg.buf = buf;
-
+	msg.ext_flag = client->ext_flag;
 	ret = i2c_transfer(adap, &msg, 1);
 
 	/*
@@ -1425,6 +1427,70 @@ int i2c_master_recv(const struct i2c_client *client, char *buf, int count)
 }
 EXPORT_SYMBOL(i2c_master_recv);
 
+/**
+ * mt_i2c_master_send - issue a single I2C message in master transmit mode
+ * @client: Handle to slave device
+ * @buf: Data that will be written to the slave
+ * @count: How many bytes to write, must be less than 64k since msg.len is u16
+ * @ext_flag: Controller special flags, for example, if you want using DMA, ext_flag |= I2C_DMA_FLAG.
+ * 			is the same to client->ext_flag 
+ *
+ * Returns negative errno, or else the number of bytes written.
+ */
+int mt_i2c_master_send(const struct i2c_client *client, const char *buf, int count, u32 ext_flag)
+{
+	int ret;
+	struct i2c_adapter *adap = client->adapter;
+	struct i2c_msg msg;
+
+	msg.addr = client->addr;
+	msg.flags = client->flags & I2C_M_TEN;
+	msg.timing = client->timing;
+	msg.len = count;
+	msg.buf = (char *)buf;
+	msg.ext_flag = ext_flag;
+	ret = i2c_transfer(adap, &msg, 1);
+
+	/*
+	 * If everything went ok (i.e. 1 msg transmitted), return #bytes
+	 * transmitted, else error code.
+	 */
+	return (ret == 1) ? count : ret;
+}
+EXPORT_SYMBOL(mt_i2c_master_send);
+
+/**
+ * mt_i2c_master_recv - issue a single I2C message in master receive mode
+ * @client: Handle to slave device
+ * @buf: Where to store data read from slave
+ * @count: How many bytes to read, must be less than 64k since msg.len is u16
+ * @ext_flag: Controller special flags, for example, if you want using DMA, ext_flag |= I2C_DMA_FLAG.
+ * 			is the same to client->ext_flag 
+ *
+ * Returns negative errno, or else the number of bytes read.
+ */
+int mt_i2c_master_recv(const struct i2c_client *client, char *buf, int count, u32 ext_flag)
+{
+	struct i2c_adapter *adap = client->adapter;
+	struct i2c_msg msg;
+	int ret;
+
+	msg.addr = client->addr;
+	msg.flags = client->flags & I2C_M_TEN;
+	msg.flags |= I2C_M_RD;
+	msg.timing = client->timing;
+	msg.len = count;
+	msg.buf = buf;
+	msg.ext_flag = ext_flag;
+	ret = i2c_transfer(adap, &msg, 1);
+
+	/*
+	 * If everything went ok (i.e. 1 msg received), return #bytes received,
+	 * else error code.
+	 */
+	return (ret == 1) ? count : ret;
+}
+EXPORT_SYMBOL(mt_i2c_master_recv);
 /* ----------------------------------------------------
  * the i2c address scanning function
  * Will not work for 10-bit addresses!

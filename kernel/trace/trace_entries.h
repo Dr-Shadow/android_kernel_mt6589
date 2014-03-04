@@ -307,3 +307,18 @@ FTRACE_ENTRY(branch, trace_branch,
 	FILTER_OTHER
 );
 
+#ifdef CONFIG_MT65XX_TRACER
+FTRACE_ENTRY(mt65xx_mon, mt65xx_mon_entry,
+
+        TRACE_MT65XX_MON_TYPE, //trace type
+
+        F_STRUCT( //members of record data structure
+            __field_struct(struct mt_mon_log, field)
+            __field(    int, cpu)
+            __field(    unsigned int, log)
+            ),
+        F_printk("mt65xx_mon_entry cpu=%d, log=%d",
+            __entry->cpu, __entry->log),
+        FILTER_OTHER
+);
+#endif

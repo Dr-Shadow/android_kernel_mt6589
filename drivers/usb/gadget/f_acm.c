@@ -20,7 +20,9 @@
 
 #include "u_serial.h"
 #include "gadget_chips.h"
+#include "logger.h"
 
+#define ACM_LOG "USB_ACM"
 
 /*
  * This CDC ACM function support just wraps control functions and
@@ -333,6 +335,15 @@ static void acm_complete_set_line_coding(struct usb_ep *ep,
 		 * nothing unless we control a real RS232 line.
 		 */
 		acm->port_line_coding = *value;
+
+		USB_LOGGER(ACM_CDC_LINE_CODING, ACM_COMPLETE_SET_LINE, \
+			acm->port_line_coding.dwDTERate, acm->port_line_coding.bCharFormat, \
+			acm->port_line_coding.bParityType, acm->port_line_coding.bDataBits);
+
+		xlog_printk(ANDROID_LOG_INFO, ACM_LOG, \
+			"%s: rate=%d, stop=%d, parity=%d, data=%d\n", __func__, \
+			acm->port_line_coding.dwDTERate, acm->port_line_coding.bCharFormat, \
+			acm->port_line_coding.bParityType, acm->port_line_coding.bDataBits);
 	}
 }
 
@@ -354,6 +365,14 @@ static int acm_setup(struct usb_function *f, const struct usb_ctrlrequest *ctrl)
 	 * to them by stalling.  Options include get/set/clear comm features
 	 * (not that useful) and SEND_BREAK.
 	 */
+
+	USB_LOGGER(ACM_SETUP, ACM_SETUP, acm->port_num, ctrl->bRequestType, ctrl->bRequest, \
+			w_value, w_index, w_length);
+
+	xlog_printk(ANDROID_LOG_INFO, ACM_LOG, \
+		"%s: ttyGS%d req%02x.%02x v%04x i%04x len=%d\n", __func__, \
+		acm->port_num, ctrl->bRequestType, ctrl->bRequest, w_value, w_index, w_length);
+
 	switch ((ctrl->bRequestType << 8) | ctrl->bRequest) {
 
 	/* SET_LINE_CODING ... just read and save what the host sends */
@@ -377,6 +396,16 @@ static int acm_setup(struct usb_function *f, const struct usb_ctrlrequest *ctrl)
 		value = min_t(unsigned, w_length,
 				sizeof(struct usb_cdc_line_coding));
 		memcpy(req->buf, &acm->port_line_coding, value);
+
+		USB_LOGGER(ACM_CDC_LINE_CODING, ACM_SETUP, \
+			acm->port_line_coding.dwDTERate, acm->port_line_coding.bCharFormat, \
+			acm->port_line_coding.bParityType, acm->port_line_coding.bDataBits);
+
+		xlog_printk(ANDROID_LOG_INFO, ACM_LOG, \
+			"%s: rate=%d,stop=%d,parity=%d,data=%d\n", __func__, \
+			acm->port_line_coding.dwDTERate, acm->port_line_coding.bCharFormat, \
+			acm->port_line_coding.bParityType, acm->port_line_coding.bDataBits);
+
 		break;
 
 	/* SET_CONTROL_LINE_STATE ... save what the host sent */
@@ -425,6 +454,9 @@ static int acm_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
 
 	/* we know alt == 0, so this is an activation or a reset */
 
+	USB_LOGGER(ACM_SET_ALT, ACM_SET_ALT, intf, acm->ctrl_id, acm->data_id, \
+			acm->notify->driver_data, acm->port.in->driver_data);
+
 	if (intf == acm->ctrl_id) {
 		if (acm->notify->driver_data) {
 			VDBG(cdev, "reset acm control interface %d\n", intf);
@@ -457,6 +489,9 @@ static int acm_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
 
 	} else
 		return -EINVAL;
+
+	USB_LOGGER(ACM_SET_ALT, ACM_SET_ALT, intf, acm->ctrl_id, acm->data_id, \
+			acm->notify->driver_data,acm->port.in->driver_data);
 
 	return 0;
 }
@@ -690,6 +725,18 @@ acm_bind(struct usb_configuration *c, struct usb_function *f)
 		if (!f->ss_descriptors)
 			goto fail;
 	}
+
+	USB_LOGGER(ACM_BIND, ACM_BIND, acm->port_num, \
+			gadget_is_superspeed(c->cdev->gadget) ? "super" :
+			gadget_is_dualspeed(c->cdev->gadget) ? "dual" : "full", \
+			acm->port.in->name, acm->port.out->name, acm->notify->name);
+
+	xlog_printk(ANDROID_LOG_INFO, ACM_LOG, \
+			"%s: ttyGS%d: %s speed IN/%s OUT/%s NOTIFY/%s\n", \
+			__func__, acm->port_num, \
+			gadget_is_superspeed(c->cdev->gadget) ? "super" :
+			gadget_is_dualspeed(c->cdev->gadget) ? "dual" : "full", \
+			acm->port.in->name, acm->port.out->name, acm->notify->name);
 
 	DBG(cdev, "acm ttyGS%d: %s speed IN/%s OUT/%s NOTIFY/%s\n",
 			acm->port_num,

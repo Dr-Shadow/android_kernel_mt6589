@@ -25,6 +25,10 @@
 #include "u_ether.h"
 #include "rndis.h"
 
+#include "logger.h"
+
+#define RNDIS_LOG "USB_RNDIS"
+
 
 /*
  * This function is an RNDIS Ethernet port -- a Microsoft protocol that's
@@ -540,14 +544,18 @@ static int rndis_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
 	struct usb_composite_dev *cdev = f->config->cdev;
 
 	/* we know alt == 0 */
+	xlog_printk(ANDROID_LOG_INFO, RNDIS_LOG, "rndis_set_alt - interface : %d, rndis ctrl id : %d, rndis data id : %d\n" ,
+	intf, rndis->ctrl_id, rndis->data_id);
 
 	if (intf == rndis->ctrl_id) {
 		if (rndis->notify->driver_data) {
 			VDBG(cdev, "reset rndis control %d\n", intf);
+			xlog_printk(ANDROID_LOG_INFO, RNDIS_LOG, "reset rndis control %d\n", intf);
 			usb_ep_disable(rndis->notify);
 		}
 		if (!rndis->notify->desc) {
 			VDBG(cdev, "init rndis ctrl %d\n", intf);
+			xlog_printk(ANDROID_LOG_INFO, RNDIS_LOG, "init rndis ctrl %d\n", intf);
 			if (config_ep_by_speed(cdev->gadget, f, rndis->notify))
 				goto fail;
 		}
@@ -559,11 +567,13 @@ static int rndis_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
 
 		if (rndis->port.in_ep->driver_data) {
 			DBG(cdev, "reset rndis\n");
+			xlog_printk(ANDROID_LOG_INFO, RNDIS_LOG,"reset rndis\n");
 			gether_disconnect(&rndis->port);
 		}
 
 		if (!rndis->port.in_ep->desc || !rndis->port.out_ep->desc) {
 			DBG(cdev, "init rndis\n");
+			xlog_printk(ANDROID_LOG_INFO, RNDIS_LOG, "init rndis\n");
 			if (config_ep_by_speed(cdev->gadget, f,
 					       rndis->port.in_ep) ||
 			    config_ep_by_speed(cdev->gadget, f,
@@ -615,6 +625,7 @@ static void rndis_disable(struct usb_function *f)
 		return;
 
 	DBG(cdev, "rndis deactivated\n");
+	xlog_printk(ANDROID_LOG_INFO, RNDIS_LOG, "rndis deactivated\n");
 
 	rndis_uninit(rndis->config);
 	gether_disconnect(&rndis->port);
@@ -638,6 +649,7 @@ static void rndis_open(struct gether *geth)
 	struct usb_composite_dev *cdev = geth->func.config->cdev;
 
 	DBG(cdev, "%s\n", __func__);
+	xlog_printk(ANDROID_LOG_INFO, RNDIS_LOG, "%s\n", __func__);
 
 	rndis_set_param_medium(rndis->config, NDIS_MEDIUM_802_3,
 				bitrate(cdev->gadget) / 100);
@@ -649,6 +661,7 @@ static void rndis_close(struct gether *geth)
 	struct f_rndis		*rndis = func_to_rndis(&geth->func);
 
 	DBG(geth->func.config->cdev, "%s\n", __func__);
+	xlog_printk(ANDROID_LOG_INFO, RNDIS_LOG, "%s\n", __func__);
 
 	rndis_set_param_medium(rndis->config, NDIS_MEDIUM_802_3, 0);
 	rndis_signal_disconnect(rndis->config);
@@ -665,6 +678,10 @@ rndis_bind(struct usb_configuration *c, struct usb_function *f)
 	struct f_rndis		*rndis = func_to_rndis(f);
 	int			status;
 	struct usb_ep		*ep;
+
+	xlog_printk(ANDROID_LOG_INFO, RNDIS_LOG, \
+			"%s: rndis_bind begin \n", \
+			__func__);
 
 	/* allocate instance-specific interface IDs */
 	status = usb_interface_id(c, f);
@@ -780,6 +797,13 @@ rndis_bind(struct usb_configuration *c, struct usb_function *f)
 	 * until we're activated via set_alt().
 	 */
 
+	xlog_printk(ANDROID_LOG_INFO, RNDIS_LOG,
+				"RNDIS: %s speed IN/%s OUT/%s NOTIFY/%s\n",
+			gadget_is_superspeed(c->cdev->gadget) ? "super" :
+			gadget_is_dualspeed(c->cdev->gadget) ? "dual" : "full",
+			rndis->port.in_ep->name, rndis->port.out_ep->name,
+			rndis->notify->name);
+
 	DBG(cdev, "RNDIS: %s speed IN/%s OUT/%s NOTIFY/%s\n",
 			gadget_is_superspeed(c->cdev->gadget) ? "super" :
 			gadget_is_dualspeed(c->cdev->gadget) ? "dual" : "full",
@@ -817,6 +841,11 @@ static void
 rndis_unbind(struct usb_configuration *c, struct usb_function *f)
 {
 	struct f_rndis		*rndis = func_to_rndis(f);
+
+	xlog_printk(ANDROID_LOG_INFO, RNDIS_LOG, \
+			"%s: rndis_unbind \n", \
+			__func__);
+			
 
 	rndis_deregister(rndis->config);
 	rndis_exit();
@@ -931,5 +960,9 @@ rndis_bind_config_vendor(struct usb_configuration *c, u8 ethaddr[ETH_ALEN],
 fail:
 		rndis_exit();
 	}
+
+	xlog_printk(ANDROID_LOG_INFO, RNDIS_LOG, \
+			"%s: rndis_bind_config_vendor done, status is %d \n", \
+			__func__, status);
 	return status;
 }

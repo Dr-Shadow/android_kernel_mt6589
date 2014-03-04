@@ -97,10 +97,22 @@ void __init call_function_init(void)
  * previous function call. For multi-cpu calls its even more interesting
  * as we'll have to ensure no other cpu is observing our csd.
  */
-static void csd_lock_wait(struct call_single_data *data)
+static int csd_lock_wait(struct call_single_data *data)
 {
-	while (data->flags & CSD_FLAG_LOCK)
+	int cpu, nr_online_cpus = 0;
+
+	while (data->flags & CSD_FLAG_LOCK) {
+		for_each_cpu(cpu, data->cpumask) {
+			if (cpu_online(cpu)) {
+				nr_online_cpus++;
+			}
+		}
+		if (!nr_online_cpus)
+			return -ENXIO;
 		cpu_relax();
+	}
+
+	return 0;
 }
 
 static void csd_lock(struct call_single_data *data)
@@ -134,11 +146,12 @@ static void csd_unlock(struct call_single_data *data)
  * ->func, ->info, and ->flags set.
  */
 static
-void generic_exec_single(int cpu, struct call_single_data *data, int wait)
+int generic_exec_single(int cpu, struct call_single_data *data, int wait)
 {
 	struct call_single_queue *dst = &per_cpu(call_single_queue, cpu);
 	unsigned long flags;
 	int ipi;
+	int err = 0;
 
 	raw_spin_lock_irqsave(&dst->lock, flags);
 	ipi = list_empty(&dst->list);
@@ -160,7 +173,9 @@ void generic_exec_single(int cpu, struct call_single_data *data, int wait)
 		arch_send_call_function_single_ipi(cpu);
 
 	if (wait)
-		csd_lock_wait(data);
+		err = csd_lock_wait(data);
+
+	return err;
 }
 
 /*
@@ -224,6 +239,7 @@ void generic_smp_call_function_interrupt(void)
 			WARN(1, "%pf enabled interrupts and double executed\n", func);
 			continue;
 		}
+		cpumask_clear_cpu(cpu, data->csd.cpumask);
 
 		refs = atomic_dec_return(&data->refs);
 		WARN_ON(refs < 0);
@@ -332,6 +348,7 @@ int smp_call_function_single(int cpu, smp_call_func_t func, void *info,
 
 			csd_lock(data);
 
+			cpumask_set_cpu(cpu, data->cpumask);
 			data->func = func;
 			data->info = info;
 			generic_exec_single(cpu, data, wait);
@@ -345,6 +362,51 @@ int smp_call_function_single(int cpu, smp_call_func_t func, void *info,
 	return err;
 }
 EXPORT_SYMBOL(smp_call_function_single);
+
+/* This function can be used by MTK Monitor only */
+/* Dont use this function directly               */
+int mtk_smp_call_function_single(int cpu, smp_call_func_t func, void *info,
+                             int wait)
+{
+        struct call_single_data d = {
+                .flags = 0,
+        };
+        unsigned long flags;
+        int this_cpu;
+        int err = 0;
+
+        /*
+         * prevent preemption and reschedule on another processor,
+         * as well as CPU removal
+         */
+        this_cpu = get_cpu();
+
+        if (cpu == this_cpu) {
+                local_irq_save(flags);
+                func(info);
+                local_irq_restore(flags);
+        } else {
+                if ((unsigned)cpu < nr_cpu_ids && cpu_online(cpu)) {
+                        struct call_single_data *data = &d;
+
+                        if (!wait)
+                                data = &__get_cpu_var(csd_data);
+
+                        csd_lock(data);
+
+                        cpumask_set_cpu(cpu, data->cpumask);
+                        data->func = func;
+                        data->info = info;
+                        generic_exec_single(cpu, data, wait);
+                } else {
+                        err = -ENXIO;   /* CPU not online */
+                }
+        }
+
+        put_cpu();
+
+        return err;
+}
 
 /*
  * smp_call_function_any - Run a function on any of the given cpus
@@ -423,6 +485,7 @@ void __smp_call_function_single(int cpu, struct call_single_data *data,
 		local_irq_restore(flags);
 	} else {
 		csd_lock(data);
+		cpumask_set_cpu(cpu, data->cpumask);
 		generic_exec_single(cpu, data, wait);
 	}
 	put_cpu();
@@ -517,6 +580,7 @@ void smp_call_function_many(const struct cpumask *mask,
 	cpumask_and(data->cpumask, mask, cpu_online_mask);
 	cpumask_clear_cpu(this_cpu, data->cpumask);
 	refs = cpumask_weight(data->cpumask);
+	cpumask_and(data->csd.cpumask, data->cpumask, data->cpumask);
 
 	/* Some callers race with other cpus changing the passed mask */
 	if (unlikely(!refs)) {

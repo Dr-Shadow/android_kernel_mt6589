@@ -30,7 +30,12 @@
 #include <linux/fs_struct.h>
 #include <linux/ima.h>
 #include <linux/dnotify.h>
-
+#if 1 //wschen 2012-03-21
+#include <linux/pipe_fs_i.h>
+#include <linux/wait.h>
+#endif
+#include <mach/mt_io_logger.h>
+#include <linux/delay.h>
 #include "internal.h"
 
 int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
@@ -38,10 +43,21 @@ int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
 {
 	int ret;
 	struct iattr newattrs;
-
+#if IO_LOGGER_ENABLE
+	
+		unsigned long long time1 = 0,timeoffset = 0;
+		bool add_trace_e = false;
+#endif
 	/* Not pretty: "inode->i_size" shouldn't really be signed. But it is. */
 	if (length < 0)
 		return -EINVAL;
+#if IO_LOGGER_ENABLE
+	if(unlikely(en_IOLogger())){
+		add_trace_e=true;
+		time1 = sched_clock();
+		AddIOTrace(IO_LOGGER_MSG_VFS_INTFS,do_truncate,dentry->d_name.name,(u32)length);
+	}
+#endif
 
 	newattrs.ia_size = length;
 	newattrs.ia_valid = ATTR_SIZE | time_attrs;
@@ -58,6 +74,19 @@ int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
 	mutex_lock(&dentry->d_inode->i_mutex);
 	ret = notify_change(dentry, &newattrs);
 	mutex_unlock(&dentry->d_inode->i_mutex);
+#if IO_LOGGER_ENABLE
+			if(unlikely(en_IOLogger()) && add_trace_e){
+				timeoffset = sched_clock() - time1;
+				add_trace_e = false;
+				if(BEYOND_TRACE_LOG_TIME(timeoffset))
+				{
+					 AddIOTrace(IO_LOGGER_MSG_VFS_INTFS_END,do_truncate,dentry->d_name.name,ret,timeoffset);	
+					 if(BEYOND_DUMP_LOG_TIME(timeoffset))
+						DumpIOTrace(timeoffset);
+					
+				}
+			}
+#endif
 	return ret;
 }
 
@@ -976,8 +1005,22 @@ long do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode)
 	int lookup = build_open_flags(flags, mode, &op);
 	char *tmp = getname(filename);
 	int fd = PTR_ERR(tmp);
+#if IO_LOGGER_ENABLE
 
+	unsigned long long time1 = 0,timeoffset = 0;
+	bool add_trace_e = false;
+#endif
 	if (!IS_ERR(tmp)) {
+#if IO_LOGGER_ENABLE
+		if(unlikely(en_IOLogger())){
+			if(!memcmp(tmp,"/data",5)||!memcmp(tmp,"/system",7)){
+				add_trace_e = true;
+				time1 = sched_clock();
+				AddIOTrace(IO_LOGGER_MSG_VFS_OPEN_INTFS,do_sys_open,tmp);
+			}
+		}
+		
+#endif
 		fd = get_unused_fd_flags(flags);
 		if (fd >= 0) {
 			struct file *f = do_filp_open(dfd, tmp, &op, lookup);
@@ -989,6 +1032,19 @@ long do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode)
 				fd_install(fd, f);
 			}
 		}
+#if IO_LOGGER_ENABLE
+			if(unlikely(en_IOLogger()) && add_trace_e){
+				timeoffset = sched_clock() - time1;
+				add_trace_e = false;
+				if(BEYOND_TRACE_LOG_TIME(timeoffset))
+				{
+					 AddIOTrace(IO_LOGGER_MSG_VFS_OPEN_INTFS_END,do_sys_open,tmp,timeoffset);	
+					 if(BEYOND_DUMP_LOG_TIME(timeoffset))
+						DumpIOTrace(timeoffset);
+					
+				}
+			}
+#endif
 		putname(tmp);
 	}
 	return fd;
@@ -1072,6 +1128,14 @@ SYSCALL_DEFINE1(close, unsigned int, fd)
 	struct fdtable *fdt;
 	int retval;
 
+#if 1 //wschen 2012-03-21
+	struct inode *inode;
+	struct pipe_inode_info *pipe;
+        wait_queue_head_t *qhead;
+
+try_again:
+#endif
+
 	spin_lock(&files->file_lock);
 	fdt = files_fdtable(files);
 	if (fd >= fdt->max_fds)
@@ -1079,6 +1143,69 @@ SYSCALL_DEFINE1(close, unsigned int, fd)
 	filp = fdt->fd[fd];
 	if (!filp)
 		goto out_unlock;
+
+#if 1 //wschen 2012-03-21 CTS testInterruptWritablePipeChannel fail
+        if (!thread_group_empty(current) && filp->f_path.dentry) {
+            inode = filp->f_path.dentry->d_inode;
+            if (inode) {
+                pipe = inode->i_pipe;
+                if (pipe && (pipe->writers == 1) && (pipe->readers == 1)) {
+
+                    if ((filp->f_mode == FMODE_WRITE) && (filp->f_flags == O_WRONLY)) {
+                        if ((pipe->waiting_writers == 1)) {
+                            qhead = &pipe->wait;
+                            if (qhead) {
+                                if (waitqueue_active(qhead)) {
+
+                                    struct task_struct *p;
+                                    struct list_head *tmp = &qhead->task_list;
+                                    wait_queue_t *w;
+
+                                    w = list_entry(tmp->next, wait_queue_t, task_list);
+                                    if (w && (w->func == autoremove_wake_function)) {
+                                        p = (struct task_struct *) w->private;
+                                        if (p && (p->pid > 0) && (p->tgid > 0) && same_thread_group(p, current)) {
+                                            set_tsk_thread_flag(p, TIF_SIGPENDING);
+                                            wake_up_interruptible(qhead);
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (pipe->waiting_writers == 0) {
+                            if (mutex_trylock(&inode->i_mutex) == 0) {
+                                spin_unlock(&files->file_lock);
+                                schedule();
+                                goto try_again;
+                            } else {
+                                mutex_unlock(&inode->i_mutex);
+                            }
+                        }
+                    } else if ((filp->f_mode == FMODE_READ) && (filp->f_flags == O_RDONLY) && (pipe->waiting_writers == 0)) {
+                        qhead = &pipe->wait;
+                        if (qhead) {
+                            if (waitqueue_active(qhead)) {
+
+                                struct task_struct *p;
+                                struct list_head *tmp = &qhead->task_list;
+                                wait_queue_t *w;
+
+                                w = list_entry(tmp->next, wait_queue_t, task_list);
+                                if (w && (w->func == autoremove_wake_function)) {
+                                    p = (struct task_struct *) w->private;
+                                    if (p && (p->pid > 0) && (p->tgid > 0) && same_thread_group(p, current)) {
+                                        filp->f_flags |= O_NONBLOCK;
+                                        set_tsk_thread_flag(p, TIF_SIGPENDING);
+                                        wake_up_interruptible(qhead);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+#endif
+
 	rcu_assign_pointer(fdt->fd[fd], NULL);
 	__clear_close_on_exec(fd, fdt);
 	__put_unused_fd(files, fd);

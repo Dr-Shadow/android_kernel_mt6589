@@ -2219,6 +2219,9 @@ gfp_to_alloc_flags(gfp_t gfp_mask)
 	return alloc_flags;
 }
 
+/* To record minfree[0] in LMK. Initial value is 0. */
+size_t lmk_adjz_minfree = 0;
+
 static inline struct page *
 __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
 	struct zonelist *zonelist, enum zone_type high_zoneidx,
@@ -2293,8 +2296,17 @@ rebalance:
 	}
 
 	/* Atomic allocations - we can't balance anything */
-	if (!wait)
-		goto nopage;
+	if (!wait) {
+		/* No LMK information! It is safe now(for Android). */
+		if (!lmk_adjz_minfree)
+			goto nopage;
+		/* We only allow direct-reclaim to be executed in "preemptible() & global free memory(< minfree[0])" condition. */
+		if (preemptible() && (global_page_state(NR_FREE_PAGES) < lmk_adjz_minfree)) {
+	    		printk(KERN_WARNING "\n\n\n\n\n [%d:%s]!!!!!! It's yours. Go ahead!!!!!!\n\n\n\n\n", current->pid, current->comm);
+		} else {
+			goto nopage;
+		}
+	}
 
 	/* Avoid recursion of direct reclaim */
 	if (current->flags & PF_MEMALLOC)
@@ -2846,6 +2858,93 @@ void show_free_areas(unsigned int filter)
 
 	show_swap_cache_info();
 }
+
+void show_free_areas_minimum(void)
+{
+    struct zone *zone;    
+	for_each_populated_zone(zone) {
+		if (skip_free_areas_node(SHOW_MEM_FILTER_NODES, zone_to_nid(zone)))
+			continue;
+		show_node(zone);
+		printk("%s"
+			" free:%lukB"
+			" min:%lukB"
+			" low:%lukB"
+			" high:%lukB"
+			" active_anon:%lukB"
+			" inactive_anon:%lukB"
+			" active_file:%lukB"
+			" inactive_file:%lukB"
+			" unevictable:%lukB"
+			" isolated(anon):%lukB"
+			" isolated(file):%lukB"
+			" present:%lukB"
+			" mlocked:%lukB"
+			" dirty:%lukB"
+			" writeback:%lukB"
+			" mapped:%lukB"
+			" shmem:%lukB"
+			" slab_reclaimable:%lukB"
+			" slab_unreclaimable:%lukB"
+			" kernel_stack:%lukB"
+			" pagetables:%lukB"
+			" unstable:%lukB"
+			" bounce:%lukB"
+			" writeback_tmp:%lukB"
+			" pages_scanned:%lu"
+			" all_unreclaimable? %s"
+			"\n",
+			zone->name,
+			K(zone_page_state(zone, NR_FREE_PAGES)),
+			K(min_wmark_pages(zone)),
+			K(low_wmark_pages(zone)),
+			K(high_wmark_pages(zone)),
+			K(zone_page_state(zone, NR_ACTIVE_ANON)),
+			K(zone_page_state(zone, NR_INACTIVE_ANON)),
+			K(zone_page_state(zone, NR_ACTIVE_FILE)),
+			K(zone_page_state(zone, NR_INACTIVE_FILE)),
+			K(zone_page_state(zone, NR_UNEVICTABLE)),
+			K(zone_page_state(zone, NR_ISOLATED_ANON)),
+			K(zone_page_state(zone, NR_ISOLATED_FILE)),
+			K(zone->present_pages),
+			K(zone_page_state(zone, NR_MLOCK)),
+			K(zone_page_state(zone, NR_FILE_DIRTY)),
+			K(zone_page_state(zone, NR_WRITEBACK)),
+			K(zone_page_state(zone, NR_FILE_MAPPED)),
+			K(zone_page_state(zone, NR_SHMEM)),
+			K(zone_page_state(zone, NR_SLAB_RECLAIMABLE)),
+			K(zone_page_state(zone, NR_SLAB_UNRECLAIMABLE)),
+			zone_page_state(zone, NR_KERNEL_STACK) *
+				THREAD_SIZE / 1024,
+			K(zone_page_state(zone, NR_PAGETABLE)),
+			K(zone_page_state(zone, NR_UNSTABLE_NFS)),
+			K(zone_page_state(zone, NR_BOUNCE)),
+			K(zone_page_state(zone, NR_WRITEBACK_TEMP)),
+			zone->pages_scanned,
+			(zone->all_unreclaimable ? "yes" : "no")
+			);
+	}
+
+	for_each_populated_zone(zone) {
+ 		unsigned long nr[MAX_ORDER], flags, order, total = 0;
+
+		if (skip_free_areas_node(SHOW_MEM_FILTER_NODES, zone_to_nid(zone)))
+			continue;
+		show_node(zone);
+		printk("%s: ", zone->name);
+
+		spin_lock_irqsave(&zone->lock, flags);
+		for (order = 0; order < MAX_ORDER; order++) {
+			nr[order] = zone->free_area[order].nr_free;
+			total += nr[order] << order;
+		}
+		spin_unlock_irqrestore(&zone->lock, flags);
+		for (order = 0; order < MAX_ORDER; order++)
+			printk("%lu*%lukB ", nr[order], K(1UL) << order);
+		printk("= %lukB\n", K(total));
+	}
+}
+EXPORT_SYMBOL(show_free_areas_minimum);
 
 static void zoneref_set_zone(struct zone *zone, struct zoneref *zoneref)
 {
@@ -5695,3 +5794,4 @@ void dump_page(struct page *page)
 	dump_page_flags(page->flags);
 	mem_cgroup_print_bad_page(page);
 }
+EXPORT_SYMBOL(dump_page);

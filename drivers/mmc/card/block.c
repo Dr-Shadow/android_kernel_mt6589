@@ -45,6 +45,12 @@
 
 #include "queue.h"
 
+#include <linux/xlog.h>
+#include <asm/div64.h>
+#include <linux/vmalloc.h>
+
+#include <mach/mt_storage_logger.h>
+
 MODULE_ALIAS("mmc:block");
 #ifdef MODULE_PARAM_PREFIX
 #undef MODULE_PARAM_PREFIX
@@ -606,6 +612,12 @@ static u32 mmc_sd_num_wr_blocks(struct mmc_card *card)
 
 	return result;
 }
+
+u32 __mmc_sd_num_wr_blocks(struct mmc_card *card)
+{
+  return mmc_sd_num_wr_blocks(card);
+}
+EXPORT_SYMBOL(__mmc_sd_num_wr_blocks);
 
 static int send_stop(struct mmc_card *card, u32 *status)
 {
@@ -1415,10 +1427,10 @@ static int mmc_blk_issue_rq(struct mmc_queue *mq, struct request *req)
 	struct mmc_card *card = md->queue.card;
 
 #ifdef CONFIG_MMC_BLOCK_DEFERRED_RESUME
-	if (mmc_bus_needs_resume(card->host)) {
-		mmc_resume_bus(card->host);
-		mmc_blk_set_blksize(md, card);
-	}
+        if (mmc_bus_needs_resume(card->host)) {
+                mmc_resume_bus(card->host);
+                mmc_blk_set_blksize(md, card);
+        }
 #endif
 
 	if (req && !mq->mqrq_prev->req)
@@ -1577,9 +1589,15 @@ static struct mmc_blk_data *mmc_blk_alloc_req(struct mmc_card *card,
 	return ERR_PTR(ret);
 }
 
+#ifdef MTK_EMMC_SUPPORT
+extern int msdc_get_reserve(void);
+#endif
 static struct mmc_blk_data *mmc_blk_alloc(struct mmc_card *card)
 {
 	sector_t size;
+#ifdef MTK_EMMC_SUPPORT
+    unsigned int l_reserve;
+#endif
 	struct mmc_blk_data *md;
 
 	if (!mmc_card_sd(card) && mmc_card_blockaddr(card)) {
@@ -1596,6 +1614,13 @@ static struct mmc_blk_data *mmc_blk_alloc(struct mmc_card *card)
 		size = card->csd.capacity << (card->csd.read_blkbits - 9);
 	}
 
+	if(!mmc_card_sd(card)){
+#ifdef MTK_EMMC_SUPPORT
+            l_reserve =  msdc_get_reserve();
+            printk("l_reserve = 0x%x\n", l_reserve);
+            size -= l_reserve;                         /*reserved for 64MB (emmc otp + emmc combo offset + reserved)*/
+#endif    
+    }
 	md = mmc_blk_alloc_req(card, &card->dev, size, false, NULL,
 					MMC_BLK_DATA_AREA_MAIN);
 	return md;
@@ -1780,6 +1805,9 @@ static const struct mmc_fixup blk_fixups[] =
 	END_FIXUP
 };
 
+#if defined(MTK_EMMC_SUPPORT)
+	extern void emmc_create_sys_symlink (struct mmc_card *card);
+#endif
 static int mmc_blk_probe(struct mmc_card *card)
 {
 	struct mmc_blk_data *md, *part_md;
@@ -1817,6 +1845,9 @@ static int mmc_blk_probe(struct mmc_card *card)
 		if (mmc_add_disk(part_md))
 			goto out;
 	}
+#if defined(MTK_EMMC_SUPPORT)
+	emmc_create_sys_symlink(card);
+#endif
 	return 0;
 
  out:

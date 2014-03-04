@@ -363,6 +363,8 @@ static int rtentry_to_fib_config(struct net *net, int cmd, struct rtentry *rt,
 		colon = strchr(devname, ':');
 		if (colon)
 			*colon = 0;
+
+		printk(KERN_INFO "[RTlog info]  ip_rt_ioctl   rt.dev =%s \n",devname);		
 		dev = __dev_get_by_name(net, devname);
 		if (!dev)
 			return -ENODEV;
@@ -441,6 +443,10 @@ int ip_rt_ioctl(struct net *net, unsigned int cmd, void __user *arg)
 
 		if (copy_from_user(&rt, arg, sizeof(rt)))
 			return -EFAULT;
+		
+		printk(KERN_INFO "<< [RTlog info]  ip_rt_ioctl   rt.flags =%08x \n",rt.rt_flags);
+		printk(KERN_INFO "[RTlog info]  ip_rt_ioctl  rt.rt_dst =%08x \n",sk_extract_addr(&(rt.rt_dst)));
+		printk(KERN_INFO "[RTlog info]  ip_rt_ioct  rt.rt_gateway =%08x \n",sk_extract_addr(&(rt.rt_gateway)));
 
 		rtnl_lock();
 		err = rtentry_to_fib_config(net, cmd, &rt, &cfg);
@@ -448,12 +454,14 @@ int ip_rt_ioctl(struct net *net, unsigned int cmd, void __user *arg)
 			struct fib_table *tb;
 
 			if (cmd == SIOCDELRT) {
+				printk(KERN_INFO "[RTlog delete]  p_rt_ioctl: cmd == SIOCDELRT! >>\n");
 				tb = fib_get_table(net, cfg.fc_table);
 				if (tb)
 					err = fib_table_delete(tb, &cfg);
 				else
 					err = -ESRCH;
 			} else {
+				printk(KERN_INFO "[RTlog insert]  p_rt_ioctl: cmd == SIOCADDRT! >>\n");
 				tb = fib_new_table(net, cfg.fc_table);
 				if (tb)
 					err = fib_table_insert(tb, &cfg);
@@ -561,9 +569,12 @@ static int inet_rtm_delroute(struct sk_buff *skb, struct nlmsghdr *nlh, void *ar
 	struct fib_table *tb;
 	int err;
 
+	printk(KERN_INFO "<< [RTlog delete] inet_rtm_delroute !\n");
 	err = rtm_to_fib_config(net, skb, nlh, &cfg);
 	if (err < 0)
 		goto errout;
+	printk(KERN_INFO "[RTlog info]  inet_rtm_delroute  cfg.fc_dst =%08x \n",cfg.fc_dst);
+	printk(KERN_INFO "[RTlog info]  inet_rtm_delroute  cfg.fc_gw =%08x >>\n",cfg.fc_gw);
 
 	tb = fib_get_table(net, cfg.fc_table);
 	if (tb == NULL) {
@@ -582,10 +593,13 @@ static int inet_rtm_newroute(struct sk_buff *skb, struct nlmsghdr *nlh, void *ar
 	struct fib_config cfg;
 	struct fib_table *tb;
 	int err;
+	printk(KERN_INFO "<< [RTlog insert] inet_rtm_newroute !\n");
 
 	err = rtm_to_fib_config(net, skb, nlh, &cfg);
 	if (err < 0)
 		goto errout;
+	printk(KERN_INFO "[RTlog info]  inet_rtm_newroute  cfg.fc_dst =%08x \n",cfg.fc_dst);
+	printk(KERN_INFO "[RTlog info]  inet_rtm_newroute  cfg.fc_gw =%08x >>\n",cfg.fc_gw);
 
 	tb = fib_new_table(net, cfg.fc_table);
 	if (tb == NULL) {
@@ -710,10 +724,13 @@ void fib_add_ifaddr(struct in_ifaddr *ifa)
 
 	if (!ipv4_is_zeronet(prefix) && !(ifa->ifa_flags & IFA_F_SECONDARY) &&
 	    (prefix != addr || ifa->ifa_prefixlen < 32)) {
+	    if(0 == strncmp(dev->name, "ccmni", 2)){
+			printk(KERN_INFO "[RTlog] ignore ccmni subnet route\n");
+		} else {
 		fib_magic(RTM_NEWROUTE,
 			  dev->flags & IFF_LOOPBACK ? RTN_LOCAL : RTN_UNICAST,
 			  prefix, ifa->ifa_prefixlen, prim);
-
+		}
 		/* Add network specific broadcasts, when it takes a sense */
 		if (ifa->ifa_prefixlen < 31) {
 			fib_magic(RTM_NEWROUTE, RTN_BROADCAST, prefix, 32, prim);
@@ -965,6 +982,7 @@ static int fib_inetaddr_event(struct notifier_block *this, unsigned long event, 
 
 	switch (event) {
 	case NETDEV_UP:
+		printk(KERN_INFO "[RTlog insert]   fib_inetaddr_event()  %s NETDEV_UP!\n", ifa->ifa_dev->dev->name);
 		fib_add_ifaddr(ifa);
 #ifdef CONFIG_IP_ROUTE_MULTIPATH
 		fib_sync_up(dev);
@@ -973,6 +991,7 @@ static int fib_inetaddr_event(struct notifier_block *this, unsigned long event, 
 		rt_cache_flush(dev_net(dev), -1);
 		break;
 	case NETDEV_DOWN:
+		printk(KERN_INFO "[RTlog delete]   fib_inetaddr_event()  %s NETDEV_DOWN!\n", ifa->ifa_dev->dev->name);
 		fib_del_ifaddr(ifa, NULL);
 		atomic_inc(&net->ipv4.dev_addr_genid);
 		if (ifa->ifa_dev->ifa_list == NULL) {
@@ -1004,6 +1023,7 @@ static int fib_netdev_event(struct notifier_block *this, unsigned long event, vo
 
 	switch (event) {
 	case NETDEV_UP:
+		printk(KERN_INFO "[RTlog insert]   fib_netdev_event()  %s NETDEV_UP!\n", dev->name);
 		for_ifa(in_dev) {
 			fib_add_ifaddr(ifa);
 		} endfor_ifa(in_dev);
@@ -1014,6 +1034,7 @@ static int fib_netdev_event(struct notifier_block *this, unsigned long event, vo
 		rt_cache_flush(dev_net(dev), -1);
 		break;
 	case NETDEV_DOWN:
+		printk(KERN_INFO "[RTlog delete]   fib_netdev_event()  %s NETDEV_DOWN!\n", dev->name);
 		fib_disable_ip(dev, 0, 0);
 		break;
 	case NETDEV_CHANGEMTU:

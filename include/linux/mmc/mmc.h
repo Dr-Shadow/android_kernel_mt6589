@@ -24,6 +24,34 @@
 #ifndef LINUX_MMC_MMC_H
 #define LINUX_MMC_MMC_H
 
+#ifndef USER_BUILD_KERNEL
+    //#define MTK_IO_PERFORMANCE_DEBUG   /* for debug IO performance issue, default not open */
+    //#define MTK_MMC_PERFORMANCE_TEST   /* for get transfer time with each trunk size, default not open */
+
+    #ifdef MTK_IO_PERFORMANCE_DEBUG
+    extern unsigned int g_mtk_mmc_clear;
+    extern unsigned int g_mtk_mmc_dbg_range;
+    extern unsigned int g_dbg_range_start;
+    extern unsigned int g_dbg_range_end;
+    extern unsigned int g_mtk_mmc_dbg_flag;
+    extern unsigned int g_dbg_req_count;
+    extern unsigned int g_dbg_raw_count;
+    extern unsigned int g_dbg_write_count;
+    extern unsigned int g_mtk_mmc_perf_dbg;
+	extern unsigned int g_dbg_raw_count_old;
+	extern int g_check_read_write;
+    extern unsigned long long g_req_buf[4000][30];
+    extern unsigned long long g_req_write_buf[4000][30];
+    extern unsigned long long g_mmcqd_buf[400][300];
+	extern unsigned long long g_req_write_count[4000];
+	extern int g_i;
+    #endif
+
+    #ifdef MTK_IO_PERFORMANCE_DEBUG
+    extern unsigned int g_mtk_mmc_perf_test;
+    #endif
+#endif
+
 /* Standard MMC commands (4.1)           type  argument     response */
    /* class 1 */
 #define MMC_GO_IDLE_STATE         0   /* bc                          */
@@ -320,6 +348,9 @@ struct _mmc_csd {
 #define EXT_CSD_DATA_TAG_SUPPORT	499	/* RO */
 #define EXT_CSD_HPI_FEATURES		503	/* RO */
 
+
+/* bit0 for diacard support with emmc4.41 plus */
+#define EXT_CSD_SAMSUNG_FEATURE         64      /* RO */
 /*
  * EXT_CSD field definitions
  */

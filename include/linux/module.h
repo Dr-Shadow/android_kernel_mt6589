@@ -326,7 +326,7 @@ struct module
 	unsigned int percpu_size;
 #endif
 
-#ifdef CONFIG_TRACEPOINTS
+#if defined(CONFIG_TRACEPOINTS) && defined(CONFIG_FTRACE_MODULE_SUPPORT)
 	unsigned int num_tracepoints;
 	struct tracepoint * const *tracepoints_ptrs;
 #endif
@@ -334,15 +334,15 @@ struct module
 	struct jump_entry *jump_entries;
 	unsigned int num_jump_entries;
 #endif
-#ifdef CONFIG_TRACING
+#if defined(CONFIG_TRACING) && defined(CONFIG_FTRACE_MODULE_SUPPORT)
 	unsigned int num_trace_bprintk_fmt;
 	const char **trace_bprintk_fmt_start;
 #endif
-#ifdef CONFIG_EVENT_TRACING
+#if defined(CONFIG_EVENT_TRACING) && defined(CONFIG_FTRACE_MODULE_SUPPORT)
 	struct ftrace_event_call **trace_events;
 	unsigned int num_trace_events;
 #endif
-#ifdef CONFIG_FTRACE_MCOUNT_RECORD
+#if defined(CONFIG_FTRACE_MCOUNT_RECORD) && defined(CONFIG_FTRACE_MODULE_SUPPORT)
 	unsigned int num_ftrace_callsites;
 	unsigned long *ftrace_callsites;
 #endif

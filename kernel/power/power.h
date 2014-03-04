@@ -177,11 +177,13 @@ extern const char *const pm_states[];
 
 extern bool valid_state(suspend_state_t state);
 extern int suspend_devices_and_enter(suspend_state_t state);
+extern int enter_state(suspend_state_t state);
 #else /* !CONFIG_SUSPEND */
 static inline int suspend_devices_and_enter(suspend_state_t state)
 {
 	return -ENOSYS;
 }
+static inline int enter_state(suspend_state_t state) { return -ENOSYS; }
 static inline bool valid_state(suspend_state_t state) { return false; }
 #endif /* !CONFIG_SUSPEND */
 
@@ -282,6 +284,12 @@ static inline void pm_autosleep_unlock(void) {}
 static inline suspend_state_t pm_autosleep_state(void) { return PM_SUSPEND_ON; }
 
 #endif /* !CONFIG_PM_AUTOSLEEP */
+
+#ifdef CONFIG_EARLYSUSPEND
+/* kernel/power/earlysuspend.c */
+void request_suspend_state(suspend_state_t state);
+suspend_state_t get_suspend_state(void);
+#endif
 
 #ifdef CONFIG_PM_WAKELOCKS
 

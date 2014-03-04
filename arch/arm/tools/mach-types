@@ -1169,3 +1169,7 @@ elite_ulk		MACH_ELITE_ULK		ELITE_ULK		3888
 pov2			MACH_POV2		POV2			3889
 ipod_touch_2g		MACH_IPOD_TOUCH_2G	IPOD_TOUCH_2G		3890
 da850_pqab		MACH_DA850_PQAB		DA850_PQAB		3891
+mt6575                  MACH_MT6575             MT6575                  6575
+mt6577                  MACH_MT6577             MT6577                  6577
+mt6589                  MACH_MT6589             MT6589                  6589
+

@@ -38,8 +38,12 @@ static inline void console_silent(void)
 
 static inline void console_verbose(void)
 {
+//do not change log level
+/*
 	if (console_loglevel)
 		console_loglevel = 15;
+*/
+
 }
 
 struct va_format {
@@ -93,6 +97,7 @@ void early_printk(const char *fmt, ...);
 
 extern int printk_needs_cpu(int cpu);
 extern void printk_tick(void);
+extern void mt_printk_tick(void);
 
 #ifdef CONFIG_PRINTK
 asmlinkage __printf(1, 0)

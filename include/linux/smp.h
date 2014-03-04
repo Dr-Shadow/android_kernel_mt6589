@@ -19,6 +19,7 @@ struct call_single_data {
 	struct list_head list;
 	smp_call_func_t func;
 	void *info;
+	cpumask_var_t cpumask;
 	u16 flags;
 	u16 priv;
 };
@@ -28,7 +29,8 @@ extern unsigned int total_cpus;
 
 int smp_call_function_single(int cpuid, smp_call_func_t func, void *info,
 			     int wait);
-
+int mtk_smp_call_function_single(int cpuid, smp_call_func_t func, void *info,
+                             int wait);
 #ifdef CONFIG_SMP
 
 #include <linux/preempt.h>

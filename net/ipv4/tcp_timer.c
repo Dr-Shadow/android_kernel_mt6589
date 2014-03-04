@@ -70,7 +70,7 @@ static int tcp_out_of_resources(struct sock *sk, int do_reset)
 
 	/* If peer does not open window for long time, or did not transmit
 	 * anything for long time, penalize it. */
-	if ((s32)(tcp_time_stamp - tp->lsndtime) > 2*TCP_RTO_MAX || !do_reset)
+	if ((s32)(tcp_time_stamp - tp->lsndtime) > 2*(inet_csk(sk)->icsk_MaxRto ? inet_csk(sk)->icsk_MaxRto : TCP_RTO_MAX) || !do_reset)
 		shift++;
 
 	/* If some dubious ICMP arrived, penalize even more. */
@@ -152,13 +152,13 @@ static bool retransmits_timed_out(struct sock *sk,
 		start_ts = tcp_sk(sk)->retrans_stamp;
 
 	if (likely(timeout == 0)) {
-		linear_backoff_thresh = ilog2(TCP_RTO_MAX/rto_base);
+		linear_backoff_thresh = ilog2((inet_csk(sk)->icsk_MaxRto ? inet_csk(sk)->icsk_MaxRto : TCP_RTO_MAX)/rto_base);
 
 		if (boundary <= linear_backoff_thresh)
 			timeout = ((2 << boundary) - 1) * rto_base;
 		else
 			timeout = ((2 << linear_backoff_thresh) - 1) * rto_base +
-				(boundary - linear_backoff_thresh) * TCP_RTO_MAX;
+				(boundary - linear_backoff_thresh) * (inet_csk(sk)->icsk_MaxRto ? inet_csk(sk)->icsk_MaxRto : TCP_RTO_MAX);
 	}
 	return (tcp_time_stamp - start_ts) >= timeout;
 }
@@ -185,7 +185,7 @@ static int tcp_write_timeout(struct sock *sk)
 
 		retry_until = sysctl_tcp_retries2;
 		if (sock_flag(sk, SOCK_DEAD)) {
-			const int alive = (icsk->icsk_rto < TCP_RTO_MAX);
+			const int alive = (icsk->icsk_rto < (icsk->icsk_MaxRto ? icsk->icsk_MaxRto : TCP_RTO_MAX));
 
 			retry_until = tcp_orphan_retries(sk, alive);
 			do_reset = alive ||
@@ -294,7 +294,7 @@ static void tcp_probe_timer(struct sock *sk)
 	max_probes = sysctl_tcp_retries2;
 
 	if (sock_flag(sk, SOCK_DEAD)) {
-		const int alive = ((icsk->icsk_rto << icsk->icsk_backoff) < TCP_RTO_MAX);
+		const int alive = ((icsk->icsk_rto << icsk->icsk_backoff) < (icsk->icsk_MaxRto ? icsk->icsk_MaxRto : TCP_RTO_MAX));
 
 		max_probes = tcp_orphan_retries(sk, alive);
 
@@ -347,7 +347,7 @@ void tcp_retransmit_timer(struct sock *sk)
 				       tp->snd_una, tp->snd_nxt);
 		}
 #endif
-		if (tcp_time_stamp - tp->rcv_tstamp > TCP_RTO_MAX) {
+		if (tcp_time_stamp - tp->rcv_tstamp > (icsk->icsk_MaxRto ? icsk->icsk_MaxRto : TCP_RTO_MAX)) {
 			tcp_write_err(sk);
 			goto out;
 		}
@@ -492,7 +492,7 @@ out_unlock:
 static void tcp_synack_timer(struct sock *sk)
 {
 	inet_csk_reqsk_queue_prune(sk, TCP_SYNQ_INTERVAL,
-				   TCP_TIMEOUT_INIT, TCP_RTO_MAX);
+				   TCP_TIMEOUT_INIT, (inet_csk(sk)->icsk_MaxRto ? inet_csk(sk)->icsk_MaxRto : TCP_RTO_MAX));
 }
 
 void tcp_syn_ack_timeout(struct sock *sk, struct request_sock *req)

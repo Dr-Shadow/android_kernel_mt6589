@@ -138,6 +138,13 @@ menuconfig FTRACE
 
 if FTRACE
 
+config FTRACE_MODULE_SUPPORT
+    bool "Ftrace Module Support"
+    help
+      Support Ftrace function in modules. Enabling this option will cause
+      module structure changes and incompatile module for engineer and
+      user load.
+
 config FUNCTION_TRACER
 	bool "Kernel Function Tracer"
 	depends on HAVE_FUNCTION_TRACER
@@ -145,6 +152,7 @@ config FUNCTION_TRACER
 	select KALLSYMS
 	select GENERIC_TRACER
 	select CONTEXT_SWITCH_TRACER
+    select FTRACE_MODULE_SUPPORT
 	help
 	  Enable the kernel to trace every kernel function. This is done
 	  by using a compiler feature to insert a small, 5-byte No-Operation

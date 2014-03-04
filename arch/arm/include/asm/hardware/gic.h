@@ -19,6 +19,8 @@
 #define GIC_CPU_EOI			0x10
 #define GIC_CPU_RUNNINGPRI		0x14
 #define GIC_CPU_HIGHPRI			0x18
+#define GIC_CPU_AIAR                    0x20
+#define GIC_CPU_AEOI                    0x24
 
 #define GIC_DIST_CTRL			0x000
 #define GIC_DIST_CTR			0x004

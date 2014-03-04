@@ -8,6 +8,27 @@
 #include <linux/tracepoint.h>
 #include <linux/binfmts.h>
 
+#ifdef CONFIG_MT65XX_TRACER
+#include <trace/events/mt65xx_mon_trace.h>
+#endif
+
+#ifdef CONFIG_MTK_SCHED_TRACERS
+/* mtk04259: states for tracking I/O & mutex events 
+ * notice avoid to conflict with linux/sched.h
+ *
+ * A bug linux not fixed: 
+ * 'K' for TASK_WAKEKILL specified in linux/sched.h
+ * but marked 'K' in sched_switch will cause Android systrace parser confused
+ * therefore for sched_switch events, these extra states will be printed
+ * in the end of each line
+ */
+#define _MT_TASK_BLOCKED_RTMUX 1024
+#define _MT_TASK_BLOCKED_MUTEX 2048
+#define _MT_TASK_BLOCKED_IO 4096
+#define _MT_TASK_BLOCKED_STATE_MASK ( _MT_TASK_BLOCKED_RTMUX | _MT_TASK_BLOCKED_MUTEX | _MT_TASK_BLOCKED_IO )
+#endif
+#define _MT_TASK_STATE_MASK		( (TASK_STATE_MAX-1) & ~TASK_WAKEKILL )
+
 /*
  * Tracepoint for calling kthread_stop, performed to end a kthread:
  */
@@ -50,6 +71,36 @@ TRACE_EVENT(sched_kthread_stop_ret,
 	TP_printk("ret=%d", __entry->ret)
 );
 
+#ifdef CREATE_TRACE_POINTS
+static inline long __trace_sched_switch_state(struct task_struct *p)
+{
+	long state = p->state;
+
+#ifdef CONFIG_PREEMPT
+	/*
+	 * For all intents and purposes a preempted task is a running task.
+	 */
+	if (task_thread_info(p)->preempt_count & PREEMPT_ACTIVE)
+		state = TASK_RUNNING | TASK_STATE_MAX;
+#endif
+
+#ifdef CONFIG_MTK_SCHED_TRACERS
+#ifdef CONFIG_RT_MUTEXES
+    if(p->pi_blocked_on)
+        state |= _MT_TASK_BLOCKED_RTMUX;
+#endif
+#ifdef CONFIG_DEBUG_MUTEXES
+    if(p->blocked_on) 
+        state |= _MT_TASK_BLOCKED_MUTEX;
+#endif
+    if((p->state & TASK_UNINTERRUPTIBLE) && p->in_iowait)
+        state |= _MT_TASK_BLOCKED_IO;
+#endif
+
+	return state;
+}
+#endif
+
 /*
  * Tracepoint for waking up a task:
  */
@@ -65,6 +116,9 @@ DECLARE_EVENT_CLASS(sched_wakeup_template,
 		__field(	int,	prio			)
 		__field(	int,	success			)
 		__field(	int,	target_cpu		)
+#ifdef CONFIG_MTK_SCHED_TRACERS
+        __field(    long,    state           )
+#endif
 	),
 
 	TP_fast_assign(
@@ -73,11 +127,28 @@ DECLARE_EVENT_CLASS(sched_wakeup_template,
 		__entry->prio		= p->prio;
 		__entry->success	= success;
 		__entry->target_cpu	= task_cpu(p);
+#ifdef CONFIG_MTK_SCHED_TRACERS
+        __entry->state      =__trace_sched_switch_state(p);
+#endif
 	),
 
-	TP_printk("comm=%s pid=%d prio=%d success=%d target_cpu=%03d",
+	TP_printk(
+#ifdef CONFIG_MTK_SCHED_TRACERS
+            "comm=%s pid=%d prio=%d success=%d target_cpu=%03d state=%s",
+#else
+            "comm=%s pid=%d prio=%d success=%d target_cpu=%03d",
+#endif
 		  __entry->comm, __entry->pid, __entry->prio,
-		  __entry->success, __entry->target_cpu)
+		  __entry->success, __entry->target_cpu
+#ifdef CONFIG_MTK_SCHED_TRACERS
+        ,
+		__entry->state & ~TASK_STATE_MAX ?
+		  __print_flags(__entry->state & ~TASK_STATE_MAX, "|",
+				{ 1, "S"} , { 2, "D" }, { 4, "T" }, { 8, "t" },
+				{ 16, "Z" }, { 32, "X" }, { 64, "x" },
+                { 128, "K" }, { 256, "W"}, {1024, "r"}, {2048, "m"}, {4096, "d"}) : "R"
+#endif
+          )
 );
 
 DEFINE_EVENT(sched_wakeup_template, sched_wakeup,
@@ -90,23 +161,6 @@ DEFINE_EVENT(sched_wakeup_template, sched_wakeup,
 DEFINE_EVENT(sched_wakeup_template, sched_wakeup_new,
 	     TP_PROTO(struct task_struct *p, int success),
 	     TP_ARGS(p, success));
-
-#ifdef CREATE_TRACE_POINTS
-static inline long __trace_sched_switch_state(struct task_struct *p)
-{
-	long state = p->state;
-
-#ifdef CONFIG_PREEMPT
-	/*
-	 * For all intents and purposes a preempted task is a running task.
-	 */
-	if (task_thread_info(p)->preempt_count & PREEMPT_ACTIVE)
-		state = TASK_RUNNING | TASK_STATE_MAX;
-#endif
-
-	return state;
-}
-#endif
 
 /*
  * Tracepoint for task switches, performed by the scheduler:
@@ -138,15 +192,30 @@ TRACE_EVENT(sched_switch,
 		__entry->next_prio	= next->prio;
 	),
 
-	TP_printk("prev_comm=%s prev_pid=%d prev_prio=%d prev_state=%s%s ==> next_comm=%s next_pid=%d next_prio=%d",
+	TP_printk(
+#ifdef CONFIG_MTK_SCHED_TRACERS
+            "prev_comm=%s prev_pid=%d prev_prio=%d prev_state=%s%s ==> next_comm=%s next_pid=%d next_prio=%d%s%s",
+#else
+            "prev_comm=%s prev_pid=%d prev_prio=%d prev_state=%s%s ==> next_comm=%s next_pid=%d next_prio=%d",
+#endif
 		__entry->prev_comm, __entry->prev_pid, __entry->prev_prio,
-		__entry->prev_state & (TASK_STATE_MAX-1) ?
-		  __print_flags(__entry->prev_state & (TASK_STATE_MAX-1), "|",
+		__entry->prev_state & (_MT_TASK_STATE_MASK) ?
+	  __print_flags(__entry->prev_state & (_MT_TASK_STATE_MASK), "|",
 				{ 1, "S"} , { 2, "D" }, { 4, "T" }, { 8, "t" },
 				{ 16, "Z" }, { 32, "X" }, { 64, "x" },
-				{ 128, "W" }) : "R",
+                {128, "K"}, { 256, "W"}) : "R",
 		__entry->prev_state & TASK_STATE_MAX ? "+" : "",
-		__entry->next_comm, __entry->next_pid, __entry->next_prio)
+		__entry->next_comm, __entry->next_pid, __entry->next_prio
+#ifdef CONFIG_MTK_SCHED_TRACERS
+        ,
+        (__entry->prev_state & (TASK_WAKEKILL | _MT_TASK_BLOCKED_STATE_MASK))?" extra_prev_state=":"",
+        __print_flags(__entry->prev_state & (TASK_WAKEKILL | _MT_TASK_BLOCKED_STATE_MASK), "|",
+            { TASK_WAKEKILL, "K" },
+            { _MT_TASK_BLOCKED_RTMUX, "r" },
+            { _MT_TASK_BLOCKED_MUTEX, "m" },
+            { _MT_TASK_BLOCKED_IO, "d" })
+#endif
+        )
 );
 
 /*
@@ -164,6 +233,9 @@ TRACE_EVENT(sched_migrate_task,
 		__field(	int,	prio			)
 		__field(	int,	orig_cpu		)
 		__field(	int,	dest_cpu		)
+#ifdef CONFIG_MTK_SCHED_TRACERS
+        __field(    long,    state           )
+#endif
 	),
 
 	TP_fast_assign(
@@ -172,11 +244,27 @@ TRACE_EVENT(sched_migrate_task,
 		__entry->prio		= p->prio;
 		__entry->orig_cpu	= task_cpu(p);
 		__entry->dest_cpu	= dest_cpu;
+#ifdef CONFIG_MTK_SCHED_TRACERS
+        __entry->state      =__trace_sched_switch_state(p);
+#endif
 	),
 
+#ifdef CONFIG_MTK_SCHED_TRACERS
+	TP_printk("comm=%s pid=%d prio=%d orig_cpu=%d dest_cpu=%d state=%s",
+#else
 	TP_printk("comm=%s pid=%d prio=%d orig_cpu=%d dest_cpu=%d",
+#endif
 		  __entry->comm, __entry->pid, __entry->prio,
-		  __entry->orig_cpu, __entry->dest_cpu)
+		  __entry->orig_cpu, __entry->dest_cpu
+#ifdef CONFIG_MTK_SCHED_TRACERS
+        ,
+		__entry->state & ~TASK_STATE_MAX ?
+		  __print_flags(__entry->state & ~TASK_STATE_MAX, "|",
+				{ 1, "S"} , { 2, "D" }, { 4, "T" }, { 8, "t" },
+				{ 16, "Z" }, { 32, "X" }, { 64, "x" },
+                { 128, "K" }, { 256, "W"}, {1024, "r"}, {2048, "m"}, {4096, "d"}) : "R"
+#endif
+          )
 );
 
 DECLARE_EVENT_CLASS(sched_process_template,
@@ -425,7 +513,117 @@ TRACE_EVENT(sched_pi_setprio,
 			__entry->comm, __entry->pid,
 			__entry->oldprio, __entry->newprio)
 );
+#ifdef CONFIG_MTK_SCHED_TRACERS
+TRACE_EVENT(int_switch,
 
+    TP_PROTO(struct task_struct *curr,
+	 int irq, int isr_enter),
+
+    TP_ARGS(curr, irq, isr_enter),
+
+    TP_STRUCT__entry(
+	__array(    char,   prev_comm,	TASK_COMM_LEN	)
+	__field(    pid_t,  prev_pid		)
+	__field(    int,    prev_prio		)
+	__field(    long,   prev_state		)
+	__array(    char,   next_comm,	TASK_COMM_LEN	)
+	__field(    pid_t,  next_pid		)
+	__field(    int,    next_prio		)
+    ),
+
+    TP_fast_assign(
+	memcpy(__entry->next_comm, curr->comm, TASK_COMM_LEN);
+	__entry->prev_pid   = curr->pid;
+	__entry->prev_prio  = curr->prio;
+	__entry->prev_state = curr->state;
+	memcpy(__entry->prev_comm, curr->comm, TASK_COMM_LEN);
+	__entry->next_pid   = curr->pid;
+	__entry->next_prio  = curr->prio;
+    ),
+
+    TP_printk("Int Switch info %d",__entry->prev_pid)
+);
+TRACE_EVENT(int_nest,
+
+    TP_PROTO( int prev_irq, int next_irq),
+
+    TP_ARGS(prev_irq, next_irq),
+
+    TP_STRUCT__entry(
+	__array(    char,   prev_comm,	TASK_COMM_LEN	)
+	__field(    pid_t,  prev_pid		)
+	__field(    int,    prev_prio		)
+	__field(    long,   prev_state		)
+	__array(    char,   next_comm,	TASK_COMM_LEN	)
+	__field(    pid_t,  next_pid		)
+	__field(    int,    next_prio		)
+    ),
+
+    TP_fast_assign(
+	__entry->prev_pid   = prev_irq;
+	__entry->prev_prio  = 120;
+	__entry->prev_state = 0;
+	__entry->next_pid   =next_irq;
+	__entry->next_prio  = 120;
+    ),
+
+    TP_printk("Int nest info %d",__entry->prev_pid)
+);
+#endif
+#ifdef CONFIG_MT_LOAD_BALANCE_PROFILER
+
+TRACE_EVENT(sched_lbprof_status,
+
+    TP_PROTO(char *strings),
+
+    TP_ARGS(strings),
+
+    TP_STRUCT__entry(
+	__array(    char,  strings, 128)
+    ),
+
+    TP_fast_assign(
+	memcpy(__entry->strings, strings, 128);
+    ),
+
+    TP_printk("%s",__entry->strings)
+);
+
+TRACE_EVENT(sched_lbprof_update,
+
+    TP_PROTO(char *strings),
+
+    TP_ARGS(strings),
+
+    TP_STRUCT__entry(
+	__array(    char,  strings, 128)
+    ),
+
+    TP_fast_assign(
+	memcpy(__entry->strings, strings, 128);
+    ),
+
+    TP_printk("%s",__entry->strings)
+);
+
+TRACE_EVENT(sched_lbprof_log,
+
+    TP_PROTO(char *strings),
+
+    TP_ARGS(strings),
+
+    TP_STRUCT__entry(
+	__array(    char,  strings, 128)
+    ),
+
+    TP_fast_assign(
+	memcpy(__entry->strings, strings, 128);
+    ),
+
+    TP_printk("%s",__entry->strings)
+);
+
+#endif
 #endif /* _TRACE_SCHED_H */
 
 /* This part must be outside protection */

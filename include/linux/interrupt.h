@@ -117,6 +117,12 @@ struct irqaction {
 	unsigned long		thread_flags;
 	unsigned long		thread_mask;
 	const char		*name;
+#ifdef CONFIG_MTPROF_IRQ_DURATION
+	unsigned long long duration;
+	unsigned long count;
+	unsigned long long dur_max;
+	unsigned long long dur_min;
+#endif
 	struct proc_dir_entry	*dir;
 } ____cacheline_internodealigned_in_smp;
 
