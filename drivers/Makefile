@@ -135,3 +135,5 @@ obj-$(CONFIG_VIRT_DRIVERS)	+= virt/
 obj-$(CONFIG_HYPERV)		+= hv/
 
 obj-$(CONFIG_PM_DEVFREQ)	+= devfreq/
+#Yatao.Yang@Prd.DesktopApp.EntranceGuard, 2013/05/30, add for permission intercept
+obj-y += opponetworkpmsmodule/

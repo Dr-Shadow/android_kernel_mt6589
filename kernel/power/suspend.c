@@ -215,7 +215,10 @@ int suspend_devices_and_enter(suspend_state_t state)
 		if (error)
 			goto Close;
 	}
+	#ifndef OPPO_R819
+	//Yixue.Ge@ProDrv.BL, 2012/12/25, Remove for resume lcd faster
 	suspend_console();
+	#endif /* OPPO_R819 */
 	suspend_test_start();
 	error = dpm_suspend_start(PMSG_SUSPEND);
 	if (error) {
@@ -235,7 +238,10 @@ int suspend_devices_and_enter(suspend_state_t state)
 	suspend_test_start();
 	dpm_resume_end(PMSG_RESUME);
 	suspend_test_finish("resume devices");
+	#ifndef OPPO_R819
+	//Yixue.Ge@ProDrv.BL, 2012/12/25, Remove for resume lcd faster
 	resume_console();
+	#endif /* OPPO_R819 */
  Close:
 	if (suspend_ops->end)
 		suspend_ops->end();

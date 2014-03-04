@@ -105,6 +105,14 @@
 #include <linux/sockios.h>
 #include <linux/atalk.h>
 
+#ifdef OPPO_R819
+//Qihu.Liu@Prd.DesktopApp.PermissionIntercept, 2013/04/02, Add for
+#define NET_PERMISSION_OPT_ACCEPT 1
+#define NET_PERMISSION_OPT_REJECT 2
+#define NET_PERMISSION_OPT_ASK    3
+#endif /* OPPO_R819 */
+
+
 static int sock_no_open(struct inode *irrelevant, struct file *dontcare);
 static ssize_t sock_aio_read(struct kiocb *iocb, const struct iovec *iov,
 			 unsigned long nr_segs, loff_t pos);
@@ -1339,6 +1347,23 @@ SYSCALL_DEFINE3(socket, int, family, int, type, int, protocol)
 	if (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
 		flags = (flags & ~SOCK_NONBLOCK) | O_NONBLOCK;
 
+#ifdef OPPO_R819
+//Qihu.Liu@Prd.DesktopApp.PermissionIntercept, 2013/04/02, Add for
+    //printk("lqh: socket, family = :%d\n", family);
+    if (AF_UNIX != family && AF_NFC != family)
+    {
+        unsigned pid = current->pid;
+        int net_permission_intercept_opt = current->signal->net_permission_intercept_opt;
+	//printk("lqh: socket, pid = :%d, net_permission_intercept_opt = %d\n", pid, net_permission_intercept_opt);
+	if (NET_PERMISSION_OPT_REJECT == net_permission_intercept_opt ||
+	    NET_PERMISSION_OPT_ASK == net_permission_intercept_opt)
+	{
+	    retval = -EINVAL;
+	    goto out;
+	}
+    }
+#endif /* OPPO_R819 */
+
 	retval = sock_create(family, type, protocol, &sock);
 	if (retval < 0)
 		goto out;
@@ -1521,6 +1546,22 @@ SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
 	if (!sock)
 		goto out;
 
+#ifdef OPPO_R819
+//Qihu.Liu@Prd.DesktopApp.PermissionIntercept, 2013/04/02, Add for
+    if (AF_UNIX != sock->ops->family && AF_NFC != sock->ops->family)
+    {
+        unsigned pid = current->pid;
+        int net_permission_intercept_opt = current->signal->net_permission_intercept_opt;
+	//printk("lqh: accept4, pid = :%d, net_permission_intercept_opt = %d\n", pid, net_permission_intercept_opt);
+	if (NET_PERMISSION_OPT_REJECT == net_permission_intercept_opt ||
+	    NET_PERMISSION_OPT_ASK == net_permission_intercept_opt)
+	{
+	    err = -EINVAL;
+	    goto out_put;
+	}
+    }
+#endif /* OPPO_R819 */
+
 	err = -ENFILE;
 	newsock = sock_alloc();
 	if (!newsock)
@@ -1605,6 +1646,23 @@ SYSCALL_DEFINE3(connect, int, fd, struct sockaddr __user *, uservaddr,
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (!sock)
 		goto out;
+
+#ifdef OPPO_R819
+//Qihu.Liu@Prd.DesktopApp.PermissionIntercept, 2013/04/02, Add for
+    if (AF_UNIX != sock->ops->family && AF_NFC != sock->ops->family)
+    {
+        unsigned pid = current->pid;
+        int net_permission_intercept_opt = current->signal->net_permission_intercept_opt;
+	//printk("lqh: connect, pid = :%d, net_permission_intercept_opt = %d\n", pid, net_permission_intercept_opt);
+	if (NET_PERMISSION_OPT_REJECT == net_permission_intercept_opt ||
+	    NET_PERMISSION_OPT_ASK == net_permission_intercept_opt)
+	{
+	    err = -EINVAL;
+	    goto out_put;
+	}
+    }
+#endif /* OPPO_R819 */
+
 	err = move_addr_to_kernel(uservaddr, addrlen, &address);
 	if (err < 0)
 		goto out_put;

@@ -279,6 +279,24 @@ static bool has_stopped_jobs(struct pid *pgrp)
 	return false;
 }
 
+#ifdef OPPO_R819
+//LinJie.Xu@Prd.SystemSrv.BPM 2011/07/21 Add
+static bool oppo_is_android_core_group(struct pid *pgrp)
+{
+	struct task_struct *p;
+
+	do_each_pid_task(pgrp, PIDTYPE_PGID, p) {
+		if( !strcmp(p->comm,"zygote") )
+		{
+			printk("oppo_is_android_core_group: find zygote will be hungup, ignore it \n");
+			return true;
+		}
+	} while_each_pid_task(pgrp, PIDTYPE_PGID, p);
+
+	return false;
+}
+#endif /* OPPO_R819 */
+
 /*
  * Check to see if any process groups have become orphaned as
  * a result of our exiting, and if they have any stopped jobs,
@@ -305,6 +323,16 @@ kill_orphaned_pgrp(struct task_struct *tsk, struct task_struct *parent)
 	    task_session(parent) == task_session(tsk) &&
 	    will_become_orphaned_pgrp(pgrp, ignored_task) &&
 	    has_stopped_jobs(pgrp)) {
+
+#ifdef OPPO_R819
+//LinJie.Xu@Prd.SystemSrv.BPM 2011/07/21 Add
+	    if(oppo_is_android_core_group(pgrp))
+	    {
+			printk("kill_orphaned_pgrp: find android core process will be hungup, ignored it, only hungup itself:%s:%d , current=%d \n",tsk->comm,tsk->pid,current->pid);
+			return;
+	    }
+#endif /* OPPO_R819 */
+
 		__kill_pgrp_info(SIGHUP, SEND_SIG_PRIV, pgrp);
 		__kill_pgrp_info(SIGCONT, SEND_SIG_PRIV, pgrp);
 	}

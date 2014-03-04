@@ -203,6 +203,14 @@ struct otp_info {
  */
 #define MEMWRITE		_IOWR('M', 24, struct mtd_write_req)
 
+#ifdef OPPO_R819
+/* hanbin.lin@BasicDrv.Audio, 2013/05/8, Add for two audio parameters*/
+#ifdef EXTERNAL_CODEC_SUPPORT
+#define GET_AUDIO_PARAMETER_ID   _IOW('M', 26, int)
+#endif /* EXTERNAL_CODEC_SUPPORT*/
+#endif /*OPPO_R819*/
+
+
 /*
  * Obsolete legacy interface. Keep it in order not to break userspace
  * interfaces

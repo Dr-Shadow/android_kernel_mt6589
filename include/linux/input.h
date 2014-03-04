@@ -469,6 +469,10 @@ struct input_keymap_entry {
 #define KEY_RFKILL		247	/* Key that controls all radios */
 
 #define KEY_MICMUTE		248	/* Mute / unmute the microphone */
+#ifdef OPPO_R819
+//li.zhanhua@Prd.BasicDrv.Audio, 2013/01/08, add for oppo headset key
+#define KEY_HOOK		249
+#endif  /* OPPO_R819 */
 
 /* Code 255 is reserved for special needs of AT keyboard driver */
 

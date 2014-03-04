@@ -671,6 +671,11 @@ struct signal_struct {
 	struct mutex cred_guard_mutex;	/* guard against foreign influences on
 					 * credential calculations
 					 * (notably. ptrace) */
+
+	#ifdef OPPO_R819
+	//Qihu.Liu@Prd.DesktopApp.PermissionIntercept, 2013/04/02, Add for
+	int net_permission_intercept_opt;	/* the option of net permisiion intercept */
+	#endif /* OPPO_R819 */
 };
 
 /* Context switch must be unlocked if interrupts are to be enabled */

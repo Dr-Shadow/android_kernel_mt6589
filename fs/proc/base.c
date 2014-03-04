@@ -966,6 +966,7 @@ static ssize_t oom_adjust_write(struct file *file, const char __user *buf,
 		task->signal->oom_score_adj = (oom_adjust * OOM_SCORE_ADJ_MAX) /
 								-OOM_DISABLE;
 	trace_oom_score_adj_update(task);
+
 err_sighand:
 	unlock_task_sighand(task, &flags);
 err_task_lock:
@@ -1000,6 +1001,157 @@ static int oom_adjust_permission(struct inode *inode, int mask)
 	return generic_permission(inode, mask);
 }
 
+#ifdef OPPO_R819
+//Qihu.Liu@Prd.DesktopApp.PermissionIntercept, 2013/04/02, Add for
+#define NET_PERMISSION_OPT_ACCEPT 1
+#define NET_PERMISSION_OPT_REJECT 2
+#define NET_PERMISSION_OPT_ASK    3
+#define NET_PERMISSION_STATUS_OFF 4
+#define NET_PERMISSION_OPT_ASK_ACCEPT 5
+#define NET_PERMISSION_OPT_ASK_REJECT 6
+//#define DEBUG_NET_PERMISSION
+static ssize_t net_permission_intercept_opt_read(struct file *file, char __user *buf,
+				size_t count, loff_t *ppos)
+{
+	struct task_struct *task = get_proc_task(file->f_path.dentry->d_inode);
+	char buffer[PROC_NUMBUF];
+	size_t len;
+	int net_permission_intercept_opt = NET_PERMISSION_OPT_ACCEPT;
+	unsigned long flags;
+    #ifdef DEBUG_NET_PERMISSION
+    printk("lqh: net_permission_intercept_opt_read\n");
+    #endif   //DEBUG_NET_PERMISSION
+
+
+	if (!task)
+		return -ESRCH;
+
+	if (lock_task_sighand(task, &flags)) {
+		net_permission_intercept_opt = task->signal->net_permission_intercept_opt;
+		unlock_task_sighand(task, &flags);
+	}
+
+	put_task_struct(task);
+
+	len = snprintf(buffer, sizeof(buffer), "%i\n", net_permission_intercept_opt);
+
+	return simple_read_from_buffer(buf, count, ppos, buffer, len);
+}
+
+static ssize_t net_permission_intercept_opt_write(struct file *file, const char __user *buf,
+				size_t count, loff_t *ppos)
+{
+	struct task_struct *task;
+	char buffer[PROC_NUMBUF];
+	int net_permission_intercept_opt;
+	unsigned long flags;
+	int err;
+    #ifdef DEBUG_NET_PERMISSION
+    printk("lqh: net_permission_intercept_opt_write\n");
+    #endif   //DEBUG_NET_PERMISSION
+
+	memset(buffer, 0, sizeof(buffer));
+	if (count > sizeof(buffer) - 1)
+		count = sizeof(buffer) - 1;
+	if (copy_from_user(buffer, buf, count)) {
+		err = -EFAULT;
+		goto out;
+	}
+
+	err = kstrtoint(strstrip(buffer), 0, &net_permission_intercept_opt);
+	if (err)
+		goto out;
+	if (net_permission_intercept_opt < NET_PERMISSION_OPT_ACCEPT || 
+	    net_permission_intercept_opt > NET_PERMISSION_OPT_ASK_REJECT) {
+		err = -EINVAL;
+		goto out;
+	}
+
+	task = get_proc_task(file->f_path.dentry->d_inode);
+	if (!task) {
+		err = -ESRCH;
+		goto out;
+	}
+
+	task_lock(task);
+	if (!task->mm) {
+		err = -EINVAL;
+		goto err_task_lock;
+	}
+
+	if (!lock_task_sighand(task, &flags)) {
+		err = -ESRCH;
+		goto err_task_lock;
+	}
+
+
+	task->signal->net_permission_intercept_opt = net_permission_intercept_opt;
+err_sighand:
+	unlock_task_sighand(task, &flags);
+err_task_lock:
+	task_unlock(task);
+	put_task_struct(task);
+out:
+    #ifdef DEBUG_NET_PERMISSION
+    printk("lqh: net_permission_intercept_opt_write, err = %d, count = %d\n", err, count);
+    #endif   //DEBUG_NET_PERMISSION
+
+	return err < 0 ? err : count;
+}
+
+static int net_permission_intercept_opt_permission(struct inode *inode, int mask)
+{
+	uid_t uid;
+	struct task_struct *p;
+
+    #ifdef DEBUG_NET_PERMISSION
+    printk("lqh: net_permission_intercept_opt_permission, mask = %d\n", mask);
+    #endif   //DEBUG_NET_PERMISSION
+
+	p = get_proc_task(inode);
+	if(p) {
+		uid = task_uid(p);
+		put_task_struct(p);
+	}
+
+    #ifdef DEBUG_NET_PERMISSION
+    printk(KERN_WARNING "lqh: net_permission_intercept_opt_permission, p = %d\n", p);
+    printk(KERN_WARNING "lqh: net_permission_intercept_opt_permission, uid = %d\n", uid);
+    printk("lqh: net_permission_intercept_opt_permission, current_fsuid = %d\n", current_fsuid());
+    #endif   //DEBUG_NET_PERMISSION
+
+	/*
+	 * System Server (uid == 1000) is granted access to net_permission_intercept_opt of all
+	 * android applications (uid > 10000) as and services (uid >= 1000)
+	 */
+	if (p && (current_fsuid() == 1000) && (uid >= 1000)) {
+
+	    #ifdef DEBUG_NET_PERMISSION
+	    printk(KERN_WARNING "lqh:here 1\n");
+	    #endif   //DEBUG_NET_PERMISSION
+
+		if (inode->i_mode >> 6 & mask) {
+
+		    #ifdef DEBUG_NET_PERMISSION
+		    printk(KERN_WARNING "lqh:here 2\n");
+		    #endif   //DEBUG_NET_PERMISSION
+
+			return 0;
+		}
+	}
+    #ifdef DEBUG_NET_PERMISSION
+    printk(KERN_WARNING "lqh:here 3\n");
+    #endif   //DEBUG_NET_PERMISSION
+	/* Fall back to default. */
+	return generic_permission(inode, mask);
+}
+
+static const struct inode_operations proc_net_permission_intercept_opt_inode_operations = {
+	.permission	= net_permission_intercept_opt_permission,
+};
+#endif /* OPPO_R819 */
+
+
 static const struct inode_operations proc_oom_adjust_inode_operations = {
 	.permission	= oom_adjust_permission,
 };
@@ -1009,6 +1161,15 @@ static const struct file_operations proc_oom_adjust_operations = {
 	.write		= oom_adjust_write,
 	.llseek		= generic_file_llseek,
 };
+
+#ifdef OPPO_R819
+//Qihu.Liu@Prd.DesktopApp.PermissionIntercept, 2013/04/02, Add for
+static const struct file_operations proc_net_permission_intercept_opt_operations = {
+	.read		= net_permission_intercept_opt_read,
+	.write		= net_permission_intercept_opt_write,
+	.llseek		= generic_file_llseek,
+};
+#endif /* OPPO_R819 */
 
 static ssize_t oom_score_adj_read(struct file *file, char __user *buf,
 					size_t count, loff_t *ppos)
@@ -3044,6 +3205,12 @@ static const struct pid_entry tgid_base_stuff[] = {
 #endif
 	INF("oom_score",  S_IRUGO, proc_oom_score),
 	ANDROID("oom_adj",S_IRUGO|S_IWUSR, oom_adjust),
+
+#ifdef OPPO_R819
+//Qihu.Liu@Prd.DesktopApp.PermissionIntercept, 2013/04/02, Add for
+    ANDROID("net_permission_intercept_opt",S_IRUGO|S_IWUSR, net_permission_intercept_opt),
+#endif /* OPPO_R819 */
+
 	REG("oom_score_adj", S_IRUGO|S_IWUSR, proc_oom_score_adj_operations),
 #ifdef CONFIG_AUDITSYSCALL
 	REG("loginuid",   S_IWUSR|S_IRUGO, proc_loginuid_operations),
@@ -3402,6 +3569,12 @@ static const struct pid_entry tid_base_stuff[] = {
 #endif
 	INF("oom_score", S_IRUGO, proc_oom_score),
 	REG("oom_adj",   S_IRUGO|S_IWUSR, proc_oom_adjust_operations),
+
+#ifdef OPPO_R819
+//Qihu.Liu@Prd.DesktopApp.PermissionIntercept, 2013/04/02, Add for
+    REG("net_permission_intercept_opt",   S_IRUGO|S_IWUSR, proc_net_permission_intercept_opt_operations),
+#endif /* OPPO_R819 */
+
 	REG("oom_score_adj", S_IRUGO|S_IWUSR, proc_oom_score_adj_operations),
 #ifdef CONFIG_AUDITSYSCALL
 	REG("loginuid",  S_IWUSR|S_IRUGO, proc_loginuid_operations),

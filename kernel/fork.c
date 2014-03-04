@@ -1070,6 +1070,11 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	init_rwsem(&sig->group_rwsem);
 #endif
 
+#ifdef OPPO_R819
+//Qihu.Liu@Prd.DesktopApp.PermissionIntercept, 2013/04/02, Add for
+    sig->net_permission_intercept_opt = current->signal->net_permission_intercept_opt;
+#endif /* OPPO_R819 */
+
 	sig->oom_adj = current->signal->oom_adj;
 	sig->oom_score_adj = current->signal->oom_score_adj;
 	sig->oom_score_adj_min = current->signal->oom_score_adj_min;

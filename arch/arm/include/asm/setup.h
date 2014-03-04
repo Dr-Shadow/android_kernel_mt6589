@@ -158,6 +158,14 @@ struct tag_meta_com {
     u32 meta_com_id;  /* multiple meta need to know com port id */
 };
 
+#ifdef OPPO_R819
+//yongjun.wu@BasicDrv.LCD, 2013/03/14, Add for LCD adapt[LCD_UBOOT_KERNEL]
+#define ATAG_LCD_ID_VALUE3  0x4100080A
+
+struct tag_lcd_id{
+    u32 lcd_id;
+};
+#endif /* OPPO_R819 */
 /*device information data*/
 #define ATAG_DEVINFO_DATA 0x41000804
 #define ATAG_DEVINFO_DATA_SIZE 21
@@ -167,6 +175,14 @@ struct tag_devinfo_data {
     u32 devinfo_data_size;                      /* device information size */
 };
 
+#ifdef OPPO_R819//Nanwei.Deng@BasicDrv.CHG, 2012/03/08, Add for Battery encryption
+/* battery vol information */
+#define ATAG_BATTERY	0x41000805
+struct tag_battery_vol{
+	u32 battery_vol;
+	u32 charger_type;
+};
+#endif /* OPPO_R819 */
 
 struct tag {
 	struct tag_header hdr;
@@ -193,6 +209,15 @@ struct tag {
                 struct tag_boot         boot;
                 struct tag_meta_com     meta_com;
                 struct tag_devinfo_data devinfo_data;
+#ifdef OPPO_R819//Nanwei.Deng@BasicDrv.CHG, 2012/03/08, Add for Battery encryption
+        struct tag_battery_vol  battery_vol;
+        struct tag_battery_vol  charger_type;
+#endif
+
+#ifdef OPPO_R819
+				//yongjun.wu@BasicDrv.LCD, 2013/03/14, Add for LCD adapt[LCD_UBOOT_KERNEL]
+				struct tag_lcd_id lcd_id;
+#endif /* OPPO_R819 */
 	} u;
 };
 

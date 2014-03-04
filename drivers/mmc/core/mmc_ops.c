@@ -66,6 +66,11 @@ int mmc_card_sleepawake(struct mmc_host *host, int sleep)
 	if (sleep)
 		mmc_deselect_cards(host);
 
+#ifdef OPPO_R819
+	if ( card && (card->raw_cid[0] == 0x90014a20) && (card->raw_cid[1] == 0x58494e59) && ( (card->raw_cid[2]&0xffff0000) == 0x48150000) ) {}
+	else {
+#endif
+
 	cmd.opcode = MMC_SLEEP_AWAKE;
 	cmd.arg = card->rca << 16;
 	if (sleep)
@@ -84,6 +89,10 @@ int mmc_card_sleepawake(struct mmc_host *host, int sleep)
 	 */
 	if (!(host->caps & MMC_CAP_WAIT_WHILE_BUSY))
 		mmc_delay(DIV_ROUND_UP(card->ext_csd.sa_timeout, 10000));
+
+#ifdef OPPO_R819
+	}
+#endif
 
 	if (!sleep)
 		err = mmc_select_card(card);
