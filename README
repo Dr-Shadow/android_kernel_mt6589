@@ -7,4 +7,71 @@ If you want to add a device, please send a device kernel source (pure mediatek s
 
 There is a commit history built but this is not the final release yet.
 
-The final release will strip mtk build scripts and show the real commit history of mtk kernel.
+The final release will strip mtk build scripts and show the real commit history of mtk kernel (if I can reach final release of course ^-^)
+
+You need arm-linux-androideabi-4.6 toolchain (you have to setup CROSS-COMPILE var like in build.sh)
+
+You need bionic directory from mt6589 source (I will include it in future releases inside mediatek) and the bionic directory has to be in same directory than your clone repo
+
+Example here :
+
+lrwxrwxrwx  1 dr-shadow dr-shadow        12 mars   4 16:11 bionic
+	content of bionic/:
+	total 44
+	drwxrwxr-x  9 dr-shadow dr-shadow 4096 janv.  6 11:44 .
+	drwxrwxr-x 32 dr-shadow dr-shadow 4096 mars   3 08:48 ..
+	-rw-rw-r--  1 dr-shadow dr-shadow  672 janv.  6 11:44 Android.mk
+	-rw-rw-r--  1 dr-shadow dr-shadow 2227 janv.  6 11:44 CleanSpec.mk
+	drwxrwxr-x 22 dr-shadow dr-shadow 4096 janv.  6 11:58 libc
+	drwxrwxr-x  2 dr-shadow dr-shadow 4096 janv.  6 11:44 libdl
+	drwxrwxr-x 15 dr-shadow dr-shadow 4096 janv.  6 11:44 libm
+	drwxrwxr-x  4 dr-shadow dr-shadow 4096 janv.  6 11:44 libstdc++
+	drwxrwxr-x  3 dr-shadow dr-shadow 4096 janv.  6 11:44 libthread_db
+	drwxrwxr-x  3 dr-shadow dr-shadow 4096 janv.  6 11:44 linker
+	drwxrwxr-x  2 dr-shadow dr-shadow 4096 janv.  6 11:44 tests
+drwxrwxr-x 26 dr-shadow dr-shadow      4096 mars   5 07:37 kernel
+	content of kernel/:
+	drwxrwxr-x  26 dr-shadow dr-shadow   4096 mars   5 07:37 .
+	drwxr-xr-x  21 dr-shadow dr-shadow   4096 mars   5 07:40 ..
+	-rw-rw-r--   1 dr-shadow dr-shadow   2935 mars   4 21:42 Android.mk
+	drwxrwxr-x  29 dr-shadow dr-shadow   4096 mars   4 21:42 arch
+	drwxrwxr-x   3 dr-shadow dr-shadow   4096 mars   4 21:42 block
+	-rwxrwxr-x   1 dr-shadow dr-shadow    856 mars   4 21:42 build.sh
+	-rw-rw-r--   1 dr-shadow dr-shadow  60638 mars   5 07:36 .config
+	-rw-rw-r--   1 dr-shadow dr-shadow  63143 mars   5 07:36 .config.old
+	-rw-rw-r--   1 dr-shadow dr-shadow  18693 mars   4 21:42 COPYING
+	-rw-rw-r--   1 dr-shadow dr-shadow  94984 mars   4 21:42 CREDITS
+	drwxrwxr-x   3 dr-shadow dr-shadow   4096 mars   4 21:42 crypto
+	drwxrwxr-x  96 dr-shadow dr-shadow  12288 mars   4 21:42 Documentation
+	drwxrwxr-x 103 dr-shadow dr-shadow   4096 mars   5 15:15 drivers
+	drwxrwxr-x  37 dr-shadow dr-shadow   4096 mars   4 21:42 firmware
+	drwxrwxr-x  72 dr-shadow dr-shadow  12288 mars   4 21:42 fs
+	drwxrwxr-x   8 dr-shadow dr-shadow   4096 mars   5 15:47 .git
+	-rw-rw-r--   1 dr-shadow dr-shadow   1014 mars   4 21:42 .gitignore
+	drwxrwxr-x  24 dr-shadow dr-shadow   4096 mars   5 07:36 include
+	drwxrwxr-x   2 dr-shadow dr-shadow   4096 mars   5 07:36 init
+	drwxrwxr-x   2 dr-shadow dr-shadow   4096 mars   4 21:42 ipc
+	-rw-rw-r--   1 dr-shadow dr-shadow   2536 mars   4 21:42 Kbuild
+	-rw-rw-r--   1 dr-shadow dr-shadow    252 mars   4 21:42 Kconfig
+	drwxrwxr-x  10 dr-shadow dr-shadow  12288 mars   5 15:15 kernel
+	drwxrwxr-x   9 dr-shadow dr-shadow  12288 mars   4 21:42 lib
+	-rw-rw-r--   1 dr-shadow dr-shadow   4320 mars   4 21:42 .mailmap
+	-rw-rw-r--   1 dr-shadow dr-shadow 210306 mars   4 21:42 MAINTAINERS
+	-rw-rw-r--   1 dr-shadow dr-shadow  55026 mars   4 21:42 Makefile
+	drwxrwxr-x   7 dr-shadow dr-shadow   4096 mars   4 21:42 mediatek
+	-rw-rw-r--   1 dr-shadow dr-shadow    313 mars   5 07:37 .missing-syscalls.d
+	drwxrwxr-x   2 dr-shadow dr-shadow   4096 mars   4 21:42 mm
+	-rw-rw-r--   1 dr-shadow dr-shadow      0 mars   5 07:36 modules.order
+	drwxrwxr-x  55 dr-shadow dr-shadow   4096 mars   5 15:15 net
+	-rw-rw-r--   1 dr-shadow dr-shadow    452 mars   4 21:42 README
+	-rw-rw-r--   1 dr-shadow dr-shadow  17459 mars   4 21:42 README.kernel
+	-rw-rw-r--   1 dr-shadow dr-shadow   3371 mars   4 21:42 REPORTING-BUGS
+	drwxrwxr-x  11 dr-shadow dr-shadow   4096 mars   4 21:42 samples
+	drwxrwxr-x  13 dr-shadow dr-shadow   4096 mars   5 07:36 scripts
+	drwxrwxr-x   9 dr-shadow dr-shadow   4096 mars   4 21:42 security
+	drwxrwxr-x  22 dr-shadow dr-shadow   4096 mars   4 21:42 sound
+	drwxrwxr-x   2 dr-shadow dr-shadow   4096 mars   5 07:36 .tmp_versions
+	drwxrwxr-x  13 dr-shadow dr-shadow   4096 mars   4 12:38 tools
+	drwxrwxr-x   2 dr-shadow dr-shadow   4096 mars   5 07:36 usr
+	-rw-rw-r--   1 dr-shadow dr-shadow      2 mars   5 07:36 .version
+	drwxrwxr-x   3 dr-shadow dr-shadow   4096 mars   4 12:38 virt
