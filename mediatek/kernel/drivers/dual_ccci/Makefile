@@ -34,7 +34,7 @@ ccci-y +=ccci_statistics.o
 
 clean-files += $(patsubst $(obj)/%,%,$(wildcard $(obj)/*~))
 
-ccflags-y  += -I$(srctree)/../bionic/libc/kernel/common/linux  -I$(srctree)/$(obj)/include  -I$(CCCI_PLATFORM_DRIVER_DIR)/include
+ccflags-y  += -I$(srctree)/$(obj)/include  -I$(CCCI_PLATFORM_DRIVER_DIR)/include
 
 ifneq ($(TARGET_BUILD_VARIANT),user)
 #ccflags-y  += -DCCCI_DEBUG_ON -D__CCCI_LOG__  -DCCCI_MD_DEBUG_ON  #-save-temps
