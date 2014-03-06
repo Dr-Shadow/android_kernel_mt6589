@@ -637,6 +637,11 @@ ifdef USE_IMMEDIATE
 KBUILD_CFLAGS	+= -DUSE_IMMEDIATE
 endif
 
+#Oppo R819 specific source
+ifdef CONFIG_OPPO_R819
+KBUILD_CFLAGS	+= -DOPPO_R819
+endif
+
 # We trigger additional mismatches with less inlining
 ifdef CONFIG_DEBUG_SECTION_MISMATCH
 KBUILD_CFLAGS += $(call cc-option, -fno-inline-functions-called-once)
