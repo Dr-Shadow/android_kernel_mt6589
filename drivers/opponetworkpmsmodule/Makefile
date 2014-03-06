@@ -2,4 +2,4 @@
 # Makefile for the permission intercept.
 #
 #
-obj-y	:= opponetworkanalyser.o
+obj-$(CONFIG_OPPO_R819)	:= opponetworkanalyser.o
