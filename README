@@ -9,4 +9,4 @@ There is a commit history built but this is not the final release yet.
 
 The final release will strip mtk build scripts and show the real commit history of mtk kernel (if I can reach final release of course ^-^)
 
-You need arm-linux-androideabi-4.6 toolchain (you have to setup CROSS-COMPILE var like in build.sh)
+You need arm-eabi-4.7 toolchain (you have to setup CROSS-COMPILE var like in build.sh)
