@@ -1,7 +1,7 @@
 This is a kernel source for MT6589
 
 Actually the list of supported devices :
-	Faea F2S (half of Faea F2S are supported, the ones with FT5216 for touchpanel)
+	Faea F2S
 
 If you want to add a device, please send a device kernel source (pure mediatek source) at xda (@Dr-Shadow) on private message
 

@@ -231,7 +231,7 @@ CUSTOM_KERNEL_SUB_IMGSENSOR=s5k4e1ga_mipi_raw
 CUSTOM_KERNEL_SUB_LENS=dummy_lens
 
 # touch driver  need to report correct touch axes
-CUSTOM_KERNEL_TOUCHPANEL=ft5216
+CUSTOM_KERNEL_TOUCHPANEL=gslx680 ft5216
 #cy8ctma300 GT818B-fpga
 
 # Configuration for USB PHY

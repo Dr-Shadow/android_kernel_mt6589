@@ -565,3 +565,9 @@ config PWR_LOSS_MTK_DEBUG
          Say Y here if you want turns on low-level debugging
          If unsure, say N.
 endif 
+
+#
+config GSL_ALG_ID
+	bool "Binary blob for GSLx680 driver"
+	help
+	 No GPL symbol is used with this binary

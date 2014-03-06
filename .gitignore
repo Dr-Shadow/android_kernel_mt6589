@@ -84,3 +84,7 @@ GTAGS
 *.orig
 *~
 \#*#
+
+
+#specific blob for GSLx680 driver
+!gsl_point_id.o
