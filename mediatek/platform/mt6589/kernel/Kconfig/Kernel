@@ -177,4 +177,7 @@ config MTK_HIBERNATION
         default y
         help
 
+config OPPO_R819
+	bool "Support for OPPO_R819 specific code"
+
 endmenu
