@@ -36,7 +36,7 @@ targets := Image zImage xipImage bootpImage uImage
 # so CONFIG_RAMDISK_OFFSET should be configured as '0xD00000' in kconfig
 define chk-kernel-img-size
   Image_size=`stat --format=%s $(obj)/Image`; \
-  zImage_size=`stat --format=%s $(obj)/zImage`; \
+  zImage_size=`stat --format=%s $(obj)/zImageOld`; \
   offset=$$(($$Image_size + $$zImage_size - 32768)); \
   ramdisk_offset=`printf %d $(CONFIG_RAMDISK_OFFSET)`; \
   shortage=$$(($$offset - $$ramdisk_offset)); \
@@ -75,10 +75,14 @@ $(obj)/Image: vmlinux FORCE
 $(obj)/compressed/vmlinux: $(obj)/Image FORCE
 	$(Q)$(MAKE) $(build)=$(obj)/compressed $@
 
-$(obj)/zImage:	$(obj)/compressed/vmlinux FORCE
+$(obj)/zImageOld:  $(obj)/compressed/vmlinux FORCE
 	$(call if_changed,objcopy)
 	$(Q)$(chk-kernel-img-size)
 	@echo '  Kernel: $@ is ready'
+
+$(obj)/zImage:	$(obj)/zImageOld FORCE
+	$(shell mediatek/build/tools/mkimage $(obj)/zImageOld KERNEL > $@)
+	@echo '  Kernel: $@ is ready with mtk header'
 
 endif
 

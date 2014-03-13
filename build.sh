@@ -10,7 +10,7 @@ mkdir -p out/e960/
 
 #Kernel part
 make -j16
-mediatek/build/tools/mkimage arch/arm/boot/zImage KERNEL > out/$TARGET_PRODUCT/zImage
+cp arch/arm/boot/zImage out/$TARGET_PRODUCT/zImage
 
 #Modules part
 make modules
