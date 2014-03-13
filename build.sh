@@ -9,7 +9,6 @@ export TARGET_PRODUCT=e960
 mkdir -p out/e960/
 
 #Kernel part
-make mediatek-configs
 make -j16
 mediatek/build/tools/mkimage arch/arm/boot/zImage KERNEL > out/$TARGET_PRODUCT/zImage
 
