@@ -50,7 +50,7 @@ curdir=`pwd`
 
 usage() {
     echo "Usage: $0 {release|rebuild|clean|silent|verbose|single} [config-xxx]"
-    echo "  config file will be generated if build with TARGET_PRODUCT"
+    echo "  config file will be generated if build with TARGET_KERNEL_PRODUCT"
     exit 1
 }
 

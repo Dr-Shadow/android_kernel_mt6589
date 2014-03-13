@@ -41,15 +41,15 @@
 # then you'll have variables such as 
 #   MTK_PATH_PLATFORM pointing to ../../../mediatek/platform/mt6516/kernel
 
-if [ -z ${TARGET_PRODUCT} ]; then TARGET_PRODUCT=$3; fi
-if [ -z ${TARGET_PRODUCT} ]; then
-    echo "*** TARGET_PRODUCT is not set. stop"
+if [ -z ${TARGET_KERNEL_PRODUCT} ]; then TARGET_KERNEL_PRODUCT=$3; fi
+if [ -z ${TARGET_KERNEL_PRODUCT} ]; then
+    echo "*** TARGET_KERNEL_PRODUCT is not set. stop"
     exit
 fi
 
 
 # export variables to shell environments
-eval `TARGET_PRODUCT=${TARGET_PRODUCT} _prefix_=$1 _postfix_=$2 make -i -f $1/mediatek/build/libs/shell.mk`
+eval `TARGET_KERNEL_PRODUCT=${TARGET_KERNEL_PRODUCT} _prefix_=$1 _postfix_=$2 make -i -f $1/mediatek/build/libs/shell.mk`
 
 # for legacy "Download folder". Will be removed once nobody use it.
 function make_legacy_download_folder() {

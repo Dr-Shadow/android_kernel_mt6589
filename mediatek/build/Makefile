@@ -37,17 +37,17 @@ __mtk_main_makefile_include := true
 
 # Makefile - global makefile for all building system to include
 ifneq (,$(PROJECT))
-TARGET_PRODUCT := $(PROJECT)
+TARGET_KERNEL_PRODUCT := $(PROJECT)
 endif
-ifeq (emulator,$(TARGET_PRODUCT))
-TARGET_PRODUCT := generic
+ifeq (emulator,$(TARGET_KERNEL_PRODUCT))
+TARGET_KERNEL_PRODUCT := generic
 endif
 _entering_makefile_list_ := $(MAKEFILE_LIST)
-ifeq (,$(TARGET_PRODUCT))
-  $(error TARGET_PRODUCT/PROJECT is not set)
+ifeq (,$(TARGET_KERNEL_PRODUCT))
+  $(error TARGET_KERNEL_PRODUCT/PROJECT is not set)
 endif
 
-FULL_PROJECT := $(TARGET_PRODUCT)$(if $(FLAVOR),[$(FLAVOR)],)
+FULL_PROJECT := $(TARGET_KERNEL_PRODUCT)$(if $(FLAVOR),[$(FLAVOR)],)
 MTK_PROJECT  := $(word 1,$(subst [, ,$(FULL_PROJECT)))
 export FULL_PROJECT MTK_PROJECT
 
