@@ -87,4 +87,4 @@ GTAGS
 
 
 #specific blob for GSLx680 driver
-!gsl_point_id.o
+!gsl_point_id.o_shipped
