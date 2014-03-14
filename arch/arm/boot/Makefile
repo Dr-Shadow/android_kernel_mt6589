@@ -81,7 +81,7 @@ $(obj)/zImageOld:  $(obj)/compressed/vmlinux FORCE
 	@echo '  Kernel: $@ is ready'
 
 $(obj)/zImage:	$(obj)/zImageOld FORCE
-	$(shell mediatek/build/tools/mkimage $(obj)/zImageOld KERNEL > $@)
+	$(shell $(MTK_ROOT)/build/tools/mkimage $(obj)/zImageOld KERNEL > $@)
 	@echo '  Kernel: $@ is ready with mtk header'
 
 endif
