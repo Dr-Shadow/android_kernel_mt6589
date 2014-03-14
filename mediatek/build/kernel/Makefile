@@ -33,10 +33,10 @@
 # applicable license agreements with MediaTek Inc.
 
 
-include mediatek/build/Makefile
-$(call codebase-path,kernel,.,mt6589,e960)
+include $(srctree)/mediatek/build/Makefile
+$(call codebase-path,kernel,$(srctree),mt6589,e960)
 #$(call relative-include,common.mk)
-include mediatek/build/kernel/common.mk
+include $(srctree)/mediatek/build/kernel/common.mk
 MODULE_PREFIX_KERNEL := CUSTOM_KERNEL_
 MODULE_PREFIX_HAL    := CUSTOM_HAL_
 machine-y       := $(call lc,$(MTK_PLATFORM))
