@@ -1,4 +1,4 @@
-#include <linux/autoconf.h>
+#include <generated/autoconf.h>
 #include <linux/kernel.h>
 #include <linux/printk.h>
 #include <linux/module.h>

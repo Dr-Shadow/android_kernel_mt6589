@@ -20,7 +20,7 @@
 #include <linux/miscdevice.h>
 #include <linux/platform_device.h>
 #include <linux/earlysuspend.h>
-#include <linux/autoconf.h>
+#include <generated/autoconf.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

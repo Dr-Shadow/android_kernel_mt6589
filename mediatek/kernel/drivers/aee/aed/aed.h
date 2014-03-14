@@ -1,7 +1,7 @@
 #ifndef __aed_h
 #define __aed_h
 
-#include <linux/autoconf.h>
+#include <generated/autoconf.h>
 #include <linux/types.h>
 #include <linux/bug.h>
 #include <linux/aee.h>

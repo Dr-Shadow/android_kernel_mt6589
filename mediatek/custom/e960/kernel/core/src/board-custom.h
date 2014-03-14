@@ -1,7 +1,7 @@
 #ifndef __ARCH_ARM_MACH_MT6575_CUSTOM_BOARD_H
 #define __ARCH_ARM_MACH_MT6575_CUSTOM_BOARD_H
 
-#include <linux/autoconf.h>
+#include <generated/autoconf.h>
 
 /*=======================================================================*/
 /* MT6589 MSDC                                                             */

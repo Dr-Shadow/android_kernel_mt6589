@@ -1,7 +1,7 @@
 #if !defined(__AEE_IPANIC_H__)
 #define __AEE_IPANIC_H__
 
-#include <linux/autoconf.h>
+#include <generated/autoconf.h>
 #include <linux/kallsyms.h>
 #include <linux/xlog.h>
 //#include "partition_define.h"

@@ -38,7 +38,7 @@
 #include <linux/cdev.h>
 #include <asm/io.h>
 
-#include <linux/autoconf.h>
+#include <generated/autoconf.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/device.h>

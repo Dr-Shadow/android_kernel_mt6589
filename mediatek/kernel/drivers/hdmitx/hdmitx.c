@@ -20,7 +20,7 @@
 #define TMFL_TDA19989
 
 #define _tx_c_
-#include <linux/autoconf.h>
+#include <generated/autoconf.h>
 #include <linux/mm.h>
 #include <linux/init.h>
 #include <linux/fb.h>

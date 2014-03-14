@@ -16,7 +16,7 @@
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/mtd/mtd.h>
-#include <linux/autoconf.h>
+#include <generated/autoconf.h>
 #include <linux/sched.h>	//show_stack(current,NULL)
 #include <mach/env.h>
 
