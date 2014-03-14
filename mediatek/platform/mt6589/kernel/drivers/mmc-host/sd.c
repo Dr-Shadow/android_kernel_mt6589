@@ -67,7 +67,7 @@
 #include "dbg.h"
 
 #include <linux/proc_fs.h>
-#include "../../../../../../kernel/drivers/mmc/card/queue.h"
+#include "../../../../../drivers/mmc/card/queue.h"
 #include "partition_define.h"
 #include <mach/emi_mpu.h>
 #include <mach/memory.h>

@@ -28,7 +28,7 @@
 #include <asm/ioctls.h>
 #include <linux/proc_fs.h>
 #include <linux/xlog.h>
-#include "../../../../../kernel/drivers/staging/android/logger.h"
+#include "../../../../drivers/staging/android/logger.h"
 #include "xlog_internal.h"
 
 /*

@@ -5,7 +5,7 @@
 #include <linux/kallsyms.h>
 #include <linux/xlog.h>
 //#include "partition_define.h"
-#include "../../../../../../kernel/drivers/staging/android/logger.h"
+#include "../../../../../drivers/staging/android/logger.h"
 
 #define AEE_IPANIC_PLABEL "expdb"
 
