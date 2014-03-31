@@ -2735,12 +2735,12 @@ tracing_cpumask_write(struct file *filp, const char __user *ubuf,
 		if (cpumask_test_cpu(cpu, tracing_cpumask) &&
 				!cpumask_test_cpu(cpu, tracing_cpumask_new)) {
 			atomic_inc(&global_trace.data[cpu]->disabled);
-            ring_buffer_record_disable_cpu(global_trace.buffer, cpu);
+			ring_buffer_record_disable_cpu(global_trace.buffer, cpu);
 		}
 		if (!cpumask_test_cpu(cpu, tracing_cpumask) &&
 				cpumask_test_cpu(cpu, tracing_cpumask_new)) {
 			atomic_dec(&global_trace.data[cpu]->disabled);
-            ring_buffer_record_enable_cpu(global_trace.buffer, cpu);
+			ring_buffer_record_enable_cpu(global_trace.buffer, cpu);
 		}
 	}
 	arch_spin_unlock(&ftrace_max_lock);
@@ -3717,11 +3717,6 @@ static ssize_t tracing_splice_read_pipe(struct file *filp,
 		.pages		= pages_def,
 		.partial	= partial_def,
 		.nr_pages	= 0, /* This gets updated below. */
-                /*
-                 * kernel patch
-                 * commit: 2c07f25ea7800adb36cd8da9b58c4ecd3fc3d064
-                 * https://android.googlesource.com/kernel/common/+/2c07f25ea7800adb36cd8da9b58c4ecd3fc3d064%5E!/#F0
-                 */
 		.nr_pages_max	= PIPE_DEF_BUFFERS,
 		.flags		= flags,
 		.ops		= &tracing_pipe_buf_ops,
@@ -3794,12 +3789,6 @@ static ssize_t tracing_splice_read_pipe(struct file *filp,
 
 	ret = splice_to_pipe(pipe, &spd);
 out:
-        /*
-         * kernel patch
-         * commit: 2c07f25ea7800adb36cd8da9b58c4ecd3fc3d064
-         * https://android.googlesource.com/kernel/common/+/2c07f25ea7800adb36cd8da9b58c4ecd3fc3d064%5E!/#F0
-         */
-	//splice_shrink_spd(pipe, &spd);
 	splice_shrink_spd(&spd);
 	return ret;
 
@@ -4353,11 +4342,6 @@ tracing_buffers_splice_read(struct file *file, loff_t *ppos,
 	struct splice_pipe_desc spd = {
 		.pages		= pages_def,
 		.partial	= partial_def,
-                /*
-                 * kernel patch
-                 * commit: 2c07f25ea7800adb36cd8da9b58c4ecd3fc3d064
-                 * https://android.googlesource.com/kernel/common/+/2c07f25ea7800adb36cd8da9b58c4ecd3fc3d064%5E!/#F0
-                 */
 		.nr_pages_max	= PIPE_DEF_BUFFERS,
 		.flags		= flags,
 		.ops		= &buffer_pipe_buf_ops,
@@ -4446,12 +4430,6 @@ tracing_buffers_splice_read(struct file *file, loff_t *ppos,
 	}
 
 	ret = splice_to_pipe(pipe, &spd);
-        /*
-         * kernel patch
-         * commit: 2c07f25ea7800adb36cd8da9b58c4ecd3fc3d064
-         * https://android.googlesource.com/kernel/common/+/2c07f25ea7800adb36cd8da9b58c4ecd3fc3d064%5E!/#F0
-         */
-	//splice_shrink_spd(pipe, &spd);
 	splice_shrink_spd(&spd);
 out:
 	return ret;

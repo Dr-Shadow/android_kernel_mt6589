@@ -663,12 +663,6 @@ typedef struct pglist_data {
 					     range, including holes */
 	int node_id;
 	wait_queue_head_t kswapd_wait;
-        /*
-         * kernel patch
-         * commit: 0e343dbe08acb440f7914d989bcc32c1d1576735
-         * https://android.googlesource.com/kernel/common/+/0e343dbe08acb440f7914d989bcc32c1d1576735%5E!/#F0
-         */
-	//struct task_struct *kswapd;
 	struct task_struct *kswapd;	/* Protected by lock_memory_hotplug() */
 	int kswapd_max_order;
 	enum zone_type classzone_idx;
