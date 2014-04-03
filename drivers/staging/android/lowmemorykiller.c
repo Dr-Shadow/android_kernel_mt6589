@@ -40,22 +40,7 @@
 #include <linux/sched.h>
 #include <linux/notifier.h>
 
-#if defined (CONFIG_MTK_AEE_FEATURE) && defined (CONFIG_MT_ENG_BUILD)
-#include <linux/aee.h>
-#include <linux/disp_assert_layer.h>
-int lowmem_indicator = 1;
-int in_lowmem = 0;
-#endif
-
-/* From page_alloc.c, for urgent allocations in preemptible situation */
-extern size_t lmk_adjz_minfree;
-extern void show_free_areas_minimum(void);
-
 static uint32_t lowmem_debug_level = 2;
-#ifdef CONFIG_MT_ENG_BUILD
-static uint32_t lowmem_debug_adj = 1;
-#endif
-static DEFINE_SPINLOCK(lowmem_shrink_lock);
 static int lowmem_adj[6] = {
 	0,
 	1,
@@ -71,6 +56,11 @@ static int lowmem_minfree[6] = {
 };
 static int lowmem_minfree_size = 4;
 
+/* From page_alloc.c, for urgent allocations in preemptible situation */
+extern size_t lmk_adjz_minfree;
+extern void show_free_areas_minimum(void);
+
+static DEFINE_SPINLOCK(lowmem_shrink_lock);
 static struct task_struct *lowmem_deathpending;
 static unsigned long lowmem_deathpending_timeout;
 
