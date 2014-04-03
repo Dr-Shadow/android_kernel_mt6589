@@ -319,7 +319,7 @@ static void tracepoint_update_probe_range(struct tracepoint * const *begin,
 	}
 }
 
-#if defined(CONFIG_MODULES) && defined(CONFIG_FTRACE_MODULE_SUPPORT)
+#ifdef CONFIG_MODULES
 void module_update_tracepoints(void)
 {
 	struct tp_module *tp_mod;
@@ -543,7 +543,7 @@ static int tracepoint_get_iter_range(struct tracepoint * const **tracepoint,
 	return 0;
 }
 
-#if defined(CONFIG_MODULES) && defined(CONFIG_FTRACE_MODULE_SUPPORT)
+#ifdef CONFIG_MODULES
 static void tracepoint_get_iter(struct tracepoint_iter *iter)
 {
 	int found = 0;
@@ -627,7 +627,7 @@ void tracepoint_iter_reset(struct tracepoint_iter *iter)
 }
 EXPORT_SYMBOL_GPL(tracepoint_iter_reset);
 
-#if defined(CONFIG_MODULES) && defined(CONFIG_FTRACE_MODULE_SUPPORT)
+#ifdef CONFIG_MODULES
 static int tracepoint_module_coming(struct module *mod)
 {
 	struct tp_module *tp_mod, *iter;

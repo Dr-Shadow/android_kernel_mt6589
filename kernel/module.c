@@ -2604,7 +2604,7 @@ static void find_module_sections(struct module *mod, struct load_info *info)
 				  sizeof(*mod->ctors), &mod->num_ctors);
 #endif
 
-#if defined(CONFIG_TRACEPOINTS) && defined(CONFIG_FTRACE_MODULE_SUPPORT)
+#ifdef CONFIG_TRACEPOINTS
 	mod->tracepoints_ptrs = section_objs(info, "__tracepoints_ptrs",
 					     sizeof(*mod->tracepoints_ptrs),
 					     &mod->num_tracepoints);
@@ -2614,7 +2614,7 @@ static void find_module_sections(struct module *mod, struct load_info *info)
 					sizeof(*mod->jump_entries),
 					&mod->num_jump_entries);
 #endif
-#if defined(CONFIG_EVENT_TRACING) && defined(CONFIG_FTRACE_MODULE_SUPPORT)
+#ifdef CONFIG_EVENT_TRACING
 	mod->trace_events = section_objs(info, "_ftrace_events",
 					 sizeof(*mod->trace_events),
 					 &mod->num_trace_events);
@@ -2625,7 +2625,7 @@ static void find_module_sections(struct module *mod, struct load_info *info)
 	kmemleak_scan_area(mod->trace_events, sizeof(*mod->trace_events) *
 			   mod->num_trace_events, GFP_KERNEL);
 #endif
-#if defined(CONFIG_TRACING) && defined(CONFIG_FTRACE_MODULE_SUPPORT)
+#ifdef CONFIG_TRACING
 	mod->trace_bprintk_fmt_start = section_objs(info, "__trace_printk_fmt",
 					 sizeof(*mod->trace_bprintk_fmt_start),
 					 &mod->num_trace_bprintk_fmt);
@@ -2637,7 +2637,7 @@ static void find_module_sections(struct module *mod, struct load_info *info)
 			   sizeof(*mod->trace_bprintk_fmt_start) *
 			   mod->num_trace_bprintk_fmt, GFP_KERNEL);
 #endif
-#if defined(CONFIG_FTRACE_MCOUNT_RECORD) && defined(CONFIG_FTRACE_MODULE_SUPPORT)
+#ifdef CONFIG_FTRACE_MCOUNT_RECORD
 	/* sechdrs[0].sh_size is always zero */
 	mod->ftrace_callsites = section_objs(info, "__mcount_loc",
 					     sizeof(*mod->ftrace_callsites),
@@ -3517,7 +3517,7 @@ void print_modules(void)
 	/* Most callers should already have preempt disabled, but make sure */
 	preempt_disable();
 	list_for_each_entry_rcu(mod, &modules, list)
-					printk(" %s %p %s", mod->name, mod->module_core, module_flags(mod, buf));
+		printk(" %s%s", mod->name, module_flags(mod, buf));
 	preempt_enable();
 	if (last_unloaded_module[0])
 		printk(" [last unloaded: %s]", last_unloaded_module);
