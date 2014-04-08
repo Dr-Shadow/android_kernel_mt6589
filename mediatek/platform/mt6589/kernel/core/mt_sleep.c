@@ -53,7 +53,12 @@ extern void Golden_Setting_Compare_for_Suspend(void);
 
 static DEFINE_SPINLOCK(slp_lock);
 
+#ifndef OPPO_R819
+//Jiada.Li@ProDrv.CHG, 2013/03/13, Modify for low bat power off
 static wake_reason_t slp_wake_reason = WR_NONE;
+#else
+wake_reason_t slp_wake_reason = WR_NONE;
+#endif
 
 static bool slp_ck26m_on = false;
 

@@ -47,6 +47,7 @@ typedef struct{
 #define GSENSOR_IOCTL_SET_CALI				_IOW(GSENSOR, 0x06, SENSOR_DATA)
 #define GSENSOR_IOCTL_GET_CALI				_IOW(GSENSOR, 0x07, SENSOR_DATA)
 #define GSENSOR_IOCTL_CLR_CALI				_IO(GSENSOR, 0x08)
+#define GSENSOR_IOCTL_USER_CALI				_IO(GSENSOR, 0x09)
 
 
 
@@ -95,6 +96,24 @@ typedef struct{
 #define MMC31XX_IOC_READ				_IOR(MSENSOR, 0x1b, int[3])
 #define MMC31XX_IOC_READXYZ				_IOR(MSENSOR, 0x1c, int[3])
 
+
+
+
+
+#define MMC3416X_IOM			'm'
+
+/* IOCTLs for MMC3416X device */
+#define MMC3416X_IOC_TM			_IO (MMC3416X_IOM, 0x00)
+#define MMC3416X_IOC_SET			_IO (MMC3416X_IOM, 0x01)
+#define MMC3416X_IOC_READ		_IOR(MMC3416X_IOM, 0x02, int[3])
+#define MMC3416X_IOC_READXYZ		_IOR(MMC3416X_IOM, 0x03, int[3])
+#define MMC3416X_IOC_RESET               _IO (MMC3416X_IOM, 0x04)
+#define MMC3416X_IOC_NOBOOST             _IO (MMC3416X_IOM, 0x05)
+#define MMC3416X_IOC_ID                  _IOR(MMC3416X_IOM, 0x06, short)
+#define MMC3416X_IOC_DIAG                _IOR(MMC3416X_IOM, 0x14, int[1])
+
+
+
 #define ECOMPASS_IOC_GET_DELAY			_IOR(MSENSOR, 0x1d, int)
 #define ECOMPASS_IOC_GET_MFLAG			_IOR(MSENSOR, 0x1e, short)
 #define	ECOMPASS_IOC_GET_OFLAG			_IOR(MSENSOR, 0x1f, short)
@@ -121,7 +140,11 @@ typedef struct{
 #define ALSPS_GET_PS_THRESHOLD_LOW           	_IOR(ALSPS, 0x0C, int)
 #define ALSPS_GET_ALS_THRESHOLD_HIGH           	_IOR(ALSPS, 0x0D, int)
 #define ALSPS_GET_ALS_THRESHOLD_LOW           	_IOR(ALSPS, 0x0E, int)
-
+#ifdef OPPO_R819
+//Lycan.Wang@BasicDrv.Sensor, 2012-11-15 Add for prox sensor service
+#define ALSPS_SET_PS_THRESHOLD              _IOR(ALSPS, 0x21, int)
+#define ALSPS_GET_CUST_PS_ADJUST_PARA       _IOR(ALSPS, 0x22, int)
+#endif /* OPPO_R819 */
 
 #define GYROSCOPE							0X86
 #define GYROSCOPE_IOCTL_INIT					_IO(GYROSCOPE, 0x01)

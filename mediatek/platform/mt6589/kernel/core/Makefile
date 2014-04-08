@@ -3,7 +3,12 @@
 #
 
 obj-y := core.o irq.o system.o timer.o clock.o mt_dbg.o
-obj-y += mt_devs.o mt_gpt.o mt_boot.o board.o mt_gpio.o mt_pm_init.o
+ifndef CONFIG_OPPO_R819
+obj-y += mt_devs.o
+else
+obj-y += mt_devs_oppo.o
+endif
+obj-y += mt_gpt.o mt_boot.o board.o mt_gpio.o mt_pm_init.o
 obj-y += ca7_timer.o dram_overclock.o
 ifeq ($(CONFIG_SMP),y)
 obj-y += mt-smp.o hotplug.o mt-headsmp.o mt_hotplug.o mt_hotplug_mechanism.o

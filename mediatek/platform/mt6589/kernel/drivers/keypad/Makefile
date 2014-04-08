@@ -32,5 +32,7 @@
 # have been modified by MediaTek Inc. All revisions are subject to any receiver's
 # applicable license agreements with MediaTek Inc.
 
-
+ifndef CONFIG_OPPO_R819
 obj-$(CONFIG_MTK_KEYPAD) := kpd.o
+endif
+obj-$(CONFIG_OPPO_R819) := kpd_oppo.o

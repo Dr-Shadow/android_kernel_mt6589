@@ -37,6 +37,9 @@
 #include <linux/earlysuspend.h> 
 #include <linux/wakelock.h>
 //add for fix resume issue end
+#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/9/14 for  sensor debuging
+#include <linux/proc_fs.h>
+#endif/*OPPO_R819*/
 
 #define SENSOR_INVALID_VALUE -1
 #define MAX_CHOOSE_G_NUM 5
@@ -45,6 +48,9 @@
 static void hwmsen_early_suspend(struct early_suspend *h);
 static void hwmsen_late_resume(struct early_suspend *h);
 static void update_workqueue_polling_rate(int newDelay);
+
+unsigned int sensor_suspend = 1;
+
 /******************************************************************************
  * structure / enumeration / macro / definition
  *****************************************************************************/
@@ -109,6 +115,9 @@ struct hwmdev_object {
 	struct wake_lock        read_data_wake_lock;
 	atomic_t                early_suspend;
 	//add for fix resume end
+#ifdef OPPO_R819//Shaoyu.Huang@BasicDrv.Sensor, add 2012/6/2 for sensor debug
+	struct proc_dir_entry* entry;	
+#endif/*OPPO_R819*/
 };
 
 static bool enable_again = false;
@@ -200,14 +209,18 @@ static void hwmsen_work_func(struct work_struct *work)
 		    continue;
 		  }
 		}
-		
+
+#ifndef OPPO_R819
         //add wake lock to make sure data can be read before system suspend
         wake_lock(&(obj->read_data_wake_lock));
 		err = cxt->obj.sensor_operate(cxt->obj.self,SENSOR_GET_DATA, NULL, 0, 
 			&sensor_data, sizeof(hwm_sensor_data), &out_size);
         wake_unlock(&(obj->read_data_wake_lock));
-      
+#endif      
 		
+		err = cxt->obj.sensor_operate(cxt->obj.self,SENSOR_GET_DATA, NULL, 0, 
+			&sensor_data, sizeof(hwm_sensor_data), &out_size);
+
 		if(err)
 		{
 			HWM_ERR("get data from sensor (%d) fails!!\n", idx);
@@ -312,9 +325,18 @@ static void hwmsen_work_func(struct work_struct *work)
 	{
 	    if(1 == atomic_read(&hwm_obj->early_suspend))
 	    {
-	       // slow down polling rate at early suspend  let system have chance to sleep
-	       mod_timer(&obj->timer, jiffies + (HZ/2));
-		   HWM_LOG("hwm_dev early suspend work polling\n");
+			if( sensor_suspend == 0 )	
+			// sensors not suspend( motion sensing state ), sensors works normally 
+			{
+				mod_timer(&obj->timer, jiffies + atomic_read(&obj->delay)/(1000/HZ)); 					
+				HWM_LOG("hwm_dev early suspend work polling in normal mode!\n");				
+			}
+			else
+			{
+				// slow down polling rate at early suspend  let system have chance to sleep
+				mod_timer(&obj->timer, jiffies + (HZ/2));				
+				HWM_LOG("hwm_dev early suspend work polling in slow down mode!\n");				
+			}
 	    }
 		else
 		{
@@ -488,6 +510,16 @@ int hwmsen_detach(int sensor)
 }
 /*----------------------------------------------------------------------------*/
 EXPORT_SYMBOL_GPL(hwmsen_detach);
+#ifdef OPPO_R819//Shaoyu.Huang@Basic.Sensor, add 2012/6/4 for sensor debuging
+/*----------------------------------------------------------------------------*/
+int hwmsen_make_debug_flag(struct file_operations *p_fops, char* name)
+{
+	proc_create(name, 0666, hwm_obj->entry, p_fops);
+	return 0;
+}
+/*----------------------------------------------------------------------------*/
+EXPORT_SYMBOL_GPL(hwmsen_make_debug_flag);
+#endif/*OPPO_R819*/
 /*----------------------------------------------------------------------------*/
 static int hwmsen_enable(struct hwmdev_object *obj, int sensor, int enable)
 {
@@ -679,12 +711,103 @@ static int hwmsen_wakeup(struct hwmdev_object *obj)
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
+/*OPPO ye.zhang add interface for sense of community*/
+
+#ifndef OPPO_R819 
+static ssize_t sensors_suspend_ctrl_show(struct device *dev, 
+								struct device_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n", sensor_suspend);
+}
+
+static ssize_t sensor_suspend_ctrl_store(struct device *dev, 
+							struct device_attribute *attr, const char *buf, size_t count)
+{
+	int tmp;
+
+	sscanf(buf, "%d\n", &tmp);
+
+	sensor_suspend = tmp;
+
+	return count;
+}
+
+static DEVICE_ATTR(sensor_suspend,      S_IWUSR | S_IRUGO, sensors_suspend_ctrl_show,  sensor_suspend_ctrl_store);
+#else
+static ssize_t sensor_suspend_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
+{	
+	char page[8]; 	
+	char *p = page;	
+	int len = 0; 	
+	p += sprintf(p, "%d\n", sensor_suspend);	
+	len = p - page;	
+	if (len > *pos)		
+		len -= *pos;	
+	else		
+		len = 0;	
+
+	if (copy_to_user(buf,page,len < count ? len  : count))		
+		return -EFAULT;	
+	*pos = *pos + (len < count ? len  : count);	
+
+	return len < count ? len  : count;
+}
+
+static ssize_t sensor_suspend_write(struct file *file, char __user *buf, size_t count, loff_t *ppos)
+{	
+	char tmp[32] = {0};	
+	int ret;		
+	if (count > 2)		
+		return -EINVAL;		
+	ret = copy_from_user(tmp, buf, 32);
+	
+	sscanf(tmp, "%d", &sensor_suspend);	
+	
+	return count;	
+}
+static struct file_operations sensor_suspend_ctrl = {
+	.read = sensor_suspend_read,
+	.write = sensor_suspend_write,
+};
+#endif/*OPPO_R819*/
+/*----------------------------------------------------------------------------*/
 static ssize_t hwmsen_show_hwmdev(struct device* dev, 
                                  struct device_attribute *attr, char *buf) 
 {
 	
     //struct hwmdev_object *devobj = (struct hwmdev_object*)dev_get_drvdata(dev);
     int len = 0;
+#ifdef OPPO_R819//Shaoyu.Huang@BasicDrv.Sensor, add 2012/6/4 for sensor debuging
+	if (hwm_obj->active_data_sensor & (0x01 << ID_ACCELEROMETER))
+		len += snprintf(buf+len, PAGE_SIZE-len,"%s\n", "GSENSOR:ON");
+	else
+		len += snprintf(buf+len, PAGE_SIZE-len,"%s\n", "GSENSOR:OFF");
+	
+	if (hwm_obj->active_data_sensor & (0x01 << ID_MAGNETIC))
+		len += snprintf(buf+len, PAGE_SIZE-len,"%s\n", "MSENSOR:ON");
+	else
+		len += snprintf(buf+len, PAGE_SIZE-len,"%s\n", "MSENSOR:OFF");
+
+	if (hwm_obj->active_data_sensor & (0x01 << ID_ORIENTATION))
+		len += snprintf(buf+len, PAGE_SIZE-len,"%s\n", "OSENSOR:ON");
+	else
+		len += snprintf(buf+len, PAGE_SIZE-len,"%s\n", "OSENSOR:OFF");
+
+	if (hwm_obj->active_data_sensor & (0x01 << ID_GYROSCOPE))
+		len += snprintf(buf+len, PAGE_SIZE-len,"%s\n", "GYROSCOPE:ON");
+	else
+		len += snprintf(buf+len, PAGE_SIZE-len,"%s\n", "GYROSCOPE:OFF");
+
+	if (hwm_obj->active_data_sensor & (0x01 << ID_LIGHT))
+		len += snprintf(buf+len, PAGE_SIZE-len,"%s\n", "LIGHT:ON");
+	else
+		len += snprintf(buf+len, PAGE_SIZE-len,"%s\n", "LIGHT:OFF");
+
+	if (hwm_obj->active_data_sensor & (0x01 << ID_PROXIMITY))
+		len += snprintf(buf+len, PAGE_SIZE-len,"%s\n", "PROXIMITY:ON");
+	else
+		len += snprintf(buf+len, PAGE_SIZE-len,"%s\n", "PROXIMITY:OFF");
+#endif/*OPPO_R819*/  
 	printk("sensor test: hwmsen_show_hwmdev function!\n");
 /*
     if (!devobj || !devobj->dc) {
@@ -853,6 +976,7 @@ static struct device_attribute *hwmsen_attr_list[] =
 	&dev_attr_delay,
 	&dev_attr_wake,
 	&dev_attr_trace,
+	//&dev_attr_sensor_suspend,
 };
 
 
@@ -1053,6 +1177,8 @@ static long hwmsen_unlocked_ioctl(struct file *fp, unsigned int cmd, unsigned lo
 				HWM_ERR("copy_from_user fail!!\n");
 				return -EFAULT;
 			}
+			
+			HWM_LOG("ioctl enable handle=%d\n",delayPara.handle);
 			hwmsen_enable(hwm_obj, flag, 1);
 			break;
 
@@ -1062,6 +1188,8 @@ static long hwmsen_unlocked_ioctl(struct file *fp, unsigned int cmd, unsigned lo
 				HWM_ERR("copy_from_user fail!!\n");
 				return -EFAULT;
 			}
+
+			HWM_LOG("ioctl disable handle=%d\n",delayPara.handle);
 			hwmsen_enable(hwm_obj, flag, 0);
 			break;
 
@@ -1090,6 +1218,7 @@ static long hwmsen_unlocked_ioctl(struct file *fp, unsigned int cmd, unsigned lo
 				HWM_ERR("copy_to_user fail!!\n");
 				return -EFAULT;
 			}
+			//HWM_ERR("sensor data to user\n");
 			break;
 			
 		case HWM_IO_ENABLE_SENSOR_NODATA:
@@ -1185,6 +1314,10 @@ static int hwmsen_probe(struct platform_device *pdev)
 	register_early_suspend(&hwm_obj->early_drv);
 	wake_lock_init(&(hwm_obj->read_data_wake_lock),WAKE_LOCK_SUSPEND,"read_data_wake_lock");
 	// add for fix resume bug end
+#ifdef OPPO_R819/*Shaoyu.Huang@BasicDrv.Sensor, add 2012/6/4 for sensor debuging*/
+	hwm_obj->entry = proc_mkdir_mode("sensor_debug", 0555, NULL);
+	proc_create("sensor_suspend", 0666, hwm_obj->entry, &sensor_suspend_ctrl);
+#endif/*OPPO_R819*/
 	return 0;
 
 	exit_hwmsen_create_attr_failed:

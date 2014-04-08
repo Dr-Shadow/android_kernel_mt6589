@@ -63,6 +63,9 @@ struct sensor_init_info
 extern int hwmsen_attach(int sensor, struct hwmsen_object *obj);
 extern int hwmsen_detach(int sensor);
 extern int hwmsen_get_interrupt_data(int sensor, hwm_sensor_data *data);
+//#ifdef OPPO_R819/*OPPO_R819*/
+int hwmsen_make_debug_flag(struct file_operations *p_fops, char* name);
+//#endif/*OPPO_R819*/
 
 #if defined(MTK_AUTO_DETECT_ACCELEROMETER)//
 extern int hwmsen_gsensor_add(struct sensor_init_info* obj) ;

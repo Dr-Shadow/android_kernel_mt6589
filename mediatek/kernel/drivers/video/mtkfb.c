@@ -40,6 +40,7 @@
 #include "mtkfb.h"
 #include "mtkfb_console.h"
 #include "mtkfb_info.h"
+#include <mach/eint.h>
 #include "ddp_ovl.h"
 
 unsigned int EnableVSyncLog = 0;
@@ -3464,6 +3465,21 @@ static void mtkfb_fb_565_to_8888(struct fb_info *fb_info)
  *      start LCD frame transfer
  *   7. register system fb_info structure
  */
+
+#ifdef OPPO_R819
+//jiawei.wang@BasicDrv.KPD, add 2012/7/22 for LCM ESD TE Interrupt
+#define TE_EINIT_GPIO 142
+#define EINIT_NO          130
+
+int gbtecnt=0;
+static void lcm_te_debug_irq_handler(void)
+{
+	//mt65xx_eint_mask(EINIT_NO);
+	gbtecnt++;
+	//printk("=======================>lcm_te_debug_irq_handler\n");
+	mt65xx_eint_unmask(EINIT_NO);
+}
+#endif
 
 static int mtkfb_probe(struct device *dev)
 {

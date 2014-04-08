@@ -42,5 +42,6 @@ obj-y   +=  ion_drv/
 ifeq ($(MTK_NFC_SUPPORT),yes)
 obj-y	+= nfc/
 endif
+obj-$(CONFIG_OPPO_R819)  += oppo_devices_list/
 
 
