@@ -34,7 +34,7 @@
 #include <mach/irqs.h>
 #include <asm/io.h>
 #include <linux/platform_device.h>
-#include <linux/autoconf.h>
+#include <generated/autoconf.h>
 #include <linux/workqueue.h>
 #include <cust_gpio_usage.h>
 #include <cust_eint.h>

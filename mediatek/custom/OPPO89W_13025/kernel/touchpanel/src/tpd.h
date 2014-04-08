@@ -45,7 +45,7 @@
 #include <mach/irqs.h>
 #include <asm/io.h>
 #include <linux/platform_device.h>
-#include <linux/autoconf.h>
+#include <generated/autoconf.h>
 #include <linux/kobject.h>
 #include <linux/earlysuspend.h>
 //#include "tpd_custom.h"
