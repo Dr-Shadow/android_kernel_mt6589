@@ -1,0 +1,2 @@
+
+#define MMC3416XMA_DIRECTION 4
