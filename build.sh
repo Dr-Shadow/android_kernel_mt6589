@@ -1,6 +1,6 @@
 #Export CROSS_COMPILE to point toolchain
 #export CROSS_COMPILE=/home/dr-shadow/faea/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6/bin/arm-eabi-
-export CROSS_COMPILE=/home/jenkins/jobs/F2S-Omnirom/workspace/prebuilts/gcc/linux-x86/arm/arm-eabi-4.7/bin/arm-eabi-
+export CROSS_COMPILE="ccache /home/jenkins/jobs/F2S-Omnirom/workspace/prebuilts/gcc/linux-x86/arm/arm-eabi-4.7/bin/arm-eabi-"
 
 #Target Product
 export TARGET_KERNEL_PRODUCT=e960
