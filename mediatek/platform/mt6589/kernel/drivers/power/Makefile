@@ -35,6 +35,7 @@
 
 obj-$(CONFIG_MTK_PMIC)          += pmic_mt6320.o upmu_common.o
 
+ifneq ($(BATTERY_IGNORE_OVERRIDE),yes)
 ifeq ($(MTK_BQ24196_SUPPORT),yes) 
     obj-$(CONFIG_MTK_SMART_BATTERY) += mt_battery_bq24196.o mt6320_fuel_gauge_bq24196.o bq24196.o
     ifeq ($(MTK_BQ27541_SUPPORT),yes)
@@ -56,4 +57,5 @@ else
          endif           
       endif
   endif
+endif
 endif
