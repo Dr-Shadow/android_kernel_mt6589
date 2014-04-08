@@ -1,6 +1,6 @@
 /************************************************************************************
 ** File: - mediatek\custom\OPPO89T_12083\kernel\sound\inc\extern_codec.h
-** VENDOR_EDIT
+** OPPO_R819
 ** Copyright (C), 2008-2012, OPPO Mobile Comm Corp., Ltd
 ** 
 ** Description: 

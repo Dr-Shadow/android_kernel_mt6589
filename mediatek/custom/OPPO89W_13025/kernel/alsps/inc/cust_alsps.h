@@ -4,7 +4,7 @@
 #define C_CUST_ALS_LEVEL    16
 #define C_CUST_I2C_ADDR_NUM 4
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //Lycan.Wang@BasicDrv.Sensor, 2012-11-07 Add for ps adjust algo
 struct ps_adjust_para {
     int ps_up;
@@ -35,7 +35,7 @@ struct set_ps_thd_para {
     int ps_average;
     int algo_state; //PS_ADJUST_XXX_STATE
 };
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
 struct alsps_hw {
     int i2c_num;                                    /*!< the i2c bus used by ALS/PS */
@@ -53,12 +53,12 @@ struct alsps_hw {
 	unsigned int    ps_threshold_low;
 	unsigned int    als_threshold_high;
 	unsigned int    als_threshold_low;
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
     //Lycan.Wang@BasicDrv.Sensor, 2012-11-15 Add for ps adjust algo
     struct ps_adjust_para *p_ps_adjust_para;
     //Shaoyu.Huang@BasicDrv.Sensor, add 2012/5/24 to config power for sensor of difference prj
     int (*power)(struct alsps_hw *hw, unsigned int on, char *devname);
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 };
 

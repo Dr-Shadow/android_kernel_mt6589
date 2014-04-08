@@ -105,16 +105,16 @@
 *keep in stereo format,because stereo output can apply
 *on more than 1 speaker.
 *****************************************************/
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 //Jirui.kang@BasicDrv.Audio, 2013/03/20, Modify for enable stereo speaker 
 //#define ENABLE_STEREO_SPEAKER
-#else /* VENDOR_EDIT */
+#else /* OPPO_R819 */
 #ifdef EXTERNAL_CODEC_SUPPORT
 #define ENABLE_STEREO_SPEAKER
 #else
 //#define ENABLE_STEREO_SPEAKER
 #endif //EXTERNAL_CODEC_SUPPORT
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
 /****************************************************
 * Define this will enable Voice  to use  VoiceBuffer

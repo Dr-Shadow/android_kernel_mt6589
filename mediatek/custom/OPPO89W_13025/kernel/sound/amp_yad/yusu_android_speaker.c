@@ -75,10 +75,10 @@
 #include <mach/mt_typedefs.h>
 #endif
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 /* xiang.fei@BasicDrv.Audio, 2012/12/22, Add for audio */
 #include "extern_codec.h"
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
 /*****************************************************************************
 *                C O M P I L E R      F L A G S
@@ -150,7 +150,7 @@ void Sound_SpeakerR_SetVolLevel(int level)
 
 void Sound_Speaker_Turnon(int channel)
 {
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 /* xiang.fei@BasicDrv.Audio, 2012/12/22, Modify for Speaker */
     if(gsk_on)
        return;    
@@ -165,14 +165,14 @@ void Sound_Speaker_Turnon(int channel)
     mt_set_gpio_out(GPIO_SPEAKER_EN_PIN,GPIO_OUT_ONE);
     
 	PRINTK("%s Success!! \n", __func__);
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
     return;
 }
 
 void Sound_Speaker_Turnoff(int channel)
 {
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 /* xiang.fei@BasicDrv.Audio, 2012/12/22, Modify for Speaker */
     if(!gsk_on)
        return;
@@ -186,7 +186,7 @@ void Sound_Speaker_Turnoff(int channel)
     Extern_Codec_Spk_Output_Path(false);
 
 	PRINTK("%s Success!! \n", __func__);
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
     return;
 }
@@ -199,7 +199,7 @@ void Sound_Speaker_SetVolLevel(int level)
 
 void Sound_Headset_Turnon(void)
 {
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 /* xiang.fei@BasicDrv.Audio, 2012/12/22, Add for Headset */
     Extern_Codec_IN2_Input_Path(true);
     Extern_Codec_Hp_Output_Path(true);
@@ -207,12 +207,12 @@ void Sound_Headset_Turnon(void)
 	PRINTK("%s Success!! \n", __func__);
 
     return;
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 }
 
 void Sound_Headset_Turnoff(void)
 {
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 /* xiang.fei@BasicDrv.Audio, 2012/12/22, Add for Headset */
     Extern_Codec_Hp_Output_Path(false);
     Extern_Codec_IN2_Input_Path(false);
@@ -220,10 +220,10 @@ void Sound_Headset_Turnoff(void)
 	PRINTK("%s Success!! \n", __func__);
 
     return;
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 }
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 /* xiang.fei@BasicDrv.Audio, 2012/12/22, Add for Audio */
 void DAC_Sound_Speaker_Turnon(void)
 {
@@ -274,7 +274,7 @@ void DAC_SetPlayFreq(int iFreq)
     
     return;
 }
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
 //kernal use
 void AudioAMPDevice_Suspend(void)

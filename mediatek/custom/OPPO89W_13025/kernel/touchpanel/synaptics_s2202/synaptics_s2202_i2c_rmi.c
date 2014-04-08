@@ -1,6 +1,6 @@
 /************************************************************************************
 ** File: - mediatek\custom\common\kernel\touchpanel\synaptics\synaptics_tm1347_i2c_rmi.c
-** VENDOR_EDIT
+** OPPO_R819
 ** Copyright (C), 2008-2012, OPPO Mobile Comm Corp., Ltd
 ** 
 ** Description: 
@@ -1601,7 +1601,7 @@ static int lcd_write_func (struct file *file,const char *buffer, unsigned long c
 
 
 /*zhangqiang add for TP FW don't UPdate when Lcd is not connected.*/
-#ifdef VENDOR_EDIT 
+#ifdef OPPO_R819 
 //extern void tpfw_update_logo(int fw_num);
 //extern int is_lcd_on(void);
 #endif
@@ -1638,13 +1638,13 @@ static int synaptics_ts_probe(struct i2c_client *client, const struct i2c_device
 	TPDTM_DMESG("synaptics_ts_probe: enter !\n");
 	tp_dev = TP_JDI;
 	//get_id();
-		#ifdef VENDOR_EDIT
+		#ifdef OPPO_R819
 	//Fuchun.Liao add
 	mt_set_gpio_mode(140, 0);
     mt_set_gpio_dir(140, 1);
     mt_set_gpio_out(140, 1);
 	mdelay(15);
-	#endif /*VENDOR_EDIT*/
+	#endif /*OPPO_R819*/
 	
 	struct 	hrtimer 	*release_timer;
 	release_timer= kzalloc(sizeof(*release_timer), GFP_KERNEL);
@@ -1710,7 +1710,7 @@ static int synaptics_ts_probe(struct i2c_client *client, const struct i2c_device
 	printk("The TP FW_ID = 0x%x\n", FW_ID);
 
 /*zhangqiang add for TP FW don't UPdate when Lcd is not connected.*/
-#ifdef VENDOR_EDIT 
+#ifdef OPPO_R819 
 //	tp_fw_update_when_LCD_on = is_lcd_on();
 
 	//if(tp_fw_update_when_LCD_on == 1)
@@ -1788,7 +1788,7 @@ if(boot_mode == NORMAL_BOOT)
 }
 #if 0
 /*zhangqiang add for TP FW don't UPdate when Lcd is not connected.*/
-#ifdef VENDOR_EDIT 
+#ifdef OPPO_R819 
 		if(tp_fw_update_when_LCD_on == 1)
 #endif			
 		{
@@ -1830,13 +1830,13 @@ if(boot_mode == NORMAL_BOOT)
 	input_set_abs_params(ts->input_dev, ABS_MT_POSITION_Y, 0, max_y, 0, 0);
 	//input_set_abs_params(ts->input_dev, ABS_MT_POSITION_Y, 0, 1489, 0, 0);
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 	set_bit(BTN_TOUCH, ts->input_dev->keybit);
 	set_bit(KEY_SEARCH, ts->input_dev->keybit);
 	set_bit(KEY_MENU, ts->input_dev->keybit);
 	set_bit(KEY_HOME, ts->input_dev->keybit);
 	set_bit(KEY_BACK, ts->input_dev->keybit);
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
 	input_set_drvdata(ts->input_dev, ts);
 	
@@ -1889,12 +1889,12 @@ if(boot_mode == NORMAL_BOOT)
 #endif
 
 /*zhangqiang add for TP virtual key.*/
-#ifdef VENDOR_EDIT 
+#ifdef OPPO_R819 
 	//synaptics_virtual_keys_init(ts);
 #endif
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 	ts->early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1;
 #else
 	ts->early_suspend.level = EARLY_SUSPEND_LEVEL_DISABLE_FB - 1;
@@ -1940,7 +1940,7 @@ err_input_dev_alloc_failed:
 err_alloc_data_failed:
 err_check_functionality_failed:
 	
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 	tpd_power(0);
 #endif
 
@@ -2004,13 +2004,13 @@ static int synaptics_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 		TPDTM_DMESG("synaptics_ts_suspend: control tm1400 to sleep failed\n");
 		goto err;
 	}
-	 #ifdef VENDOR_EDIT 
+	 #ifdef OPPO_R819 
 	 //Fuchun.Liao@wxkfDrv,2013/03/07,set TP_RESET low to reduce sleep current
 	 mt_set_gpio_mode(140, 0);
      mt_set_gpio_dir(140, 1);
 	 mt_set_gpio_out(140, 0);
 	 mdelay(2);
-    #endif /*VENDOR_EDIT*/
+    #endif /*OPPO_R819*/
 	tpd_power(0);
 	up(&work_sem);
 	return 0;
@@ -2028,13 +2028,13 @@ static int synaptics_ts_resume(struct i2c_client *client)
 	struct synaptics_ts_data *ts = i2c_get_clientdata(client);
 
 	printk("============================ TP resume is called\n");
-  #ifdef VENDOR_EDIT
+  #ifdef OPPO_R819
 	//Fuchun.Liao add
 	mt_set_gpio_mode(140, 0);
     mt_set_gpio_dir(140, 1);
     mt_set_gpio_out(140, 1);
 	mdelay(10);
-	#endif /*VENDOR_EDIT*/	
+	#endif /*OPPO_R819*/	
 	tpd_power(1);
 	
 	Disable_key_during_touch = 0;

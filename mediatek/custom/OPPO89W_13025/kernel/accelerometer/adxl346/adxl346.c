@@ -62,7 +62,7 @@
 #define ADXL346_DEV_NAME        "ADXL346"
 /*----------------------------------------------------------------------------*/
 static const struct i2c_device_id adxl346_i2c_id[] = {{ADXL346_DEV_NAME,0},{}};
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 static struct i2c_board_info __initdata i2c_adxl346={ I2C_BOARD_INFO(ADXL346_DEV_NAME, 0x53)};
 #else
 static struct i2c_board_info __initdata i2c_adxl346={ I2C_BOARD_INFO(ADXL346_DEV_NAME, 0x1D>>1)};//set any but same as other i2c devices.
@@ -79,14 +79,14 @@ static int adxl346_i2c_remove(struct i2c_client *client);
 static int adxl346_suspend(struct i2c_client *client, pm_message_t msg) ;
 static int adxl346_resume(struct i2c_client *client);
 
-#ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/6/7 for sensor debug
+#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/6/7 for sensor debug
 static int calculate_gsensor_cali_data(struct i2c_client *client, s16 data[3]);
 #if  0
 		#define GSEN_DBG(x...) printk("adxl346.c : "x)
 #else
 		#define GSEN_DBG(x...) 
 #endif 
-#endif /* VENDOR_EDIT*/
+#endif /* OPPO_R819*/
 
 /*----------------------------------------------------------------------------*/
 typedef enum {
@@ -142,9 +142,9 @@ struct adxl346_i2c_data {
 #if defined(CONFIG_HAS_EARLYSUSPEND)
     struct early_suspend    early_drv;
 #endif   
-#ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor. add 2012/6/8 for gsensor power off
+#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor. add 2012/6/8 for gsensor power off
    atomic_t		    enable_before_resume;
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 };
 /*----------------------------------------------------------------------------*/
@@ -200,7 +200,7 @@ static struct acc_hw* get_cust_acc_hw(void)
     return get_cust_acc_hw_adxl346();
 }
 
-#ifdef VENDOR_EDIT//Shaoyu.Huang@BadicDrv.Sensor, add 2012/6/4 for sensor debuging
+#ifdef OPPO_R819//Shaoyu.Huang@BadicDrv.Sensor, add 2012/6/4 for sensor debuging
 /*----------------------------------------------------------------------------*/
 static debugflag = 0;
 static ssize_t debugflag_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
@@ -241,7 +241,7 @@ static struct file_operations debug_fops = {
 	.read = debugflag_read,
 	.write = debugflag_write,
 };
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 
 
@@ -250,7 +250,7 @@ static struct file_operations debug_fops = {
 static void ADXL346_power(struct acc_hw *hw, unsigned int on) 
 {
 	static unsigned int power_on = 0;
-#ifndef VENDOR_EDIT//Shaoyu.Huang@Prd.BasicDrv.Sensor, modify 2012/5/23 for gsensor power
+#ifndef OPPO_R819//Shaoyu.Huang@Prd.BasicDrv.Sensor, modify 2012/5/23 for gsensor power
 	if(hw->power_id != POWER_NONE_MACRO)		// have externel LDO
 	{        
 		GSE_LOG("power %s\n", on ? "on" : "off");
@@ -274,7 +274,7 @@ static void ADXL346_power(struct acc_hw *hw, unsigned int on)
 		}
 	}
 	power_on = on;    
-#else/*VENDOR_EDIT*/
+#else/*OPPO_R819*/
 	hw->power(hw, on, NULL);
 #endif
 }
@@ -432,7 +432,7 @@ static int ADXL346_ReadCalibration(struct i2c_client *client, int dat[ADXL346_AX
     }    
     
     mul = obj->reso->sensitivity/adxl346_offset_resolution.sensitivity;
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
     dat[obj->cvt.map[ADXL346_AXIS_X]] = obj->cvt.sign[ADXL346_AXIS_X]*(obj->offset[ADXL346_AXIS_X]*mul + obj->cali_sw[ADXL346_AXIS_X]);
     dat[obj->cvt.map[ADXL346_AXIS_Y]] = obj->cvt.sign[ADXL346_AXIS_Y]*(obj->offset[ADXL346_AXIS_Y]*mul + obj->cali_sw[ADXL346_AXIS_Y]);
     dat[obj->cvt.map[ADXL346_AXIS_Z]] = obj->cvt.sign[ADXL346_AXIS_Z]*(obj->offset[ADXL346_AXIS_Z]*mul + obj->cali_sw[ADXL346_AXIS_Z]);                        
@@ -478,7 +478,7 @@ static int ADXL346_WriteCalibration(struct i2c_client *client, int dat[ADXL346_A
 	int lsb = adxl346_offset_resolution.sensitivity;
 	int divisor = obj->reso->sensitivity/lsb;
 
-#ifndef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/3/3 for calibrate gsensor	
+#ifndef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/3/3 for calibrate gsensor	
 	if((err = ADXL346_ReadCalibrationEx(client, cali, raw)))	/*offset will be updated in obj->offset*/
 	{ 
 		GSE_ERR("read offset fail, %d\n", err);
@@ -601,9 +601,9 @@ static int ADXL346_SetPowerMode(struct i2c_client *client, bool enable)
 	databuf[1] = databuf[0];
 	databuf[0] = ADXL346_REG_POWER_CTL;
 
-#ifdef VENDOR_EDIT  //mingqiang.guo@Prd.BasicDrv.Sensor , 2012/06/05, add for debug power mod 
+#ifdef OPPO_R819  //mingqiang.guo@Prd.BasicDrv.Sensor , 2012/06/05, add for debug power mod 
 	GSEN_DBG("set power mode 0x%x\n",databuf[1]);
-#endif  /*VENDOR_EDIT*/	
+#endif  /*OPPO_R819*/	
 
 	res = i2c_master_send(client, databuf, 0x2);
 
@@ -652,9 +652,9 @@ static int ADXL346_SetBWRate(struct i2c_client *client, u8 bwrate)
 	databuf[0] = ADXL346_REG_BW_RATE;    
 	databuf[1] = bwrate;
 
- #ifdef VENDOR_EDIT //mingqiang.guo@Prd.BasicDrv.Sensor , 2012/06/05, Add for debug rate and power mode
+ #ifdef OPPO_R819 //mingqiang.guo@Prd.BasicDrv.Sensor , 2012/06/05, Add for debug rate and power mode
 	GSEN_DBG("set BWrate 0x%x\n",databuf[1]);
- #endif /*VENDOR_EDIT*/
+ #endif /*OPPO_R819*/
  
 	res = i2c_master_send(client, databuf, 0x2);
 
@@ -826,11 +826,11 @@ static int ADXL346_ReadSensorData(struct i2c_client *client, char *buf, int bufs
 	}
 	else
 	{
-		#ifndef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/7/3 del for calibrate gsensor
+		#ifndef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/7/3 del for calibrate gsensor
 		obj->data[ADXL346_AXIS_X] += obj->cali_sw[ADXL346_AXIS_X];
 		obj->data[ADXL346_AXIS_Y] += obj->cali_sw[ADXL346_AXIS_Y];
 		obj->data[ADXL346_AXIS_Z] += obj->cali_sw[ADXL346_AXIS_Z];
-		#endif /*VENDOR_EDIT*/
+		#endif /*OPPO_R819*/
 		
 		/*remap coordinate*/
 		acc[obj->cvt.map[ADXL346_AXIS_X]] = obj->cvt.sign[ADXL346_AXIS_X]*obj->data[ADXL346_AXIS_X];
@@ -844,7 +844,7 @@ static int ADXL346_ReadSensorData(struct i2c_client *client, char *buf, int bufs
 		acc[ADXL346_AXIS_Y] = acc[ADXL346_AXIS_Y] * GRAVITY_EARTH_1000 / obj->reso->sensitivity;
 		acc[ADXL346_AXIS_Z] = acc[ADXL346_AXIS_Z] * GRAVITY_EARTH_1000 / obj->reso->sensitivity;		
 
-		#ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/7/3 del for calibrate gsensor
+		#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/7/3 del for calibrate gsensor
 
 			if( strcmp(buf,"calibration gsensor") ) 
 			//when user calibrat gsensor, need original data from adxl346 ,can not add cali_sw data 
@@ -853,7 +853,7 @@ static int ADXL346_ReadSensorData(struct i2c_client *client, char *buf, int bufs
 				acc[ADXL346_AXIS_Y] += obj->cali_sw[ADXL346_AXIS_Y];
 				acc[ADXL346_AXIS_Z] += obj->cali_sw[ADXL346_AXIS_Z];
 			}
-		#endif /*VENDOR_EDIT*/		
+		#endif /*OPPO_R819*/		
 
 		sprintf(buf, "%04x %04x %04x", acc[ADXL346_AXIS_X], acc[ADXL346_AXIS_Y], acc[ADXL346_AXIS_Z]);
 
@@ -1028,7 +1028,7 @@ static ssize_t show_cali_value(struct device_driver *ddri, char *buf)
 	}
 	else
 	{  
-		#ifndef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/7/3 del for calibrate gsensor
+		#ifndef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/7/3 del for calibrate gsensor
 		mul = obj->reso->sensitivity/adxl346_offset_resolution.sensitivity;
 		len += snprintf(buf+len, PAGE_SIZE-len, "[HW ][%d] (%+3d, %+3d, %+3d) : (0x%02X, 0x%02X, 0x%02X)\n", mul,                        
 			obj->offset[ADXL346_AXIS_X], obj->offset[ADXL346_AXIS_Y], obj->offset[ADXL346_AXIS_Z],
@@ -1045,7 +1045,7 @@ static ssize_t show_cali_value(struct device_driver *ddri, char *buf)
 			calculate_gsensor_cali_data(client,&(obj->cali_sw) );
 		    printk("calibrate data: (%d %d %d) \n",
                  obj->cali_sw[ADXL346_AXIS_X], obj->cali_sw[ADXL346_AXIS_Y], obj->cali_sw[ADXL346_AXIS_Z]) ;
-		#endif /*VENDOR_EDIT*/
+		#endif /*OPPO_R819*/
 		
 		return len;
     }
@@ -1381,7 +1381,7 @@ static ssize_t show_power_status_value(struct device_driver *ddri, char *buf)
 	return relv;
 }
 
-#ifdef VENDOR_EDIT//LiuPing@Prd.BasicDrv.Sensor,  2012/12/04 add for debug gsensor direction
+#ifdef OPPO_R819//LiuPing@Prd.BasicDrv.Sensor,  2012/12/04 add for debug gsensor direction
 /*----------------------------------------------------------------------------*/
 static ssize_t store_direction_value(struct device_driver *ddri, char *buf, size_t count)
 {
@@ -1423,7 +1423,7 @@ static ssize_t show_direction_value(struct device_driver *ddri, char *buf, size_
 	
 	return res;      
 }
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 
 
 /*----------------------------------------------------------------------------*/
@@ -1436,9 +1436,9 @@ static DRIVER_ATTR(firlen,     S_IWUSR | S_IRUGO, show_firlen_value,        stor
 static DRIVER_ATTR(trace,      S_IWUSR | S_IRUGO, show_trace_value,         store_trace_value);
 static DRIVER_ATTR(status,               S_IRUGO, show_status_value,        NULL);
 static DRIVER_ATTR(powerstatus,          S_IRUGO, show_power_status_value,        NULL);
-#ifdef VENDOR_EDIT//LiuPing@Prd.BasicDrv.Sensor,  2012/12/04 add for debug gsensor direction
+#ifdef OPPO_R819//LiuPing@Prd.BasicDrv.Sensor,  2012/12/04 add for debug gsensor direction
 static DRIVER_ATTR(direction,      S_IWUSR | S_IRUGO, show_direction_value,  store_direction_value);
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 
 
 /*----------------------------------------------------------------------------*/
@@ -1452,9 +1452,9 @@ static struct driver_attribute *adxl346_attr_list[] = {
 	&driver_attr_trace,        /*trace log*/
 	&driver_attr_status,        
 	&driver_attr_powerstatus,   
-#ifdef VENDOR_EDIT//LiuPing@Prd.BasicDrv.Sensor,  2012/12/04 add for debug gsensor direction
+#ifdef OPPO_R819//LiuPing@Prd.BasicDrv.Sensor,  2012/12/04 add for debug gsensor direction
         &driver_attr_direction,
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 
 };
 /*----------------------------------------------------------------------------*/
@@ -1508,7 +1508,7 @@ static int gsensor_operate(void* self, uint32_t command, void* buff_in, int size
 	hwm_sensor_data* gsensor_data;
 	char buff[ADXL346_BUFSIZE];
 
-#ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor. 2012/6/8, add for gsensor power off
+#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor. 2012/6/8, add for gsensor power off
 
 	if (atomic_read(&priv->suspend))
 	{
@@ -1524,7 +1524,7 @@ static int gsensor_operate(void* self, uint32_t command, void* buff_in, int size
 		return 0;
 	}
 
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 	
 	//GSE_FUN(f);
 	switch (command)
@@ -1609,10 +1609,10 @@ static int gsensor_operate(void* self, uint32_t command, void* buff_in, int size
 					   &gsensor_data->values[1], &gsensor_data->values[2]);				
 				   gsensor_data->status = SENSOR_STATUS_ACCURACY_MEDIUM;				
 				   gsensor_data->value_divide = 1000;
-				#ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/7/23 for sensor debugflag
+				#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/7/23 for sensor debugflag
 				GSEN_DBG("[Gsensor]:x= %d, y = %d, z = %d\n",
 				     gsensor_data->values[0],gsensor_data->values[1],gsensor_data->values[2]);
-				#endif/*VENDOR_EDIT*/
+				#endif/*OPPO_R819*/
 				}
 			}
 			break;
@@ -1625,7 +1625,7 @@ static int gsensor_operate(void* self, uint32_t command, void* buff_in, int size
 	return err;
 }
 
-#ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/7/23 for user calibrate gsensor
+#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/7/23 for user calibrate gsensor
 static int calculate_gsensor_cali_data(struct i2c_client *client, s16 data[3])
 {
 	u8 i = 0;
@@ -1676,7 +1676,7 @@ static int calculate_gsensor_cali_data(struct i2c_client *client, s16 data[3])
 			obj->cali_sw[0], obj->cali_sw[1], obj->cali_sw[2]);	
 	return 0;	
 }
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 
 /****************************************************************************** 
@@ -1816,7 +1816,7 @@ static long adxl346_unlocked_ioctl(struct file *file, unsigned int cmd,
 			}
 			else
 			{
-			#ifndef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/3/3 for calibrate gsensor
+			#ifndef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/3/3 for calibrate gsensor
 				cali[ADXL346_AXIS_X] = sensor_data.x * obj->reso->sensitivity / GRAVITY_EARTH_1000;
 				cali[ADXL346_AXIS_Y] = sensor_data.y * obj->reso->sensitivity / GRAVITY_EARTH_1000;
 				cali[ADXL346_AXIS_Z] = sensor_data.z * obj->reso->sensitivity / GRAVITY_EARTH_1000;		
@@ -1824,7 +1824,7 @@ static long adxl346_unlocked_ioctl(struct file *file, unsigned int cmd,
 				cali[ADXL346_AXIS_X] = sensor_data.x ;
 				cali[ADXL346_AXIS_Y] = sensor_data.y ;
 				cali[ADXL346_AXIS_Z] = sensor_data.z ;	
-			#endif /*VENDOR_EDIT*/			
+			#endif /*OPPO_R819*/			
 				err = ADXL346_WriteCalibration(client, cali);			 
 			}
 			break;
@@ -1844,7 +1844,7 @@ static long adxl346_unlocked_ioctl(struct file *file, unsigned int cmd,
 			{
 				break;
 			}
-		#ifndef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/3/3 for calibrate gsensor			
+		#ifndef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/3/3 for calibrate gsensor			
 			sensor_data.x = cali[ADXL346_AXIS_X] * GRAVITY_EARTH_1000 / obj->reso->sensitivity;
 			sensor_data.y = cali[ADXL346_AXIS_Y] * GRAVITY_EARTH_1000 / obj->reso->sensitivity;
 			sensor_data.z = cali[ADXL346_AXIS_Z] * GRAVITY_EARTH_1000 / obj->reso->sensitivity;
@@ -1852,14 +1852,14 @@ static long adxl346_unlocked_ioctl(struct file *file, unsigned int cmd,
 			sensor_data.x = cali[ADXL346_AXIS_X];
 			sensor_data.y = cali[ADXL346_AXIS_Y];
 			sensor_data.z = cali[ADXL346_AXIS_Z];	
-		#endif /*VENDOR_EDIT*/
+		#endif /*OPPO_R819*/
 			if(copy_to_user(data, &sensor_data, sizeof(sensor_data)))
 			{
 				err = -EFAULT;
 				break;
 			}		
 			break;
-	#ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/7/23 for user calibrate gsensor
+	#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/7/23 for user calibrate gsensor
 		case GSENSOR_IOCTL_USER_CALI:
 			{
 				int buf[3];
@@ -1872,7 +1872,7 @@ static long adxl346_unlocked_ioctl(struct file *file, unsigned int cmd,
 				copy_to_user(data, &buf, 3 * sizeof(int));
 			}
 		break;
-	#endif /*VENDOR_EDIT*/
+	#endif /*OPPO_R819*/
 		
 
 		default:
@@ -2004,12 +2004,12 @@ static void adxl346_late_resume(struct early_suspend *h)
 	need_power = false;
 	printk("%s  power on, not resume ss=%d,power=%d\n",__func__,sensor_suspend,need_power);
 	ADXL346_power(obj->hw, 1);
-    #ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor. add 2012/10/16 for gsensor wakeup error
+    #ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor. add 2012/10/16 for gsensor wakeup error
         msleep(10);
-    #endif/*VENDOR_EDIT*/
+    #endif/*OPPO_R819*/
 	if((err = adxl346_init_client(obj->client, 0)))
 	{
-	    #ifdef VENDOR_EDIT
+	    #ifdef OPPO_R819
 	    //zhanhua.li@Prd.Basic_Drv.Sensor. 2013/04/06, resume fail,try again
 	    GSE_ERR("initialize client again!!\n");
 	    ADXL346_power(obj->hw, 0);
@@ -2023,14 +2023,14 @@ static void adxl346_late_resume(struct early_suspend *h)
 		#endif 
 	}
 	atomic_set(&obj->suspend, 0);   
-#ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor. add 2012/6/8 for gsensor power off
+#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor. add 2012/6/8 for gsensor power off
 
 	if (atomic_read(&obj->enable_before_resume))
 	{
 		ADXL346_SetPowerMode(obj->client, false);
 		atomic_set(&obj->enable_before_resume, 0);
 	}
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 }
 /*----------------------------------------------------------------------------*/
@@ -2071,7 +2071,7 @@ static int adxl346_i2c_probe(struct i2c_client *client, const struct i2c_device_
 		goto exit;
 	}
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //LiuPing@Prd.BasicDrv.Sensor, add 2012/12/03 ,because of the same i2c addr as mma8453q,set other addr to register driver successful.
 	client->addr = 0x1D;   //after register driver, modify i2c addr.
 #endif
@@ -2103,7 +2103,7 @@ static int adxl346_i2c_probe(struct i2c_client *client, const struct i2c_device_
 
 	adxl346_i2c_client = new_client;	
 
-  #ifndef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, 2012/8/16 modify for gsensor init error
+  #ifndef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, 2012/8/16 modify for gsensor init error
 	if((err = adxl346_init_client(new_client, 1)))
 	{
 		goto exit_init_failed;
@@ -2121,7 +2121,7 @@ static int adxl346_i2c_probe(struct i2c_client *client, const struct i2c_device_
 		   goto exit_init_failed;
 	}
 	}
-  #endif /* VENDOR_EDIT*/
+  #endif /* OPPO_R819*/
 
 	if((err = misc_register(&adxl346_device)))
 	{
@@ -2150,9 +2150,9 @@ static int adxl346_i2c_probe(struct i2c_client *client, const struct i2c_device_
 	obj->early_drv.resume   = adxl346_late_resume,    
 	register_early_suspend(&obj->early_drv);
 #endif 
-#ifndef VENDOR_EDIT//Shaoyu.Huang@Prd.BasicDrv.Sensor, add 2012/6/4 for sensor debuging
+#ifndef OPPO_R819//Shaoyu.Huang@Prd.BasicDrv.Sensor, add 2012/6/4 for sensor debuging
 	hwmsen_make_debug_flag(&debug_fops, "adxl346_gsensor");
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 	printk("%s: OK\n", __func__);    
 	return 0;
@@ -2223,11 +2223,11 @@ static struct platform_driver adxl346_gsensor_driver = {
 	.probe      = adxl346_probe,
 	.remove     = adxl346_remove,    
 	.driver     = {
-		#ifndef VENDOR_EDIT//LiuPing@Prd.BasicDrv.Sensor, add 2012/11/23 for muti gsensor
+		#ifndef OPPO_R819//LiuPing@Prd.BasicDrv.Sensor, add 2012/11/23 for muti gsensor
 		.name  = "gsensor",
 		#else
 		.name  = "gsensor_adxl346",
-		#endif /*VENDOR_EDIT*/	
+		#endif /*OPPO_R819*/	
 //		.owner = THIS_MODULE,
 	}
 };
@@ -2236,7 +2236,7 @@ static struct platform_driver adxl346_gsensor_driver = {
 static int __init adxl346_init(void)
 {
 	GSE_FUN();
-	#ifndef VENDOR_EDIT
+	#ifndef OPPO_R819
 	struct acc_hw *hw = get_cust_acc_hw();
 	GSE_LOG("%s: i2c_number=%d\n", __func__,hw->i2c_num); 
 	i2c_register_board_info(hw->i2c_num, &i2c_adxl346, 1);

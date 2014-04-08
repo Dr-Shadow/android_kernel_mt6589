@@ -244,7 +244,7 @@ static DECLARE_WAIT_QUEUE_HEAD(ps_adjust_head);
 static struct hrtimer report_timer;
 static unsigned int timer_count = 0;
 #endif
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 /*relate to stk3171 als*/
 static unsigned int level_count = 0;
 static unsigned int intensity_level = 0;
@@ -268,7 +268,7 @@ static unsigned int ps_invalid_flags = 0;
 /********end********/
 
 
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 /*************************************************/
 static s32 atoi(char *psz_buf)
 {
@@ -441,7 +441,7 @@ static struct file_operations ps_switch_fops = {
 	.write = set_ps_switch,
 };
 /*----------------------------------------------*/
-#ifdef VENDOR_EDIT//Shaoyu.Huang@BadicDrv.Sensor, add 2012/6/4 for sensor debuging
+#ifdef OPPO_R819//Shaoyu.Huang@BadicDrv.Sensor, add 2012/6/4 for sensor debuging
 /*----------------------------------------------------------------------------*/
 static int alsps_dbg_flag = 1;
 static ssize_t debugflag_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
@@ -483,7 +483,7 @@ static struct file_operations open_alsps_log = {
 	.write = debugflag_write,
 };
 
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 
 /*----------------------------------------------------------------------------*/
 static struct i2c_driver stk3171_i2c_driver = {	
@@ -660,7 +660,7 @@ down(&ps_set_mode);
 
 	*data = (*data)*3; // add for als ratio
 	
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 	if (alsps_dbg_flag){
 		printk(APS_TAG"als = %d\n",*data);
 	}
@@ -878,7 +878,7 @@ static int stk3171_enable_ps(struct i2c_client *client, int enable)
 	int trc = atomic_read(&obj->trace);
 	hwm_sensor_data sensor_data;
 	printk("%s: enable=%d\n", __func__, enable);
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
         g_is_far = 1; //initial this parama with FAR
         g_ps_low_threshold = 0;
         g_ps_high_threshold = 255;
@@ -929,7 +929,7 @@ static int stk3171_enable_ps(struct i2c_client *client, int enable)
 	
 	if(enable)
 	{
-#ifdef VENDOR_EDIT /* 2012-6-20 zhye Add for  PS*/
+#ifdef OPPO_R819 /* 2012-6-20 zhye Add for  PS*/
 		ps_work_status = 1;
 		distance = 1;
 		prev_dist = 1;
@@ -1422,7 +1422,7 @@ static int stk3171_init_client(struct i2c_client *client)
 		return err;
 	}
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 	if (init_count < 1){
 		for (i = 0; i < 3; i++){
 			reg8[i] = i2c_smbus_read_byte_data(client, reg);
@@ -2127,7 +2127,7 @@ static long stk3171_unlocked_ioctl(struct file *file, unsigned int cmd,
 			break;
 
 		case ALSPS_GET_PS_DATA:
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 			if((err = stk3171_read_ps(obj->client, &obj->ps)))
 			{
 				goto err_out;
@@ -2152,7 +2152,7 @@ static long stk3171_unlocked_ioctl(struct file *file, unsigned int cmd,
 			break;
 
 		case ALSPS_GET_PS_RAW_DATA:
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 		down(&ps_set_mode);
 			if((err = stk3171_read_ps(obj->client, &obj->ps)))
 			{
@@ -2284,7 +2284,7 @@ static long stk3171_unlocked_ioctl(struct file *file, unsigned int cmd,
 			}              
 			break;
 /*******************************************************************/
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 	case ALSPS_SET_PS_THRESHOLD: //0x21 lycan add for 
 		
             if(copy_from_user(&set_ps_thd_para, ptr, sizeof(set_ps_thd_para)))
@@ -2747,7 +2747,7 @@ int stk3171_als_operate(void* self, uint32_t command, void* buff_in, int size_in
 }
 
 /**zhye**add**for**ps**algorithm**/
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 
 static void stk3171_set_ps_threshold(struct i2c_client *client, int low_threshold, int high_threshold)
 {
@@ -2770,7 +2770,7 @@ static void stk3171_set_ps_threshold(struct i2c_client *client, int low_threshol
 
 	databuf[0] = (u8)(low_threshold & 0x00FF);		//far_away
 	databuf[1] = (u8)(high_threshold & 0x00FF);			//close
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 	res = stk3171_write_ps_high_thd(client, databuf[1]);
 	res = stk3171_write_ps_low_thd(client, databuf[0]);
 #else
@@ -2784,7 +2784,7 @@ static void stk3171_set_ps_threshold(struct i2c_client *client, int low_threshol
 	}
 
 /*check reg 0x81 0x82 0x83 val are changed or not*/
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 	reg = 0x81;
 	for (i = 0; i < 3; i++){
 		chk[i] = i2c_smbus_read_byte_data(client, reg);
@@ -2801,7 +2801,7 @@ static void stk3171_set_ps_threshold(struct i2c_client *client, int low_threshol
 			reg += 0x01;
 		}
 	} else printk("%s  recv reg are right\n",__func__);
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 	
 	return;
 	
@@ -2810,7 +2810,7 @@ EXIT_ERR:
 	return;
 }
 /**zhye**add**end**/
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 /*----------------------------------------------------------------------------*/
 extern volatile ALSPS_DEV alsps_dev;
 static int stk3171_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
@@ -2836,7 +2836,7 @@ static int stk3171_i2c_probe(struct i2c_client *client, const struct i2c_device_
 	obj->hw = get_cust_alsps_hw();
 	stk3171_get_addr(obj->hw, &obj->addr);
 	
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 	INIT_DELAYED_WORK(&stk3171_ps_work, stk3171_ps_adjust_delayed_work);
 #endif
 	INIT_WORK(&obj->eint_work, stk3171_eint_work);
@@ -2968,14 +2968,14 @@ static int stk3171_i2c_probe(struct i2c_client *client, const struct i2c_device_
 #endif
 #endif
 
-#ifdef VENDOR_EDIT /*zhye add a interface to control register*/
+#ifdef OPPO_R819 /*zhye add a interface to control register*/
 	//wake_lock_init(&ps_lock, WAKE_LOCK_SUSPEND, "ps_wakelock");
 	hwmsen_make_debug_flag(&open_alsps_log, "open_alsps_log");
 	hwmsen_make_debug_flag(&set_prox_reg, "set_prox_reg");
 	hwmsen_make_debug_flag(&read_prox_reg, "read_prox_reg");
 	hwmsen_make_debug_flag(&ps_switch_fops,"ps_switch");
 	//hwmsen_make_debug_flag(&set_prox_thd, "set_prox_thd");
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 	alsps_dev = ALSPS_STK31XX;
 	printk("%s: OK\n", __func__);
 	return 0;

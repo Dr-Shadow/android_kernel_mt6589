@@ -37,7 +37,7 @@
  
  
 // use accdet + EINT solution
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 /* xiang.fei@MutimediaDrv.audio, 2012/06/12, Remove for headset */
 
 #define ACCDET_EINT
@@ -46,7 +46,7 @@
 #define ACCDET_DELAY_ENABLE_TIME 500 //delay 500ms to enable accdet after EINT 
 //#define ACCDET_EINT_HIGH_ACTIVE //defaule low active if not define ACCDET_EINT_HIGH_ACTIVE
 #endif
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 // support multi_key feature
 //#define ACCDET_MULTI_KEY_FEATURE
 // after 5s disable accdet
@@ -67,7 +67,7 @@ struct headset_mode_settings{
 //key press customization: long press time
 int long_press_time = 2000;
 
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 //li.zhanhua@Prd.BasicDrv.audio,2013/01/08, remove for headset
 #ifdef  ACCDET_MULTI_KEY_FEATURE
 struct headset_mode_settings cust_headset_settings = {

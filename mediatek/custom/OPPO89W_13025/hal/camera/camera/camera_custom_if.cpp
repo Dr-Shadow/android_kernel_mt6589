@@ -62,12 +62,12 @@ TO REVISE OR REPLACE THE MEDIATEK SOFTWARE AT ISSUE, OR REFUND ANY SOFTWARE LICE
 #include <stdio.h>
 #include "camera_custom_if.h"
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //LiuBin@MtkCamera, 2013/03/21, Add for oppo define exif info
 #include <cutils/properties.h>
 #include <cutils/log.h>
 #define LOG_TAG "CAM_CUSTOM_CONFIG" 
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
 namespace NSCamCustom
 {
@@ -79,7 +79,7 @@ namespace NSCamCustom
 /*******************************************************************************
 * custom exif
 *******************************************************************************/
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 //#define EN_CUSTOM_EXIF_INFO
 MINT32 custom_SetExif(void **ppCustomExifTag)
 {
@@ -96,7 +96,7 @@ static customExifInfo_t exifTag = {CUSTOM_EXIF_STRING_MAKE,CUSTOM_EXIF_STRING_MO
     return -1;
 #endif
 }
-#else /* VENDOR_EDIT */
+#else /* OPPO_R819 */
 //LiuBin@MtkCamera, 2013/03/21, Add for oppo define exif info
 #define EN_CUSTOM_EXIF_INFO
 MINT32 custom_SetExif(void **ppCustomExifTag)
@@ -125,7 +125,7 @@ MINT32 custom_SetExif(void **ppCustomExifTag)
 	    return -1;
 #endif
 }
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
 //
 customExif_t const&

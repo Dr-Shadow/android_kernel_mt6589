@@ -528,7 +528,7 @@ typedef struct
     /* common parameters */
     unsigned int width;
     unsigned int height;
-    #ifdef VENDOR_EDIT
+    #ifdef OPPO_R819
 	//yongjun.wu@ProDrv.BL, 2012/12/18, Add for cst must need this value
 	unsigned int hw_width;
 	unsigned int hw_height;

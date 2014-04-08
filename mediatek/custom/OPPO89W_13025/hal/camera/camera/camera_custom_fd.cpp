@@ -64,12 +64,12 @@ TO REVISE OR REPLACE THE MEDIATEK SOFTWARE AT ISSUE, OR REFUND ANY SOFTWARE LICE
 void get_fd_CustomizeData(FD_Customize_PARA  *FDDataOut)
 {    
     FDDataOut->FDThreadNum = 2;
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 //ZhangZhengrong@MtkCamera, 2013/03/22, modify for fd erroneous judgement
     FDDataOut->FDThreshold = 32;
 #else
     FDDataOut->FDThreshold = 35;
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
     FDDataOut->MajorFaceDecision = 1;
     FDDataOut->OTRatio = 1088;
     FDDataOut->SmoothLevel = 1;

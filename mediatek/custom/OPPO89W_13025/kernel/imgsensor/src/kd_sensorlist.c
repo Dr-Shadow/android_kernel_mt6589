@@ -186,11 +186,11 @@ static BOOL g_bEnableDriver[KDIMGSENSOR_MAX_INVOKE_DRIVERS] = {FALSE,FALSE};
 static CAMERA_DUAL_CAMERA_SENSOR_ENUM g_invokeSocketIdx[KDIMGSENSOR_MAX_INVOKE_DRIVERS] = {DUAL_CAMERA_NONE_SENSOR,DUAL_CAMERA_NONE_SENSOR};
 static char g_invokeSensorNameStr[KDIMGSENSOR_MAX_INVOKE_DRIVERS][32] = {KDIMGSENSOR_NOSENSOR,KDIMGSENSOR_NOSENSOR};
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //LiuBin@MtkCamera, 2013/02/02, Add for I2C DMA transfer
 static u8 *g_pI2CDMAVirtualAddr = NULL;
 static u32 g_uI2CDMAPhysicalAddr = 0;
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
 /*=============================================================================
 
@@ -563,7 +563,7 @@ int iWriteRegI2C(u8 *a_pSendData , u16 a_sizeSendData, u16 i2cId)
 {
     int  i4RetValue = 0;
     int retry = 3;
-    #ifdef VENDOR_EDIT
+    #ifdef OPPO_R819
 	//lanhe@MTKcamera modify for rong cuo chu li
 	int ret = 0;
 	#endif
@@ -601,14 +601,14 @@ int iWriteRegI2C(u8 *a_pSendData , u16 a_sizeSendData, u16 i2cId)
 		}
 		
         if (i4RetValue != a_sizeSendData) {
-            #ifdef VENDOR_EDIT
+            #ifdef OPPO_R819
 			//lanhe@MTKcamera modify for rong cuo chu li
 			ret = 1;
             #endif
             PK_DBG("[CAMERA SENSOR] I2C send failed!!, Addr = 0x%x, Data = 0x%x \n", a_pSendData[0], a_pSendData[1] );
         }
         else {
-            #ifdef VENDOR_EDIT
+            #ifdef OPPO_R819
 			//lanhe@MTKcamera modify for rong cuo chu li
 			ret = 0;
             #endif
@@ -619,12 +619,12 @@ int iWriteRegI2C(u8 *a_pSendData , u16 a_sizeSendData, u16 i2cId)
     //KD_IMGSENSOR_PROFILE("iWriteRegI2C");
     
     g_pstI2Cclient->ext_flag = 0;
-	#ifndef VENDOR_EDIT
+	#ifndef OPPO_R819
 	//lanhe@MTKcamera modify for rong cuo chu li
     return 0;
-	#else /*VENDOR_EDIT*/
+	#else /*OPPO_R819*/
 	return ret;
-	#endif /*VENDOR_EDIT*/
+	#endif /*OPPO_R819*/
 }
 
 /*******************************************************************************
@@ -914,7 +914,7 @@ MULTI_SENSOR_FUNCTION_STRUCT  kd_MultiSensorFunc =
     kd_MultiSensorClose
 };
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //LiuBin@MtkCamera, 2013/02/20, Add for set ISP debug flag 
 #ifdef OPPO_EXT_ISP_MS2R
 int kdSetDebugFlag(void *pDebugInfo)
@@ -930,7 +930,7 @@ int kdSetDebugFlag(void *pDebugInfo)
 	}
 }
 #endif
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
 /*******************************************************************************
 * kdModulePowerOn
@@ -1404,14 +1404,14 @@ inline static int  adopt_CAMERA_HW_FeatureControl(void *pBuf)
 
     if(SENSOR_FEATURE_SINGLE_FOCUS_MODE == pFeatureCtrl->FeatureId || SENSOR_FEATURE_CANCEL_AF == pFeatureCtrl->FeatureId
 		|| SENSOR_FEATURE_CONSTANT_AF == pFeatureCtrl->FeatureId 
-		#ifdef VENDOR_EDIT    
+		#ifdef OPPO_R819    
 		#ifdef QUICK_CAPTURE	  
 		//lanhe@MTKCamera,2013/03/14 ,add for silent preview sensor		
 		|| SENSOR_FEATURE_SILNET_PREVIEW == pFeatureCtrl->FeatureId		
 		#endif /*QUICK_CAPTURE*/
 		//LiuBin@MtkCamera, 2013/04/23, Add for set isp to capture
 		|| SENSOR_FEATURE_SET_ISP_CAPTURE == pFeatureCtrl->FeatureId
-		#endif /*VENDOR_EDIT*/
+		#endif /*OPPO_R819*/
 		) {//YUV AF_init and AF_constent and AF_single has no params
     }
     else
@@ -1466,10 +1466,10 @@ inline static int  adopt_CAMERA_HW_FeatureControl(void *pBuf)
 		case SENSOR_FEATURE_GET_DELAY_INFO:
 		case SENSOR_FEATURE_SET_MAX_FRAME_RATE_BY_SCENARIO:
 		case SENSOR_FEATURE_GET_DEFAULT_FRAME_RATE_BY_SCENARIO:
-		#ifdef VENDOR_EDIT
+		#ifdef OPPO_R819
 		//LiuBin@MtkCamera, 2013/03/12, Add for set isp flash mode
 		case SENSOR_FEATURE_SET_FLASHLIGHT:
-		#endif /* VENDOR_EDIT */
+		#endif /* OPPO_R819 */
             //
             if(copy_from_user((void*)pFeaturePara , (void *) pFeatureCtrl->pFeaturePara, FeatureParaLen)) {
                 kfree(pFeaturePara);
@@ -1541,7 +1541,7 @@ inline static int  adopt_CAMERA_HW_FeatureControl(void *pBuf)
             pSensorGroupInfo->GroupNamePtr = kernelGroupNamePtr;
             break;
 		
-        #ifdef VENDOR_EDIT
+        #ifdef OPPO_R819
         #ifdef QUICK_CAPTURE
 	    //lanhe@MTKCamera,2013/03/14 ,add for silent preview sensor
 		case SENSOR_FEATURE_SILNET_PREVIEW:
@@ -1552,7 +1552,7 @@ inline static int  adopt_CAMERA_HW_FeatureControl(void *pBuf)
 		case SENSOR_FEATURE_SET_ISP_CAPTURE:
 			PK_DBG("SENSOR_FEATURE_SET_ISP_CAPTURE \r\n");
 			break;
-		#endif /*VENDOR_EDIT*/
+		#endif /*OPPO_R819*/
         //copy to user
         case SENSOR_FEATURE_GET_RESOLUTION:
         case SENSOR_FEATURE_GET_PERIOD:
@@ -1615,7 +1615,7 @@ inline static int  adopt_CAMERA_HW_FeatureControl(void *pBuf)
         case SENSOR_FEATURE_GET_AE_MAX_NUM_METERING_AREAS:
         case SENSOR_FEATURE_CHECK_SENSOR_ID:
 		case SENSOR_FEATURE_GET_DEFAULT_FRAME_RATE_BY_SCENARIO:
-		#ifdef VENDOR_EDIT
+		#ifdef OPPO_R819
 		//LiuBin@MtkCamera, 2013/03/07, Add for isp flash capture sync
 		case SENSOR_FEATURE_GET_ISP_STATUS:
 		//feng.hu@mtk camera team modified for ms2r continuous af
@@ -1626,7 +1626,7 @@ inline static int  adopt_CAMERA_HW_FeatureControl(void *pBuf)
 		case SENSOR_FEATURE_GET_WB:
 		case SENSOR_FEATURE_GET_AE_GAIN_SHUTTER:
 		case SENSOR_FEATURE_GET_AF_POSITION:
-		#endif /* VENDOR_EDIT */
+		#endif /* OPPO_R819 */
             //
             if(copy_to_user((void __user *) pFeatureCtrl->pFeaturePara, (void*)pFeaturePara , FeatureParaLen)) {
                 kfree(pFeaturePara);
@@ -1775,14 +1775,14 @@ static long CAMERA_HW_Ioctl(
         case KDIMGSENSORIOC_X_RELEASE_I2C_TRIGGER_LOCK:
             i4RetValue = kdReleaseI2CTriggerLock();
             break;
-		#ifdef VENDOR_EDIT
+		#ifdef OPPO_R819
 		//LiuBin@MtkCamera, 2013/02/20, Add for set ISP debug flag 
 		#ifdef OPPO_EXT_ISP_MS2R
 		case KDIMGSENSORIOC_X_SET_ISP_DEBUG_FLAG:
 			i4RetValue = kdSetDebugFlag(pBuff);
 			break;
 		#endif
-		#endif /* VENDOR_EDIT */
+		#endif /* OPPO_R819 */
     	default :
     		PK_DBG("No such command \n");
     		i4RetValue = -EPERM;
@@ -1957,15 +1957,15 @@ static int CAMERA_HW_i2c_probe(struct i2c_client *client, const struct i2c_devic
     spin_lock(&kdsensor_drv_lock);
     g_pstI2Cclient = client;
     //set I2C clock rate
-    #ifndef VENDOR_EDIT
+    #ifndef OPPO_R819
 	//LiuBin@MtkCamera, 2013/01/30, Modify for I2C clock rate support 400K
     g_pstI2Cclient->timing = 200;//200k
-	#else /* VENDOR_EDIT */
+	#else /* OPPO_R819 */
     g_pstI2Cclient->timing = 400;//400k
-	#endif /* VENDOR_EDIT */
+	#endif /* OPPO_R819 */
     spin_unlock(&kdsensor_drv_lock);
 
-	#ifdef VENDOR_EDIT
+	#ifdef OPPO_R819
 	//LiuBin@MtkCamera, 2013/02/02, Add for I2C DMA transfer
 	g_pI2CDMAVirtualAddr = (u8 *)dma_alloc_coherent(NULL, 0x1b30+8*29, &g_uI2CDMAPhysicalAddr, GFP_KERNEL);
     if(!g_pI2CDMAVirtualAddr)
@@ -1973,7 +1973,7 @@ static int CAMERA_HW_i2c_probe(struct i2c_client *client, const struct i2c_devic
 		PK_ERR("Allocate imgsensor DMA I2C Buffer failed!\n");
 		return -1;
     }
-	#endif /* VENDOR_EDIT */
+	#endif /* OPPO_R819 */
 
     //Register char driver
     i4RetValue = RegisterCAMERA_HWCharDrv();
@@ -1995,7 +1995,7 @@ static int CAMERA_HW_i2c_probe(struct i2c_client *client, const struct i2c_devic
 ********************************************************************************/
 static int CAMERA_HW_i2c_remove(struct i2c_client *client)
 {
-	#ifdef VENDOR_EDIT
+	#ifdef OPPO_R819
 	//LiuBin@MtkCamera, 2013/02/02, Add for I2C DMA transfer
     if(g_pI2CDMAVirtualAddr)
     {
@@ -2003,7 +2003,7 @@ static int CAMERA_HW_i2c_remove(struct i2c_client *client)
 		g_pI2CDMAVirtualAddr = NULL;
 		g_uI2CDMAPhysicalAddr = 0;
     }
-	#endif /* VENDOR_EDIT */
+	#endif /* OPPO_R819 */
     return 0;
 }
 
@@ -2164,12 +2164,12 @@ static int CAMERA_HW_i2c_probe2(struct i2c_client *client, const struct i2c_devi
     g_pstI2Cclient2 = client;
 
     //set I2C clock rate
-    #ifndef VENDOR_EDIT
+    #ifndef OPPO_R819
 	//LiuBin@MtkCamera, 2013/01/30, Modify for I2C clock rate support 400K
 	g_pstI2Cclient2->timing = 200;//200k
-	#else /* VENDOR_EDIT */
+	#else /* OPPO_R819 */
     g_pstI2Cclient2->timing = 400;//400k
-	#endif /* VENDOR_EDIT */
+	#endif /* OPPO_R819 */
 	spin_unlock(&kdsensor_drv_lock);
 
     //Register char driver

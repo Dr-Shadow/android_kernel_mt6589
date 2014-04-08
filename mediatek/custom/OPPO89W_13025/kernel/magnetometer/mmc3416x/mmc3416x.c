@@ -83,9 +83,9 @@
 		#define MSEN_DBG(x...) 
 	#endif 
 
-#ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/10/15 for mult project sensor
+#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/10/15 for mult project sensor
 #include "mmc3416x_private.h"
-#endif /* VENDOR_EDIT*/
+#endif /* OPPO_R819*/
 
 struct mmc3416x_i2c_data {
     struct i2c_client *client;
@@ -96,10 +96,10 @@ struct mmc3416x_i2c_data {
 #if defined(CONFIG_HAS_EARLYSUSPEND)    
     struct early_suspend    early_drv;
 #endif 
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
     atomic_t suspend;
     atomic_t enable_before_resume; 
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 };
 
 static u32 read_idx = 0;
@@ -149,7 +149,7 @@ static struct platform_driver mmc3416x_platform_driver = {
 };
 static DEFINE_MUTEX(ecompass_lock);
 
-#ifdef VENDOR_EDIT//Shaoyu.Huang@BadicDrv.Sensor, add 2012/6/4 for sensor debuging
+#ifdef OPPO_R819//Shaoyu.Huang@BadicDrv.Sensor, add 2012/6/4 for sensor debuging
 /*----------------------------------------------------------------------------*/
 
 static debugflag = 0;
@@ -260,7 +260,7 @@ static int I2C_TxData(char *txData, int length)
 	return 0;
 }
 
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 static int mmc3xxx_i2c_rx_data(char *buf, int len)
 {
 
@@ -698,7 +698,7 @@ static ssize_t show_daemon_name(struct device_driver *ddri, char *buf)
 	sprintf(strbuf, "memsicd");
 	return sprintf(buf, "%s", strbuf);		
 }
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msesensor auto test
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msesensor auto test
 #define abs(a) (((a) < 0) ? -(a) : (a))
 int data_initial[3] = {0, 0, 0};
 int data_magnet_close[3] = {0, 0, 0};
@@ -807,7 +807,7 @@ static ssize_t show_autotest_get_ic_mode(struct device_driver *ddri, char *buf)
 	printk("msensor is mmc416x\n");
 	return 0;
 }
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 /*----------------------------------------------------------------------------*/
 static DRIVER_ATTR(daemon,      S_IRUGO, show_daemon_name, NULL);
 static DRIVER_ATTR(chipinfo,    S_IRUGO, show_chipinfo_value, NULL);
@@ -816,12 +816,12 @@ static DRIVER_ATTR(posturedata, S_IRUGO, show_posturedata_value, NULL);
 static DRIVER_ATTR(direction,      S_IRUGO | S_IWUSR, show_direction_value, store_direction_value );
 static DRIVER_ATTR(status,      S_IRUGO, show_status_value, NULL);
 static DRIVER_ATTR(trace,       S_IRUGO | S_IWUSR, show_trace_value, store_trace_value);
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor auto test
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor auto test
 static DRIVER_ATTR(test_id,       S_IRUGO, show_autotest_testID, NULL);
 static DRIVER_ATTR(magnet_close,  S_IRUGO, show_autotest_magnetclose, NULL);
 static DRIVER_ATTR(magnet_leave,  S_IRUGO, show_autotest_magnetleave, NULL);
 static DRIVER_ATTR(get_ic_modle,  S_IRUGO, show_autotest_get_ic_mode, NULL);
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 /*----------------------------------------------------------------------------*/
 static struct driver_attribute *mmc3416x_attr_list[] = {
     &driver_attr_daemon,
@@ -831,12 +831,12 @@ static struct driver_attribute *mmc3416x_attr_list[] = {
 	&driver_attr_direction,
 	&driver_attr_status,
 	&driver_attr_trace,
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor auto test
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor auto test
 	&driver_attr_test_id,
 	&driver_attr_magnet_close,
 	&driver_attr_magnet_leave,
 	&driver_attr_get_ic_modle,	
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 };
 /*----------------------------------------------------------------------------*/
 static int mmc3416x_create_attr(struct device_driver *driver) 
@@ -1014,7 +1014,7 @@ static long mmc3416x_ioctl(struct file *file, unsigned int cmd, unsigned long ar
 		}
 
 		break;
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
         case ECOMPASS_IOC_GET_DELAY:			
 			delay = mmcd_delay;
 			if(copy_to_user(pa, &delay, sizeof(delay)))
@@ -1181,7 +1181,7 @@ static long mmc3416x_ioctl(struct file *file, unsigned int cmd, unsigned long ar
 			
 			break;
 
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 	default:
 	    MMCDBG("lizhanhua no command failed.\n");
 		break;
@@ -1281,10 +1281,10 @@ static void mmc3416x_early_suspend(struct early_suspend *h)
 	}
 
 	
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for sensor power off
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for sensor power off
 	atomic_set(&obj->suspend, 1);	
 	mmc3416_power(obj->hw, 0);
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 	       
 }
 /*----------------------------------------------------------------------------*/
@@ -1298,13 +1298,13 @@ static void mmc3416x_late_resume(struct early_suspend *h)
 		return;
 	}
 	mmc3416_power(obj->hw, 1);
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
 	if (atomic_read(&obj->enable_before_resume)) {
 		wake_up(&open_wq);	
 		atomic_set(&obj->enable_before_resume, 0);
 	}
 	atomic_set(&obj->suspend, 0);
-#endif/*VENDOR_EDIT*/	
+#endif/*OPPO_R819*/	
 }
 /*----------------------------------------------------------------------------*/
 #endif /*CONFIG_HAS_EARLYSUSPEND*/
@@ -1323,7 +1323,7 @@ int mmc3416x_operate(void* self, uint32_t command, void* buff_in, int size_in,
 		MMCFUNC("mmc3416x_operate\n");
 	}	
  
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
 	if (atomic_read(&data->suspend)) {
 		if (SENSOR_ENABLE == command) {
 			value = *(int *)buff_in;
@@ -1340,7 +1340,7 @@ int mmc3416x_operate(void* self, uint32_t command, void* buff_in, int size_in,
 		}
 		return 0;
 	}
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 	switch (command)
 	{
 		case SENSOR_DELAY:
@@ -1427,7 +1427,7 @@ int mmc3416x_orientation_operate(void* self, uint32_t command, void* buff_in, in
 	if(atomic_read(&data->trace) & MMC_FUN_DEBUG){
 		MMCFUNC("mmc3416x_orientation_operate");
 	}	
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
 	if (atomic_read(&data->suspend)){
 		if (SENSOR_ENABLE == command){
 			value = *(int *)buff_in;
@@ -1444,7 +1444,7 @@ int mmc3416x_orientation_operate(void* self, uint32_t command, void* buff_in, in
 		}
 		return 0;
 	}
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 	switch (command)
 	{
@@ -1637,9 +1637,9 @@ static int mmc3416x_probe(struct i2c_client *client, const struct i2c_device_id 
 	data->early_drv.resume   = mmc3416x_late_resume,    
 	register_early_suspend(&data->early_drv);
 #endif
-#ifdef VENDOR_EDIT//Shaoyu.Huang@BasicDrv.Sensor, add 2012/6/4 for sensor debuging
+#ifdef OPPO_R819//Shaoyu.Huang@BasicDrv.Sensor, add 2012/6/4 for sensor debuging
 	hwmsen_make_debug_flag(&debug_fops, "mmc3416xma_msensor");
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 	MMCDBG("%s: OK\n", __func__);
 	return 0;
@@ -1650,9 +1650,9 @@ static int mmc3416x_probe(struct i2c_client *client, const struct i2c_device_id 
     exit_init_failed:
     this_client = NULL;
 	exit:
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
 	mmc3416_power(data->hw, 0);
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 	kfree(data);
 

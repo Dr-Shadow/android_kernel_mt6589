@@ -540,11 +540,11 @@ void excharger_dump_register(void)
     printk("\n");
 }
 #if 0
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 extern int g_enable_high_vbat_spec;
 #endif
 extern int g_pmic_cid;
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 #define GPIO_EXCHARGER_STAT_NUM           GPIOEXT26
 #define GPIO_EXCHARGER_STAT_MODE          GPIO_MODE_GPIO
 #define GPIO_EXCHARGER_STAT_DIR           GPIO_DIR_OUT
@@ -559,7 +559,7 @@ extern int g_pmic_cid;
 #endif
 void excharger_hw_init(void)
 {    
-    #ifdef VENDOR_EDIT
+    #ifdef OPPO_R819
     mt_set_gpio_mode(GPIO_EXCHARGER_STAT_NUM,GPIO_EXCHARGER_STAT_MODE);
     mt_set_gpio_dir(GPIO_EXCHARGER_STAT_NUM,GPIO_EXCHARGER_STAT_DIR);
     mt_set_gpio_out(GPIO_EXCHARGER_STAT_NUM,GPIO_EXCHARGER_STAT_ON_OUT);
@@ -569,7 +569,7 @@ void excharger_hw_init(void)
     mt_set_gpio_out(GPIO_EXCHARGER_DISABLE_NUM,GPIO_EXCHARGER_DISABLE_ON_OUT);
     #endif
     
-    #ifndef VENDOR_EDIT
+    #ifndef OPPO_R819
     if(g_enable_high_vbat_spec == 1)
     {
         if(g_pmic_cid == 0x1020)
@@ -611,7 +611,7 @@ static int excharger_driver_probe(struct i2c_client *client, const struct i2c_de
     new_client = client;    
 
     //---------------------
-    #ifdef VENDOR_EDIT
+    #ifdef OPPO_R819
     //do not delete,or regist 0x06 will can not write???(need to check)
     excharger_dump_register();
     #endif

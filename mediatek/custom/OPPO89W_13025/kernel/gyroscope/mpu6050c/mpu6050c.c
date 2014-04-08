@@ -1026,7 +1026,7 @@ static int MPU6050C_SetPowerMode(struct i2c_client *client, bool enable)
 	{
 		printk("Sensor power status is newest but set again!\n");
 		
-#ifndef VENDOR_EDIT		// Delete by zhangqiang
+#ifndef OPPO_R819		// Delete by zhangqiang
 
 		return MPU6050C_SUCCESS;
 
@@ -1276,11 +1276,11 @@ static int mpu6050c_gpio_config(void)
 	mt_set_gpio_pull_select(GPIO_GYRO_EINT_PIN, GPIO_PULL_UP);
 
 	mt65xx_eint_set_polarity(CUST_EINT_GYRO_NUM, CUST_EINT_GYRO_POLARITY);
-    #ifndef VENDOR_EDIT //xiaohua.tian@wxkf.wxBasicDriver.Sensor, 2013/03/12, modify interrupt mode
+    #ifndef OPPO_R819 //xiaohua.tian@wxkf.wxBasicDriver.Sensor, 2013/03/12, modify interrupt mode
 	mt65xx_eint_set_sens(CUST_EINT_GYRO_NUM, CUST_EINT_GYRO_SENSITIVE);
-    #else /*VENDOR_EDIT*/
+    #else /*OPPO_R819*/
 	mt65xx_eint_set_sens(CUST_EINT_GYRO_NUM, CUST_EINT_EDGE_SENSITIVE);
-    #endif /*VENDOR_EDIT*/
+    #endif /*OPPO_R819*/
 	mt65xx_eint_set_hw_debounce(CUST_EINT_GYRO_NUM, CUST_EINT_GYRO_DEBOUNCE_CN);
 	mt65xx_eint_registration(CUST_EINT_GYRO_NUM, CUST_EINT_GYRO_DEBOUNCE_EN, 
 							CUST_EINT_GYRO_POLARITY, gyro_irq_handler, 0);
@@ -1778,7 +1778,7 @@ static long mpu6050c_gsensor_unlocked_ioctl(struct file *file, unsigned int cmd,
 			
 			break;	
 
-#ifdef VENDOR_EDIT	// add for user calibrate gsensor in engineering mode
+#ifdef OPPO_R819	// add for user calibrate gsensor in engineering mode
 		case GSENSOR_IOCTL_USER_CALI:
 			{
 				int buf[3];

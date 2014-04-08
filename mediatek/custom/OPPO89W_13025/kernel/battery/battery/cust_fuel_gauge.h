@@ -53,7 +53,7 @@ typedef enum
     T3_50C
 } PROFILE_TEMPERATURE;
 
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 // T0 -10C
 BATTERY_PROFILE_STRUC battery_profile_t0[] =
 {
@@ -893,7 +893,7 @@ typedef struct _R_PROFILE_STRUC
     kal_int32 voltage;
 } R_PROFILE_STRUC, *R_PROFILE_STRUC_P;
 
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 // T0 -10C
 R_PROFILE_STRUC r_profile_t0[] =
 {

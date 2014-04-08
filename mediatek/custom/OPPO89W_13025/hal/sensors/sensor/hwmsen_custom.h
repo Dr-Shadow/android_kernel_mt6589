@@ -17,7 +17,7 @@
 #ifndef __HWMSEN_CUSTOM_H__ 
 #define __HWMSEN_CUSTOM_H__
 
-#ifndef VENDOR_EDIT 
+#ifndef OPPO_R819 
 //zhangqiang delete for using new sensors name, vender instead of the old 
 
 #ifdef CUSTOM_KERNEL_ACCELEROMETER

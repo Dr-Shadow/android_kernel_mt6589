@@ -27,12 +27,12 @@ FID_TO_TYPE_ENUM  (
         SCENE_MODE_ISO_ANTI_SHAKE,                  // ISO Anti Shake mode
         //  (Unsupported legacy symbol; don't use this symbol if possible)
         SCENE_MODE_BRACKET_AE,                      // Bracket AE
-		#ifdef VENDOR_EDIT
+		#ifdef OPPO_R819
 		//ZhangZhengrong@MtkCamera, 2013/03/19, Add for scene detect
         SCENE_MODE_INDOOR,  /*18*/                  //new add for indoor
         SCENE_MODE_MIX_ILLUMINANT,                  //new add for mix
         SCENE_MODE_MACRO,                           //new add for macro
-        #endif /* VENDOR_EDIT */
+        #endif /* OPPO_R819 */
 
         SCENE_MODE_HDR, 
         SCENE_MODE_NUM
@@ -97,7 +97,7 @@ FID_TO_TYPE_ENUM  (
     )
 ) AE_FLICKER_MODE_T;
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //lanhe@MTKCamera add for HDR captrue ctl path
 //  AE HDR
 FID_TO_TYPE_ENUM  (
@@ -114,7 +114,7 @@ FID_TO_TYPE_ENUM  (
         AE_EV_HDR_TOTAL_NUM
     )
 ) AE_EV_HDR_T;
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 
 
 //  AE EV
@@ -348,7 +348,7 @@ FID_TO_TYPE_ENUM  (
         CAPTURE_MODE_CONTINUOUS_SHOT,
         CAPTURE_MODE_MULTI_MOTION, 
 /* xinlan.he@Prd.Camera.CameraSrv for: CUSTOM_PROCESS */
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
         CAPTURE_MODE_SCALADO_HDR,
         CAPTURE_MODE_SCALADO_LOMO,
         CAPTURE_MODE_DOC_SKINBEAUTY,

@@ -1,6 +1,6 @@
 //s_add new sensor driver here
 //export funtions
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //hufeng@MtkCamera, 2013/02/06, Add for OV2722 sensor
 UINT32 OV2722MIPI_RAW_SensorInit(PSENSOR_FUNCTION_STRUCT *pfFunc);
 #endif
@@ -57,10 +57,10 @@ UINT32 S5K3H7Y_MIPI_RAW_SensorInit(PSENSOR_FUNCTION_STRUCT *pfFunc);
 UINT32 S5K8AAYX_MIPI_YUV_SensorInit(PSENSOR_FUNCTION_STRUCT *pfFunc);
 UINT32 OV9740_MIPI_YUV_SensorInit(PSENSOR_FUNCTION_STRUCT *pfFunc);
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //LiuBin@MtkCamera, 2013/01/30, Add for MS2R yuv sensor
 UINT32 MS2R_YUV_SensorInit(PSENSOR_FUNCTION_STRUCT *pfFunc);
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
 //! Add Sensor Init function here
 //! Note:
@@ -70,13 +70,13 @@ UINT32 MS2R_YUV_SensorInit(PSENSOR_FUNCTION_STRUCT *pfFunc);
 //! 2. This file should be the same as mediatek\custom\common\hal\imgsensor\src\sensorlist.cpp
 ACDK_KD_SENSOR_INIT_FUNCTION_STRUCT kdSensorList[MAX_NUM_OF_SUPPORT_SENSOR+1] =
 {
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //LiuBin@MtkCamera, 2013/01/30, Add for MS2R yuv sensor
 #if defined(MS2R_YUV)
 	{MS2R_SENSOR_ID, SENSOR_DRVNAME_MS2R_YUV, MS2R_YUV_SensorInit},
 #endif
-#endif /* VENDOR_EDIT */
-#ifdef VENDOR_EDIT
+#endif /* OPPO_R819 */
+#ifdef OPPO_R819
 //hufeng@MtkCamera, 2013/02/06, Add for OV2722 sensor
 #if defined(OV8825_MIPI_RAW)
     {OV8825_SENSOR_ID, SENSOR_DRVNAME_OV8825_MIPI_RAW, OV8825_MIPI_RAW_SensorInit}, 

@@ -46,13 +46,13 @@
 #define MMC328X_SENSITIVITY_Y		512
 #define MMC328X_SENSITIVITY_Z		512
 
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor self test
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor self test
 #define MMC328X_IOM			'm'
 #define MMC328x_CTRL_RRM                0x40
 #define MMC328X_IOC_READID		_IOR(MMC328X_IOM, 0x06, int[2])
 #define MMC328X_REG_ID0			0x0C
 #define MMC328X_REG_ID1			0x0D
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 #endif /* __MMC328x_H__ */
 

@@ -1,6 +1,6 @@
 /************************************************************************************
 ** File: - Z:\work\code\mtkbase\11071\svn2871_whole\development_emmc\mediatek\custom\oppo75_emmc_11071\common\oppo_custom_partition.h
-** VENDOR_EDIT
+** OPPO_R819
 ** Copyright (C), 2008-2012, OPPO Mobile Comm Corp., Ltd
 ** 
 ** Description: 
@@ -44,15 +44,15 @@ typedef struct
       int					GsensorData[3];
       unsigned int        nRebootNumber;
       unsigned int        nRebootReason;
-      //#ifndef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/11/15 add for ps revoer send pulse count 
+      //#ifndef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/11/15 add for ps revoer send pulse count 
       unsigned int        nAlsPsCalibratePsFlag;
       unsigned int        nAlsPsSendPulseNumber;
       unsigned int        nAlsPsOffsetValue;
-      //#endif /*VENDOR_EDIT*/
-      //#ifndef VENDOR_EDIT//LiuPing@Prd.BasicDrv.Sensor, add 2012/12/05 add for ps switch 
+      //#endif /*OPPO_R819*/
+      //#ifndef OPPO_R819//LiuPing@Prd.BasicDrv.Sensor, add 2012/12/05 add for ps switch 
       unsigned int        nAlsPsSwitchPsStoreFlag;
       unsigned int        nAlsPsSwitchPsVal;  // 0:on 1:off
-      //#endif /*VENDOR_EDIT*/
+      //#endif /*OPPO_R819*/
 
 }TOppoCustConfigInf;
 

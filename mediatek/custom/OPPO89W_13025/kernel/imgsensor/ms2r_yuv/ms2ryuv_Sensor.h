@@ -1,6 +1,6 @@
 /************************************************************************************
 ** File: - ms2ryuv_Sensor.h
-** VENDOR_EDIT
+** OPPO_R819
 ** Copyright (C), 2008-2012, OPPO Mobile Comm Corp., Ltd
 ** 
 ** Description: 
@@ -210,7 +210,7 @@ char data_pin3[MS2R_PIN_DATA_SIZE] =
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //feng.hu@mtk camera team modified for ms2r continuous af
 static MUINT32 mPreFv;
 static MUINT32 uPreWB;

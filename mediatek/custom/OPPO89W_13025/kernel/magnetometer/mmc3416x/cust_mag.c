@@ -36,7 +36,7 @@
 #include <mach/mt_pm_ldo.h>
 #include <cust_mag.h>
 
-#ifdef VENDOR_EDIT//Shaoyu.Huang@Prd.BasicDrv.Sensor,add 2012/5/28 for gsensor power
+#ifdef OPPO_R819//Shaoyu.Huang@Prd.BasicDrv.Sensor,add 2012/5/28 for gsensor power
 #include <linux/delay.h>
 #include <mach/mt_gpio.h>
 static int power(struct mag_hw *hw, unsigned int on, char *devname)
@@ -64,16 +64,16 @@ static int power(struct mag_hw *hw, unsigned int on, char *devname)
 	status = on;
 	return 0;
 }
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 static struct mag_hw cust_mag_hw = {
     .i2c_num = 2,//i2c-3
     .direction = 7,
     .power_id = MT65XX_POWER_NONE,  /*!< LDO is not used */
     .power_vol= VOL_DEFAULT,        /*!< LDO is not used */
-#ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/8/13 for msensor power
+#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/8/13 for msensor power
 	.power = power,
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 };
 struct mag_hw* get_cust_mag_hw_mmc3461(void) 
 {

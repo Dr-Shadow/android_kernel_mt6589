@@ -342,7 +342,7 @@ static int LIS3DH_ReadData(struct i2c_client *client, s16 data[LIS3DH_AXES_NUM])
 	else
 	{
 
-#ifndef VENDOR_EDIT  //modify for read data at one time
+#ifndef OPPO_R819  //modify for read data at one time
 
 		if(hwmsen_read_block(client, LIS3DH_REG_OUT_X, buf, 0x01))
 		{
@@ -586,7 +586,7 @@ static int LIS3DH_SetBWRate(struct i2c_client *client, u8 bwrate)
 	u8 databuf[2];
 	int res = 0;
 
-#ifndef VENDOR_EDIT 	
+#ifndef OPPO_R819 	
 // changed by zhangqiang for some wrong data that read from register when many APK of G-sensor open close continually
 
 	if(hwmsen_read_byte(client, addr, &databuf[0]))
@@ -768,7 +768,7 @@ static int LIS3DH_ReadSensorData(struct i2c_client *client, char *buf, int bufsi
 		acc[LIS3DH_AXIS_Y] = acc[LIS3DH_AXIS_Y] * GRAVITY_EARTH_1000 / obj->reso->sensitivity;
 		acc[LIS3DH_AXIS_Z] = acc[LIS3DH_AXIS_Z] * GRAVITY_EARTH_1000 / obj->reso->sensitivity;		
 
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 
 		acc[LIS3DH_AXIS_X] += obj->cali_sw[LIS3DH_AXIS_X];
 		acc[LIS3DH_AXIS_Y] += obj->cali_sw[LIS3DH_AXIS_Y];
@@ -1082,7 +1082,7 @@ static ssize_t store_dump_register(struct device_driver *ddri, char *buf, size_t
 
 	return count; 	
 }
-#ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor,  2012/9/18 add for debug gsensor direction
+#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor,  2012/9/18 add for debug gsensor direction
 /*----------------------------------------------------------------------------*/
 static ssize_t store_direction_value(struct device_driver *ddri, char *buf, size_t count)
 {
@@ -1109,7 +1109,7 @@ static ssize_t store_direction_value(struct device_driver *ddri, char *buf, size
         printk("set direction %d\n",trace);
 return count;    
 }
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 
 
 /*----------------------------------------------------------------------------*/
@@ -1121,9 +1121,9 @@ static DRIVER_ATTR(firlen,     S_IWUSR | S_IRUGO, show_firlen_value,        stor
 static DRIVER_ATTR(trace,      S_IWUSR | S_IRUGO, show_trace_value,         store_trace_value);
 static DRIVER_ATTR(status,               S_IRUGO, show_status_value,        NULL);
 static DRIVER_ATTR(dump_register,        S_IWUSR, NULL,    					store_dump_register);
-#ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor,  2012/9/18 add for debug gsensor direction
+#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor,  2012/9/18 add for debug gsensor direction
 static DRIVER_ATTR(direction,      S_IWUSR | S_IRUGO, NULL,  store_direction_value);
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 
 /*----------------------------------------------------------------------------*/
 static struct driver_attribute *lis3dh_attr_list[] = {
@@ -1135,9 +1135,9 @@ static struct driver_attribute *lis3dh_attr_list[] = {
 	&driver_attr_trace,        /*trace log*/
 	&driver_attr_status,        
 	&driver_attr_dump_register,
-#ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor,  2012/9/18 add for debug gsensor direction
+#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor,  2012/9/18 add for debug gsensor direction
         &driver_attr_direction,
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 };
 
 /*----------------------------------------------------------------------------*/
@@ -1546,7 +1546,7 @@ static long lis3dh_unlocked_ioctl(struct file *file, unsigned int cmd,
 			}		
 			break;
 		
-	#ifdef VENDOR_EDIT	// for user calibrate gsensor in engineering mode
+	#ifdef OPPO_R819	// for user calibrate gsensor in engineering mode
 		case GSENSOR_IOCTL_USER_CALI:
 			{
 				int buf[3];
@@ -2231,7 +2231,7 @@ static int lis3dh_i2c_probe(struct i2c_client *client, const struct i2c_device_i
 
 	lis3dh_i2c_client = new_client;	
 
-#ifndef VENDOR_EDIT	// modify for gsensor init error
+#ifndef OPPO_R819	// modify for gsensor init error
 	if(err = LIS3DH_Init_client(new_client, 1))
 	{
 		printk("LIS3DH_Init_client failed, not lis3dh or bad chip!\n");	
@@ -2384,7 +2384,7 @@ static struct platform_driver lis3dh_gsensor_driver =
 	.remove     = lis3dh_remove,    
 	.driver     = 
 	{
-		#ifndef VENDOR_EDIT	//add for muti gsensor
+		#ifndef OPPO_R819	//add for muti gsensor
 		.name  = "gsensor",
 		#else
 		.name  = "gsensor_lis3dh",

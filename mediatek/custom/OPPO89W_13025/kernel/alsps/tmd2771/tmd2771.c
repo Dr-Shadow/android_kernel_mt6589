@@ -101,18 +101,18 @@ extern volatile ALSPS_DEV alsps_dev;
 #define APS_TAG                  "[ALS/PS] "
 #define APS_FUN(f)               printk(KERN_INFO APS_TAG"%s\n", __FUNCTION__)
 #define APS_ERR(fmt, args...)    printk(KERN_ERR  APS_TAG"%s %d : "fmt, __FUNCTION__, __LINE__, ##args)
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 #define APS_LOG(fmt, args...)    printk(KERN_INFO APS_TAG fmt, ##args)
-#else/*VENDOR_EDIT*/
+#else/*OPPO_R819*/
 #define APS_LOG(fmt, args...)    printk(KERN_ALERT APS_TAG fmt, ##args)
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 #define APS_DBG(fmt, args...)    printk(KERN_INFO APS_TAG fmt, ##args)                 
 #define APS_PRINTK(fmt,args...)  if(debugflag) printk(APS_TAG fmt,##args)
-#ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/10/13 for mult project sensor
+#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/10/13 for mult project sensor
 #include "alsps_private_tmd2771.h"
 //#include <linux/oppo_devices_list.h>
 //extern ALSPS_DEV alsps_dev;
-#endif /* VENDOR_EDIT*/
+#endif /* OPPO_R819*/
 /******************************************************************************
  * extern functions
  *******************************************************************************/
@@ -267,7 +267,7 @@ bool Get_PsState(void)
 }
 EXPORT_SYMBOL(Get_PsState);
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //mingqiang.guo@prd.BasicDrv.Sensor 
 
 #define PS_HIGH       0xffff
@@ -300,9 +300,9 @@ struct wake_lock g_prox_wake_lock;
     i2c_smbus_read_word_data(client, TMD_TRANS_WORD(addr))
 //static DEFINE_SPINLOCK(tmd2771_alsps_lock);
 static struct mutex alsps_mutex;
-#endif/*VENDOR_EDIT*/	
+#endif/*OPPO_R819*/	
 
-#ifdef VENDOR_EDIT//Shaoyu.Huang@BadicDrv.Sensor, add 2012/6/4 for sensor debuging
+#ifdef OPPO_R819//Shaoyu.Huang@BadicDrv.Sensor, add 2012/6/4 for sensor debuging
 /*----------------------------------------------------------------------------*/
 static struct alsps_hw* get_cust_alsps_hw_tmd(void)
 {
@@ -691,7 +691,7 @@ static struct file_operations ps_switch_fops = {
 };
 
 
-#ifdef VENDOR_EDIT//mingqiang.guo@prd.BasicDrv.Sensor, 2012/11/12 add for read_ic_model
+#ifdef OPPO_R819//mingqiang.guo@prd.BasicDrv.Sensor, 2012/11/12 add for read_ic_model
 static ssize_t read_ic_model(struct file *file, char __user *buf, size_t count, loff_t *pos)
 {	
 
@@ -719,7 +719,7 @@ static ssize_t read_ic_model(struct file *file, char __user *buf, size_t count, 
 static struct file_operations ic_model_fops = {
     .read = read_ic_model,
 };
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 static int debugflag = 0;
 static ssize_t debugflag_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
@@ -788,7 +788,7 @@ static struct file_operations als_read_fops = {
     .read = als_data_read,
 };
 
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 /*----------------------------------------------------------------------------*/
 
@@ -807,7 +807,7 @@ static void tmd2771_power(struct alsps_hw *hw, unsigned int on)
     static unsigned int power_on = 0;
     APS_LOG(" %s()\n", __FUNCTION__);
     //APS_LOG("power %s\n", on ? "on" : "off");
-#ifndef VENDOR_EDIT//Shaoyu.Huang@BasicDrv.Sensor, modify 2012/5/24 for alsps power
+#ifndef OPPO_R819//Shaoyu.Huang@BasicDrv.Sensor, modify 2012/5/24 for alsps power
     if(hw->power_id != POWER_NONE_MACRO)
     {
         if(power_on == on)
@@ -830,9 +830,9 @@ static void tmd2771_power(struct alsps_hw *hw, unsigned int on)
         }
     }
     power_on = on;
-#else/*VENDOR_EDIT*/
+#else/*OPPO_R819*/
     hw->power(hw, on, NULL);
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 }
 /*----------------------------------------------------------------------------*/
 static long tmd2771_enable_als(struct i2c_client *client, int enable)
@@ -900,7 +900,7 @@ EXIT_ERR:
 }
 static int tmd2771_init_client(struct i2c_client *client);
 
-#ifdef VENDOR_EDIT			// zhanqiang add for G-sensor motion sensing
+#ifdef OPPO_R819			// zhanqiang add for G-sensor motion sensing
 
 int whether_in_call_state()
 {
@@ -1015,7 +1015,7 @@ static long tmd2771_enable_ps(struct i2c_client *client, int enable)
         return -1;
     }
 
-#ifdef VENDOR_EDIT//LiuPing@Prd.BasicDrv.Sensor, add 2012/12/05 add for ps switch 
+#ifdef OPPO_R819//LiuPing@Prd.BasicDrv.Sensor, add 2012/12/05 add for ps switch 
     if (g_ps_switch_off == 1)
     {
         printk(" tmd2771_enable_ps ,  ps switch off \n");
@@ -1259,7 +1259,7 @@ static int tmd2771_init_client(struct i2c_client *client)
     struct tmd2771_priv *obj = i2c_get_clientdata(client);
     int res = 0;
 
-#ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/10/24 ¨ª¡§1y?¨¢¨¨?1a?DID¡ê?????2?¨ª?¦Ì?2?¨ºy 
+#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/10/24 ¨ª¡§1y?¨¢¨¨?1a?DID¡ê?????2?¨ª?¦Ì?2?¨ºy 
     char device_id;
     if(TMD2771_SUCCESS != tmd2771_read_reg(TMD2771_DEVICE_ID, &device_id) )
     {
@@ -1283,7 +1283,7 @@ static int tmd2771_init_client(struct i2c_client *client)
         g_CONTROL_VALUE = TMD2771_CONTROL;	
     }
 
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
     if (TMD2771_SUCCESS != (
                 tmd2771_write_reg(TMD2771_CMM_ENABLE, 0x00) | 
                 tmd2771_write_reg(TMD2771_CMM_ATIME, 0xEE) |
@@ -1294,7 +1294,7 @@ static int tmd2771_init_client(struct i2c_client *client)
         goto EXIT_ERR;
     }
 
-#ifdef VENDOR_EDIT /* mingqiang.guo@BasicDrv.Sensor  ,  2012-9-28, add  for tmd2772 */
+#ifdef OPPO_R819 /* mingqiang.guo@BasicDrv.Sensor  ,  2012-9-28, add  for tmd2772 */
     if(g_DEVICE_ID==0x39)
     { 	
         printk("------ als/ps DEVICE ID is 0x%x\n", g_DEVICE_ID);
@@ -1303,7 +1303,7 @@ static int tmd2771_init_client(struct i2c_client *client)
             goto EXIT_ERR;
         }
     }
-#endif /*VENDOR_EDIT*/	
+#endif /*OPPO_R819*/	
 
     if(0 == obj->hw->polling_mode_ps)
     {
@@ -1384,9 +1384,9 @@ int tmd2771_read_als(struct i2c_client *client, u16 *data)
     u8 buffer[1];
     u16 atio;
     int res = 0;
-#ifdef VENDOR_EDIT /* Lipeng.Bai@Prd.BasicDrv.Sensor  ,  2012-7-5,  Add  for learn from 12009*/
+#ifdef OPPO_R819 /* Lipeng.Bai@Prd.BasicDrv.Sensor  ,  2012-7-5,  Add  for learn from 12009*/
     int irf = 0, tmp;
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
     if(client == NULL)
     {
@@ -1394,7 +1394,7 @@ int tmd2771_read_als(struct i2c_client *client, u16 *data)
         return -1;
     }
 
-#ifdef VENDOR_EDIT /* Lipeng.Bai@Prd.BasicDrv.Sensor  ,  2012-8-6,  Add for  OPPO  PS*/
+#ifdef OPPO_R819 /* Lipeng.Bai@Prd.BasicDrv.Sensor  ,  2012-8-6,  Add for  OPPO  PS*/
     c0_value = TMD2771_READ_WORD(client, TMD2771_CMM_C0DATA_L);	
     c0_nf = obj->als_modulus*c0_value;
     c1_value = TMD2771_READ_WORD(client, TMD2771_CMM_C1DATA_L);	
@@ -1423,7 +1423,7 @@ int tmd2771_read_als(struct i2c_client *client, u16 *data)
         irf = 0;
 
     tmp = AtimeToMS( A_TIME ) * AGAIN *  TSL_GA;
-#ifdef VENDOR_EDIT /* mingqiang.guo@BasicDrv.Sensor  ,  2012-10-17,  modify for tmd2772*/
+#ifdef OPPO_R819 /* mingqiang.guo@BasicDrv.Sensor  ,  2012-10-17,  modify for tmd2772*/
     if(g_DEVICE_ID == 0X39) {
         *data = 1 * 52 * irf * c0_value /tmp * ALS_GAIN_2772;
     } else {
@@ -1432,11 +1432,11 @@ int tmd2771_read_als(struct i2c_client *client, u16 *data)
     //*data = 1 * 52 * irf * c0_value /tmp * g_ALS_GAIN;
 #endif
 
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
-#ifndef VENDOR_EDIT//Shaoyu.Huang@BasicDrv.Sensor, add modify 2012/6/4 for sensro debuging
+#ifndef OPPO_R819//Shaoyu.Huang@BasicDrv.Sensor, add modify 2012/6/4 for sensro debuging
     APS_PRINTK("%s   als = %d\n", __func__,*data);
-#else/*VENDOR_EDIT*/
+#else/*OPPO_R819*/
     /*c0->CDATA (visible+infrared), c1->IRDATA (infrared)*/
     als_c0_data =c0_value ;
     als_c1_data = c1_value;
@@ -1445,7 +1445,7 @@ int tmd2771_read_als(struct i2c_client *client, u16 *data)
         printk(KERN_ALERT"[ALS]:c0(visible+infrared)=%d, c1(infrared)=%d, als= %d", 
                 c0_value, c1_value, *data);
     }
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
     return 0;	 
 
 EXIT_ERR:
@@ -1561,7 +1561,7 @@ long tmd2771_read_ps(struct i2c_client *client, u16 *data)
         APS_LOG("ps is zero , appear 100 time\n");
         tmd2771_enable_ps(client,0);
         msleep(10);
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
         //LiPeng.Bai@wxkf.wxBaseDrv.Sensor  ,  2013/02/18,  Add for  OPPO  sensor
         //If drop the phone on the ground ,  PS may be in wrong state, for example, 0x0F register
         //may be 0x0, so add the follow code to resolve it
@@ -1573,7 +1573,7 @@ long tmd2771_read_ps(struct i2c_client *client, u16 *data)
         {
             APS_LOG("tmd2771_init_client() reset OK!\n");
         }
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
         tmd2771_enable_ps(client,1);
         data_read = TMD2771_READ_WORD(client, TMD2771_CMM_PDATA_L);		
         ps_is_zero_num=0;
@@ -2388,7 +2388,7 @@ static int tmd2771_i2c_probe(struct i2c_client *client, const struct i2c_device_
     obj->als_level_num = sizeof(obj->hw->als_level)/sizeof(obj->hw->als_level[0]);
     obj->als_value_num = sizeof(obj->hw->als_value)/sizeof(obj->hw->als_value[0]);  
     /*Lenovo-sw chenlj2 add 2011-06-03,modified gain 16 to 1/5 accoring to actual thing */
-#ifndef VENDOR_EDIT /* Lipeng.Bai@Prd.BasicDrv.Sensor  ,  2012-7-5,  Modify  for learn from 12009*/
+#ifndef OPPO_R819 /* Lipeng.Bai@Prd.BasicDrv.Sensor  ,  2012-7-5,  Modify  for learn from 12009*/
     obj->als_modulus = (400*100*ZOOM_TIME)/(1*150);//(1/Gain)*(400/Tine), this value is fix after init ATIME and CONTROL register value
     //(400)/16*2.72 here is amplify *100 //16
 #else
@@ -2459,7 +2459,7 @@ static int tmd2771_i2c_probe(struct i2c_client *client, const struct i2c_device_
         obj->early_drv.resume   = tmd2771_late_resume,    
         register_early_suspend(&obj->early_drv);
 #endif
-#ifdef VENDOR_EDIT//Shaoyu.Huang@BasicDrv.Sensor, add 2012/6/4 for sensor debuging
+#ifdef OPPO_R819//Shaoyu.Huang@BasicDrv.Sensor, add 2012/6/4 for sensor debuging
     hwmsen_make_debug_flag(&debug_fops, "open_alsps_log");
     hwmsen_make_debug_flag(&set_reg_if, "set_tmd_reg");
     hwmsen_make_debug_flag(&read_reg_if, "read_tmd_reg");
@@ -2471,7 +2471,7 @@ static int tmd2771_i2c_probe(struct i2c_client *client, const struct i2c_device_
     hwmsen_make_debug_flag(&als_read_fops,"read_als_data");
     wake_lock_init(&g_prox_wake_lock, WAKE_LOCK_SUSPEND, "Prox wakelock");
     hwmsen_make_debug_flag(&ic_model_fops, "read_alsps_model");//mingqiang.guo@prd.BasicDrv.Sensor, 2012/11/12 add for read_ic_model 
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
     alsps_dev = ALSPS_TAOS_277X;
     APS_LOG("%s: OK\n", __func__);
     return 0;
@@ -2482,9 +2482,9 @@ exit_misc_device_register_failed:
 exit_init_failed:
     //i2c_detach_client(client);
     //exit_kfree:
-#ifdef VENDOR_EDIT//Shaoyu.Huang@Prd.BasicDrv.Sensor, add 2012/6/14 for sensor power off
+#ifdef OPPO_R819//Shaoyu.Huang@Prd.BasicDrv.Sensor, add 2012/6/14 for sensor power off
     tmd2771_power(obj->hw, 0);
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
     kfree(obj);
 exit:
     tmd2771_i2c_client = NULL;           

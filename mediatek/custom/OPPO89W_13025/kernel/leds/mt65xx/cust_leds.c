@@ -86,7 +86,7 @@ static struct cust_mt65xx_led cust_led_list[MT65XX_LED_TYPE_TOTAL] = {
 	{"blue",              MT65XX_LED_MODE_NONE, -1,{0}},
 	{"jogball-backlight", MT65XX_LED_MODE_NONE, -1,{0}},
 	{"keyboard-backlight",MT65XX_LED_MODE_NONE, -1,{0}},
-	#ifndef VENDOR_EDIT
+	#ifndef OPPO_R819
 	//rendong.shi@Basic.drv, 2012/12/12, Add for 12083 keypadlight
 	{"button-backlight",  MT65XX_LED_MODE_PMIC, MT65XX_LED_PMIC_NLED_ISINK01,{0}},
 	#else

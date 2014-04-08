@@ -77,9 +77,9 @@
 #include <mach/mt_sleep.h>
 #include <mach/mt_gpio.h>
 
-#ifdef VENDOR_EDIT//Nanwei.Deng@BasicDrv.CHG, 2012/03/08, Add for Battery encryption
+#ifdef OPPO_R819//Nanwei.Deng@BasicDrv.CHG, 2012/03/08, Add for Battery encryption
 #include "bq2202a.h"
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 #ifdef OPPO_NEW_CHARGING
 #undef MTK_JEITA_STANDARD_SUPPORT
@@ -194,7 +194,7 @@ kal_uint8 oppo_excharger_id;
 static kal_uint8 oppo_ipod_status = 0;
 #endif/* OPPO_NEW_CHARGING */ 
 
-#ifdef VENDOR_EDIT//Fanhong.Kong@ProDrv.CHG, add 2012/7/6 for low bat power on
+#ifdef OPPO_R819//Fanhong.Kong@ProDrv.CHG, add 2012/7/6 for low bat power on
 #define BAT_LOW_CLOSED_POWERON
 
 #ifdef BAT_LOW_CLOSED_POWERON
@@ -203,7 +203,7 @@ extern void kpd_pwkey_longpass(void);
 kal_int8 g_BAT_Low_Close = KAL_FALSE;
 kal_int8 g_IPO_status = KAL_FALSE;
 #endif
-#endif //#ifdef VENDOR_EDIT
+#endif //#ifdef OPPO_R819
 #if defined(CONFIG_POWER_VERIFY)
 kal_bool upmu_is_chr_det(void)
 {
@@ -241,7 +241,7 @@ extern void mt_usb_connect(void);
 extern void mt_usb_disconnect(void);
 
 extern CHARGER_TYPE mt_charger_type_detection(void);
-#if 0//def VENDOR_EDIT //Jiada.Li@BasicDrv.Charger, 2013/06/18, for  Charger type judgment 
+#if 0//def OPPO_R819 //Jiada.Li@BasicDrv.Charger, 2013/06/18, for  Charger type judgment 
 extern CHARGER_TYPE oppo_mt_charger_type_detection(void);
 #endif
 extern int PMIC_IMM_GetOneChannelValue(int dwChannel, int deCount, int trimd);
@@ -258,7 +258,7 @@ extern int gFG_15_vlot;
 
 extern BOOTMODE g_boot_mode;
 
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 //rendong.shi@BasicDrv.PRD add for avoiding  noise in charging for TP 
 unsigned int tp_is_in_charging = 0;
 unsigned int tp_set = 0;
@@ -954,7 +954,7 @@ static void mt6320_usb_update(struct mt6320_usb_data *usb_data)
 
     if( upmu_is_chr_det() == KAL_TRUE )        
     {
-    	#ifdef VENDOR_EDIT //Nanwei.Deng@BasicDrv.CHG, 2013/03/08, Add for usb fault detection
+    	#ifdef OPPO_R819 //Nanwei.Deng@BasicDrv.CHG, 2013/03/08, Add for usb fault detection
         printk("dengnanwei--charger_type_old = %d \n", BMT_status.charger_type);
         if(BMT_status.charger_type == CHARGING_HOST)//for standard charger before poweron
         {
@@ -966,7 +966,7 @@ static void mt6320_usb_update(struct mt6320_usb_data *usb_data)
                 mt_usb_disconnect();
             }
         }
-		#endif /*VENDOR_EDIT*/
+		#endif /*OPPO_R819*/
 		
         if ( (BMT_status.charger_type == STANDARD_HOST) ||
              (BMT_status.charger_type == CHARGING_HOST)        )
@@ -991,7 +991,7 @@ static void mt6320_battery_update(struct mt6320_battery_data *bat_data)
     struct power_supply *bat_psy = &bat_data->psy;
     int i;
 
-    #ifndef VENDOR_EDIT//Nanwei.Deng@BasicDrv.CHG, 2012/03/08, Add for Battery encryption
+    #ifndef OPPO_R819//Nanwei.Deng@BasicDrv.CHG, 2012/03/08, Add for Battery encryption
     static int CheckIDSign=5;
 	if(CheckIDSign>0)
     {
@@ -1012,7 +1012,7 @@ static void mt6320_battery_update(struct mt6320_battery_data *bat_data)
         
 		printk( "<dengnanwei_dayin_ID = %d: oppo_high_battery_status =%d :%s: LINE= %d : \n", oppo_check_ID_status,oppo_high_battery_status,__FUNCTION__,__LINE__);
     }
-    #endif/*VENDOR_EDIT*/
+    #endif/*OPPO_R819*/
 
     bat_data->BAT_TECHNOLOGY = POWER_SUPPLY_TECHNOLOGY_LION;
     bat_data->BAT_HEALTH = POWER_SUPPLY_HEALTH_GOOD;
@@ -2868,7 +2868,7 @@ int do_jeita_state_machine(void)
 #endif
 
 
-#ifdef VENDOR_EDIT//Nanwei.Deng@BasicDrv.CHG, 2012/03/08, Add for Battery encryption
+#ifdef OPPO_R819//Nanwei.Deng@BasicDrv.CHG, 2012/03/08, Add for Battery encryption
 extern signed int g_true_vol;
 extern signed int g_charger_type;
 #endif
@@ -3909,7 +3909,7 @@ void BAT_thread(void)
 	UINT32 charger_vol;
     //kal_uint32 tmp32;
 
-	#ifndef VENDOR_EDIT//Nanwei.Deng@BasicDrv.CHG, 2012/03/08, Add for Battery encryption
+	#ifndef OPPO_R819//Nanwei.Deng@BasicDrv.CHG, 2012/03/08, Add for Battery encryption
 	if(upmu_is_chr_det()==KAL_TRUE)
     {
 		if(oppo_high_battery_status == 0)
@@ -3931,7 +3931,7 @@ void BAT_thread(void)
 			oppo_high_battery_status_count=0;
 		}
 	}
-    #endif/*VENDOR_EDIT*/    
+    #endif/*OPPO_R819*/    
 	    
     if (Enable_BATDRV_LOG == 1) {
 #if defined(MTK_JEITA_STANDARD_SUPPORT)
@@ -3996,13 +3996,13 @@ void BAT_thread(void)
         
     }
 
-#ifdef VENDOR_EDIT//rendong.shi@BasicDrv.PRD add for avoiding  noise in charging for TP
+#ifdef OPPO_R819//rendong.shi@BasicDrv.PRD add for avoiding  noise in charging for TP
 	 charger_vol = PMIC_IMM_GetOneChannelValue(AUXADC_CHARGER_VOLTAGE_CHANNEL,5,1);
 	 charger_vol = charger_vol / 100;
 	 printk("shirendong charger_vol = %d   1!!!1\n",charger_vol);
 	if((charger_vol > 4000)&& (charger_vol< 6000 ))
 	{
-		#ifndef VENDOR_EDIT//rendong.shi@BasicDrv.PRD add for avoiding  noise in charging for TP
+		#ifndef OPPO_R819//rendong.shi@BasicDrv.PRD add for avoiding  noise in charging for TP
 			tp_is_in_charging = 1;
 			if(is_tp_init == 1 && tp_set != 1)
 			{
@@ -4014,7 +4014,7 @@ void BAT_thread(void)
 	}
 	else
 	{
-		#ifndef VENDOR_EDIT//rendong.shi@BasicDrv.PRD add for avoiding  noise in charging for TP
+		#ifndef OPPO_R819//rendong.shi@BasicDrv.PRD add for avoiding  noise in charging for TP
 		tp_is_in_charging = 0;
 	      if(is_tp_init == 1 && tp_set != 0)
 		{
@@ -4024,7 +4024,7 @@ void BAT_thread(void)
 		}
 		#endif
 	}
-#endif /*VENDOR_EDIT*/	
+#endif /*OPPO_R819*/	
 	
 	
     /* If charger exist, than get the charger type */    
@@ -4034,13 +4034,13 @@ void BAT_thread(void)
 	
         wake_lock(&battery_suspend_lock);        
 		    
-		#ifdef VENDOR_EDIT//Nanwei.Deng@BasicDrv.charger, add for  Charger type judgment
+		#ifdef OPPO_R819//Nanwei.Deng@BasicDrv.charger, add for  Charger type judgment
         if((g_charger_type > CHARGER_UNKNOWN)&&(g_charger_type <= STANDARD_CHARGER))
         {
             BMT_status.charger_type = g_charger_type;
             g_charger_type= CHARGER_UNKNOWN;
 	
-			#ifndef VENDOR_EDIT//rendong.shi@BasicDrv.PRD add for avoiding  noise in charging for TP
+			#ifndef OPPO_R819//rendong.shi@BasicDrv.PRD add for avoiding  noise in charging for TP
 			tp_is_in_charging = 1;
 			if(is_tp_init == 1)
 			{
@@ -4054,12 +4054,12 @@ void BAT_thread(void)
         {
             g_charger_type= CHARGER_UNKNOWN;
         }
-		#endif /*VENDOR_EDIT*/
+		#endif /*OPPO_R819*/
 		
         if(BMT_status.charger_type == CHARGER_UNKNOWN)
         //if((BMT_status.charger_type == CHARGER_UNKNOWN) && mt_usb_is_device())        
         {
-			#ifndef VENDOR_EDIT//rendong.shi@BasicDrv.PRD add for avoiding  noise in charging for TP
+			#ifndef OPPO_R819//rendong.shi@BasicDrv.PRD add for avoiding  noise in charging for TP
 			tp_is_in_charging = 1;
 			if(is_tp_init == 1)
 			{
@@ -4069,7 +4069,7 @@ void BAT_thread(void)
 			}
 			#endif
 
-			#if 0//def VENDOR_EDIT  //Jiada.Li@BasicDrv.Charger, 2013/06/18, for  Charger type judgment 
+			#if 0//def OPPO_R819  //Jiada.Li@BasicDrv.Charger, 2013/06/18, for  Charger type judgment 
 			CHR_Type_num = oppo_mt_charger_type_detection();
 			#else
             CHR_Type_num = mt_charger_type_detection();                  
@@ -6562,7 +6562,7 @@ static long adc_cali_ioctl(struct file *file, unsigned int cmd, unsigned long ar
             {
                 adc_out_data[0] = get_bat_sense_volt(adc_in_data[1]) * adc_in_data[1];
             }
-            #ifdef VENDOR_EDIT //Jiada.LI@ProDrv.chager, modify 2013/05/18 for AT adc test
+            #ifdef OPPO_R819 //Jiada.LI@ProDrv.chager, modify 2013/05/18 for AT adc test
             else if( adc_in_data[0] == 99 ) // CHARGE_OFF_ADC_BAT_SEN
             {
                 #ifdef OPPO_USE_EXCHARGER
@@ -7725,16 +7725,16 @@ static struct hrtimer battery_kthread_timer;
 static struct task_struct *battery_kthread_hrtimer_task = NULL;
 static int battery_kthread_flag = 0;
 static DECLARE_WAIT_QUEUE_HEAD(battery_kthread_waiter);
-#ifdef VENDOR_EDIT//Jiada.LI@ProDrv.chager, modify 2013/05/18 for ioctrol
+#ifdef OPPO_R819//Jiada.LI@ProDrv.chager, modify 2013/05/18 for ioctrol
 static u8 g_bat_thread_count = 0;
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 int battery_kthread_handler(void *unused)
 {
     ktime_t ktime;
 
     do
     {
-		#ifdef VENDOR_EDIT//Jiada.LI@ProDrv.chager, modify 2013/05/18 for ioctrol
+		#ifdef OPPO_R819//Jiada.LI@ProDrv.chager, modify 2013/05/18 for ioctrol
 		if(g_bat_thread_count < 3) {
 			xlog_printk(ANDROID_LOG_INFO, "Power/Battery", "g_bat_thread_count : done\n", g_bat_thread_count);
 			g_bat_thread_count += 1;
@@ -7742,7 +7742,7 @@ int battery_kthread_handler(void *unused)
 		}else {
 			ktime = ktime_set(10, 0);	// 10s, 10* 1000 ms
 		}
-    	#endif /*VENDOR_EDIT*/
+    	#endif /*OPPO_R819*/
     
         wait_event_interruptible(battery_kthread_waiter, battery_kthread_flag != 0);
     
@@ -8018,7 +8018,7 @@ static int mt6320_battery_resume(struct platform_device *dev)
 
 #if defined(CONFIG_POWER_EXT)
 #else        
-        #ifdef VENDOR_EDIT //oppo zhanglong add for average current
+        #ifdef OPPO_R819 //oppo zhanglong add for average current
         mutex_lock(&bat_mutex);
         FGADC_thread_kthread();
         mutex_unlock(&bat_mutex);
@@ -8029,7 +8029,7 @@ static int mt6320_battery_resume(struct platform_device *dev)
             printk(KERN_CRIT "[bat resume] by pcm timer\n");
             
             mutex_lock(&bat_mutex);
-            #ifndef VENDOR_EDIT  //oppo zhanglong move for average current
+            #ifndef OPPO_R819  //oppo zhanglong move for average current
             FGADC_thread_kthread();
             #endif
             BAT_thread();
@@ -8106,7 +8106,7 @@ static ssize_t store_BN_TestMode(struct device *dev,struct device_attribute *att
 static DEVICE_ATTR(BN_TestMode, 0664, show_BN_TestMode, store_BN_TestMode);
 
 
-#ifdef VENDOR_EDIT//Fanhong.Kong@ProDrv.CHG, add 2012/7/6 for low bat power on
+#ifdef OPPO_R819//Fanhong.Kong@ProDrv.CHG, add 2012/7/6 for low bat power on
 static ssize_t show_Powerkey_Close(struct device *dev,struct device_attribute *attr, char *buf)
 {
 	if (Enable_BATDRV_LOG == 1) 
@@ -8252,7 +8252,7 @@ static int mt_batteryNotify_probe(struct platform_device *dev)
     
     ret_device_file = device_create_file(&(dev->dev), &dev_attr_BatteryNotify);
     ret_device_file = device_create_file(&(dev->dev), &dev_attr_BN_TestMode);
-	#ifdef VENDOR_EDIT //Fanhong.Kong@ProDrv.CHG, add 2012/7/6 for low bat power on
+	#ifdef OPPO_R819 //Fanhong.Kong@ProDrv.CHG, add 2012/7/6 for low bat power on
     ret_device_file = device_create_file(&(dev->dev), &dev_attr_BAT_Low_Close_Status);
     ret_device_file = device_create_file(&(dev->dev), &dev_attr_IPO_Status);
 	ret_device_file = device_create_file(&(dev->dev), &dev_attr_ID_status);

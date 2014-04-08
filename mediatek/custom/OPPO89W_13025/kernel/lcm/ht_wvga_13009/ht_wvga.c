@@ -1,6 +1,6 @@
 /************************************************************************************
 ** File: - \mediatek\custom\common\kernel\lcm\ht_wvga\lcm_drv.c
-** VENDOR_EDIT
+** OPPO_R819
 ** Copyright (C), 2008-2012, OPPO Mobile Comm Corp., Ltd
 ** 
 ** Description: 
@@ -105,7 +105,7 @@ struct LCM_setting_table {
 };
 
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 volatile int oppo_lcd_status = 1;
 extern int g_lcd_id_value3;
 
@@ -668,7 +668,7 @@ static void lcm_init(void)
 #endif
 #endif
     
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 	oppo_lcd_status = 1;
 
 #endif
@@ -706,7 +706,7 @@ static void lcm_suspend(void)
         push_table(lcm_cmd_sleep_mode_in_setting, sizeof(lcm_cmd_sleep_mode_in_setting) / sizeof(struct LCM_setting_table), 1);
 #endif      
 	
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 	oppo_lcd_status = 0;
 #endif
 }
@@ -762,7 +762,7 @@ static void lcm_resume(void)
 
     DMS_LCD("lcm_resume end: g_lcd_id_value3 = %d\n", g_lcd_id_value3);
    
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
    oppo_lcd_status = 1;
 #endif
 	

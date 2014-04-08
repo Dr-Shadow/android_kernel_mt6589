@@ -174,7 +174,7 @@ static int stk3x1x_i2c_remove(struct i2c_client *client);
 static int stk3x1x_i2c_suspend(struct i2c_client *client, pm_message_t msg);
 static int stk3x1x_i2c_resume(struct i2c_client *client);
 static struct stk3x1x_priv *g_stk3x1x_ptr = NULL;
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //Fuchun.Liao@wxkfDrv,2013/05/31,add for solve compile error
 int whether_in_call_state=0;
 int whether_in_approach_state=0;
@@ -523,7 +523,7 @@ static struct file_operations ps_switch_fops = {
     .write = set_ps_switch,
 };
 /*----------------------------------------------*/
-#ifdef VENDOR_EDIT//Shaoyu.Huang@BadicDrv.Sensor, add 2012/6/4 for sensor debuging
+#ifdef OPPO_R819//Shaoyu.Huang@BadicDrv.Sensor, add 2012/6/4 for sensor debuging
 /*----------------------------------------------------------------------------*/
 static int alsps_dbg_flag = 1;
 static ssize_t debugflag_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
@@ -565,10 +565,10 @@ static struct file_operations open_alsps_log = {
     .write = debugflag_write,
 };
 
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 /*----------------------------------------------------------------------------*/
 /**zhye**add**for**ps**algorithm**/
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 
 static void stk3x1x_set_ps_threshold(struct i2c_client *client, int low_threshold, int high_threshold)
 {
@@ -604,7 +604,7 @@ EXIT_ERR:
 	return;
 }
 /**zhye**add**end**/
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 /*----------------------------------------------------------------------------*/
 int stk3x1x_get_addr(struct alsps_hw *hw, struct stk3x1x_i2c_addr *addr)
 {
@@ -1239,7 +1239,7 @@ static void stk3x1x_power(struct alsps_hw *hw, unsigned int on)
 	static unsigned int power_on = 0;
 
 	//APS_LOG("power %s\n", on ? "on" : "off");
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 	if(hw->power_id != POWER_NONE_MACRO)
 	{
 		if(power_on == on)
@@ -1348,7 +1348,7 @@ static int stk3x1x_enable_ps(struct i2c_client *client, int enable)
 
 	u8 i, val;
 
-#ifdef VENDOR_EDIT//LiuPing@Prd.BasicDrv.Sensor, add 2013/06/20 add for ps switch 
+#ifdef OPPO_R819//LiuPing@Prd.BasicDrv.Sensor, add 2013/06/20 add for ps switch 
     if (g_ps_switch_off == 1)
     {
         printk(" stk3x1x_enable_ps fail ,  ps switch off \n");
@@ -1357,7 +1357,7 @@ static int stk3x1x_enable_ps(struct i2c_client *client, int enable)
 #endif
 
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 	g_is_far = 1; /*init this flag with 1, means FAR*/
 	g_ps_low_threshold = 0;
 	g_ps_high_threshold = 0xFFFF;
@@ -1881,7 +1881,7 @@ static void stk3x1x_eint_work(struct work_struct *work)
 			APS_ERR("stk3x1x read ps data: %d\n", err);
 			goto err_i2c_rw;
 		}
-	#ifdef VENDOR_EDIT
+	#ifdef OPPO_R819
 		sensor_data.values[0] = (flag_reg & STK_FLG_NF_MASK)? 1 : 0;
 		g_is_far = sensor_data.values[0];
 	#else
@@ -2997,7 +2997,7 @@ static long stk3x1x_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned
 			break;
 
 		case ALSPS_GET_PS_DATA:    
-		#ifndef VENDOR_EDIT
+		#ifndef OPPO_R819
 			if((err = stk3x1x_read_ps(obj->client, &obj->ps)))
 			{
 				goto err_out;
@@ -3101,7 +3101,7 @@ static long stk3x1x_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned
 				goto err_out;
 			}              
 			break;
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 	case ALSPS_SET_PS_THRESHOLD: //0x21 lycan add for 
 		
             if(copy_from_user(&set_ps_thd_para, ptr, sizeof(set_ps_thd_para)))
@@ -3683,14 +3683,14 @@ static int stk3x1x_i2c_probe(struct i2c_client *client, const struct i2c_device_
 	obj->early_drv.resume   = stk3x1x_late_resume,    
 	register_early_suspend(&obj->early_drv);
 #endif
-#ifdef VENDOR_EDIT /*zhye add a interface to control register*/
+#ifdef OPPO_R819 /*zhye add a interface to control register*/
     //wake_lock_init(&ps_lock, WAKE_LOCK_SUSPEND, "ps_wakelock");
 	hwmsen_make_debug_flag(&open_alsps_log, "open_alsps_log");
 	hwmsen_make_debug_flag(&set_prox_reg, "set_prox_reg");
 	hwmsen_make_debug_flag(&read_prox_reg, "read_prox_reg");
 	hwmsen_make_debug_flag(&ps_switch_fops,"ps_switch");
     //hwmsen_make_debug_flag(&set_prox_thd, "set_prox_thd");
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 	printk("%s: OK\n", __FUNCTION__);
 
 	return 0;

@@ -136,7 +136,7 @@ static LCM_UTIL_FUNCS lcm_util = {0};
 #define MDELAY(n) (lcm_util.mdelay(n))
 
 
-#ifdef VENDOR_EDIT //Nanwei.Deng@BasicDrv.Charger, 2013/05/17, Add for the  Bright screen as  charger
+#ifdef OPPO_R819 //Nanwei.Deng@BasicDrv.Charger, 2013/05/17, Add for the  Bright screen as  charger
 volatile int oppo_lcd_status = 1;
 #endif
 // ---------------------------------------------------------------------------
@@ -471,7 +471,7 @@ static void lcm_init(void)
    }
    DMS_LCD("lcm_init end: \n"); 
 	 #endif
-    #ifdef VENDOR_EDIT
+    #ifdef OPPO_R819
 	oppo_lcd_status = 1;
 	#endif
 }
@@ -512,7 +512,7 @@ static void lcm_suspend(void)
 	#endif
 	#endif
 
-    #ifdef VENDOR_EDIT //Nanwei.Deng@BasicDrv.Charger, 2013/05/17, Add for the  Bright screen as  charger
+    #ifdef OPPO_R819 //Nanwei.Deng@BasicDrv.Charger, 2013/05/17, Add for the  Bright screen as  charger
 	oppo_lcd_status = 0;
 	#endif
 }
@@ -553,7 +553,7 @@ static void lcm_resume(void)
 		  gbtecnt=60;
     }
 #endif
-    #ifdef VENDOR_EDIT //Nanwei.Deng@BasicDrv.Charger, 2013/05/17, Add for the  Bright screen as  charger
+    #ifdef OPPO_R819 //Nanwei.Deng@BasicDrv.Charger, 2013/05/17, Add for the  Bright screen as  charger
 	oppo_lcd_status = 1;
 	#endif
 }

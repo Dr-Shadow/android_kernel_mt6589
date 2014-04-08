@@ -1,6 +1,6 @@
 /************************************************************************************
 ** File: - mediatek\custom\common\kernel\touchpanel\synaOT\synaOT_drv.c
-** VENDOR_EDIT
+** OPPO_R819
 ** Copyright (C), 2008-2012, OPPO Mobile Comm Corp., Ltd
 ** 
 ** Description: 

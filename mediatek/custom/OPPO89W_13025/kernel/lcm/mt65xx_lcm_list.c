@@ -64,7 +64,7 @@ extern LCM_DRIVER bp101wx1_n_lcm_drv;
 extern LCM_DRIVER nt35516_qhd_rav4_lcm_drv;
 extern LCM_DRIVER r63311_fhd_dsi_vdo_sharp_lcm_drv;
 extern LCM_DRIVER nt35596_fhd_dsi_vdo_truly_lcm_drv;
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //rendong.shi@BasicDrv.LCD, add 2012/5/22 for prj 12083 lcd
 extern LCM_DRIVER jdi_hd_lcm_drv;
 extern LCM_DRIVER ht_wvga_lcm_drv;
@@ -73,7 +73,7 @@ extern LCM_DRIVER qhd_hx8394_13003_lcm_drv;
 extern LCM_DRIVER ht_wvga_13039_lcm_drv;
 extern LCM_DRIVER qhd_hx8394_lcm_drv;
 extern LCM_DRIVER qhd_hx8394_13003_lcm_drv;
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 LCM_DRIVER* lcm_driver_list[] = 
 { 
@@ -325,11 +325,11 @@ LCM_DRIVER* lcm_driver_list[] =
   &nt35510_fwvga_lcm_drv,
 #endif
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //rendong.shi@BasicDrv.LCD, add 2012/5/22 for prj 12083 lcd
 #if defined(JDI_HD_ACX457AKP)
      &jdi_hd_lcm_drv,
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 #if defined(HT_WVGA_13009)
 	&ht_wvga_lcm_drv,
 #endif

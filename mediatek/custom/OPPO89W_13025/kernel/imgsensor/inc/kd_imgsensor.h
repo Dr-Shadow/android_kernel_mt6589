@@ -53,19 +53,19 @@
 //set I2C bus 
 #define KDIMGSENSORIOC_X_RELEASE_I2C_TRIGGER_LOCK     _IO(IMGSENSORMAGIC,50)
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //LiuBin@MtkCamera, 2013/02/20, Add for set ISP debug flag
 #ifdef OPPO_EXT_ISP_MS2R
 #define KDIMGSENSORIOC_X_SET_ISP_DEBUG_FLAG		_IOWR(IMGSENSORMAGIC, 60, ISP_DEBUG_INFO)
 #endif
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
 
 /*******************************************************************************
 *
 ********************************************************************************/
 /* SENSOR CHIP VERSION */
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //hufeng@MtkCamera, 2013/02/06, Add for OV2722 sensor
 #define OV2722MIPI_SENSOR_ID                    0x2722
 #endif
@@ -194,16 +194,16 @@
 #define OV8830_SENSOR_ID			  0x8830
 #define OV9726_SENSOR_ID                          0x9726
 #define A5141MIPI_SENSOR_ID                     0x4800
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //LiuBin@MtkCamera, 2013/01/30, Add for MS2R yuv sensor
 #define MS2R_SENSOR_ID							(0x0F16)
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
 /* CAMERA DRIVER NAME */
 #define CAMERA_HW_DEVNAME            "kd_camera_hw"
 
 /* SENSOR DEVICE DRIVER NAME */
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //hufeng@MtkCamera, 2013/02/06, Add for OV2722 sensor
 #define SENSOR_DRVNAME_OV2722_MIPI_RAW  "ov2722mipiraw"
 #endif
@@ -259,10 +259,10 @@
 
 #define SENSOR_DRVNAME_OV9740_MIPI_YUV     "ov9740mipiyuv"
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //LiuBin@MtkCamera, 2013/01/30, Add for MS2R yuv sensor
 #define SENSOR_DRVNAME_MS2R_YUV			"ms2ryuv"
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 /*******************************************************************************
 *
 ********************************************************************************/

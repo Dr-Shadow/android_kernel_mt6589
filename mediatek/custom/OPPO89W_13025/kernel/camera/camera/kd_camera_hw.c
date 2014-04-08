@@ -136,27 +136,27 @@ u32 pinSet[3][8] = {
 		
 		if (0 == pinSetIdx)
 		{
-			#ifdef VENDOR_EDIT
+			#ifdef OPPO_R819
 			//LiuBin@MtkCamera, 2012/11/08, Add for pull down SPI_CS
 			if(mt_set_gpio_mode(GPIO134, GPIO_MODE_00)){PK_DBG("[CAMERA SENSOR] set gpio mode failed!! \n");}
 			if(mt_set_gpio_dir(GPIO134,GPIO_DIR_OUT)){PK_DBG("[CAMERA SENSOR] set gpio dir failed!! \n");}
 			if(mt_set_gpio_out(GPIO134,GPIO_OUT_ZERO)){PK_DBG("[CAMERA SENSOR] set gpio failed!! \n");}
-			#endif /* VENDOR_EDIT */
+			#endif /* OPPO_R819 */
 
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 //Jinshui.Liu@wxkf.wxBaseDrv, 2013/02/25, Modify for different hareware
 			//LiuBin@MtkCamera, 2012/09/05, Add for pull up ISP_1V2_EN 	
 			if(mt_set_gpio_mode(GPIO32, GPIO_MODE_00)){PK_DBG("[CAMERA SENSOR] set gpio mode failed!! \n");}
 			if(mt_set_gpio_dir(GPIO32,GPIO_DIR_OUT)){PK_DBG("[CAMERA SENSOR] set gpio dir failed!! \n");}
 			if(mt_set_gpio_out(GPIO32,GPIO_OUT_ONE)){PK_DBG("[CAMERA SENSOR] set gpio failed!! \n");}
 			mdelay(5);
-#else /*VENDOR_EDIT*/
+#else /*OPPO_R819*/
             if(TRUE != hwPowerOn(MT65XX_POWER_LDO_VAST, VOL_1200,mode_name))
             {
                 PK_DBG("[CAMERA SENSOR] Fail to enable vast power\n");
                 goto _kdCISModulePowerOn_exit_;
             }
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 
 			if(TRUE != hwPowerOn(CAMERA_POWER_VCAM_A, VOL_2800,mode_name))
 	        {
@@ -309,21 +309,21 @@ u32 pinSet[3][8] = {
 				goto _kdCISModulePowerOn_exit_;
 			}
 			
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 //Jinshui.Liu@wxkf.wxBaseDrv, 2013/02/25, Modify for different hareware
-			#ifdef VENDOR_EDIT
+			#ifdef OPPO_R819
 			//LiuBin@MtkCamera, 2012/09/05, Add for pull down ISP_1V2_EN 
 			if(mt_set_gpio_mode(GPIO32, GPIO_MODE_00)){PK_DBG("[CAMERA SENSOR] set gpio mode failed!! \n");}
 			if(mt_set_gpio_dir(GPIO32, GPIO_DIR_OUT)){PK_DBG("[CAMERA SENSOR] set gpio dir failed!! \n");}
 			if(mt_set_gpio_out(GPIO32, GPIO_OUT_ZERO)){PK_DBG("[CAMERA SENSOR] set gpio failed!! \n");}
-			#endif /* VENDOR_EDIT */
-#else /*VENDOR_EDIT*/
+			#endif /* OPPO_R819 */
+#else /*OPPO_R819*/
             if(TRUE != hwPowerDown(MT65XX_POWER_LDO_VAST, mode_name)) 
             {
                 PK_DBG("[CAMERA SENSOR] Fail to OFF vast power\n");
                 goto _kdCISModulePowerOn_exit_;
             }
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 			
 		}
 		else if (1 == pinSetIdx)

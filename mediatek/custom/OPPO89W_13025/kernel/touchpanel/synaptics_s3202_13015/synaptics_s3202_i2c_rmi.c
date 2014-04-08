@@ -1,6 +1,6 @@
 /************************************************************************************
 ** File: - mediatek\custom\common\kernel\touchpanel\synaptics\synaptics_tm1347_i2c_rmi.c
-** VENDOR_EDIT
+** OPPO_R819
 ** Copyright (C), 2008-2012, OPPO Mobile Comm Corp., Ltd
 ** 
 ** Description: 
@@ -64,7 +64,7 @@
 #define TPD_DEVICE "mtk-tpd3202"
 #define TOUCHPANEL_INT_PIN 124
 #define  CUST_EINT_TOUCH_PANEL_NUM 5
-#ifdef VENDOR_EDIT//huqiao modify by black touchpanel buttonled
+#ifdef OPPO_R819//huqiao modify by black touchpanel buttonled
 #include <mach/pmic_mt6329_hw_bank1.h> 
 #include <mach/pmic_mt6329_sw_bank1.h> 
 #include <mach/pmic_mt6329_hw.h>
@@ -96,11 +96,11 @@ extern TP_DEV tp_dev;
 extern int TP_FW;
 //static int tp_dev;
 //static int TP_FW;
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 //Fuchun.Liao@wxkfDrv,modify for engineermode display
 #define TP_TRULY 1
 #define TP_YOUNGFAST 0
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 
 
 
@@ -729,7 +729,7 @@ static void int_state(struct synaptics_ts_data *ts)
 		return;
 	}
 }
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //Fuchun.Liao add for select tp
 static void TP_get_id(void)
 {
@@ -760,7 +760,7 @@ static void TP_get_id(void)
    }
    printk("TP_get_id:tp_dev:%d,GPIOEXT32:%d,GPIOEXT33:%d\n",tp_dev,tmp0,tmp1);
 }
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 static void int_touch(struct synaptics_ts_data *ts)
 {
     int ret= -1,i=0, j = 0;
@@ -1493,7 +1493,7 @@ static int tp_write_func (struct file *file,const char *buffer,
 	struct synaptics_ts_data *ts; 
 	ssize_t num_read_chars = 0;
 	int ret = 0;
-#ifdef VENDOR_EDIT //modify bu huqiao for white TP buttonled
+#ifdef OPPO_R819 //modify bu huqiao for white TP buttonled
 		if(tp_dev == TP_TRULY_BLACK)
 	{
 		num_read_chars += sprintf(buffer, "2");
@@ -1793,7 +1793,7 @@ static int synaptics_ts_probe(
 	uint8_t fw_cnt = 0;
 	
 	TPDTM_DMESG("synaptics_ts_probe: enter !!!!!!!!!!!!!!\n");	
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //Fuchun.Liao@wxkfDrv,2013/06/04,add for tp can work if alsps error
 	tpd_power(1);
 #endif 	
@@ -1831,7 +1831,7 @@ static int synaptics_ts_probe(
 	//tp_autotest = kzalloc(sizeof(*tp_autotest), GFP_KERNEL);
 	//memset(tp_autotest,0,sizeof(*tp_autotest));
 
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 //Fuchun.Liao@wxkfDrv,2013/05/21 modify
 	/*check tp factory*/
 	ret = mt_get_gpio_in(31);
@@ -1846,7 +1846,7 @@ static int synaptics_ts_probe(
 	}
 #else
    TP_get_id();
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 	INIT_WORK(&ts->work, synaptics_ts_work_func);
 	ts->client = client;
 	i2c_set_clientdata(client, ts);
@@ -1865,7 +1865,7 @@ static int synaptics_ts_probe(
 
 	if(tp_dev == TP_TRULY){
 		printk("TP_DEV = TP_TRULY\n");
-		#ifdef VENDOR_EDIT//huqiao modify by black touchpanel buttonled
+		#ifdef OPPO_R819//huqiao modify by black touchpanel buttonled
 		//		upmu_set_kpled_dim_duty(0x1F);	 
 		//		upmu_set_kpled_dim_div(0x0); 
 		//		upmu_set_kpled_sel(0x5);			// Imax = 56.25mA  
@@ -2105,7 +2105,7 @@ err_alloc_data_failed:
 err_check_functionality_failed:
 synaptics_ts_probe_end:
 
-#ifdef VENDOR_EDIT//hsy@oppo.com, add 2011/12/14 for tpd power off
+#ifdef OPPO_R819//hsy@oppo.com, add 2011/12/14 for tpd power off
 	
 	#ifndef SUPPORT_DOUBLE_TAP
 		tpd_power(0);
@@ -2119,7 +2119,7 @@ synaptics_ts_probe_end:
 		//   tpd_power(0);
 		}
 	#endif
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 	return ret;
 }
 
@@ -2258,7 +2258,7 @@ static void synaptics_ts_early_suspend(struct early_suspend *h)
 #endif	
 	
 	synaptics_ts_suspend(ts->client, PMSG_SUSPEND);
-#ifdef VENDOR_EDIT//hsy@oppo.com, add 2011/12/14 for tp power off
+#ifdef OPPO_R819//hsy@oppo.com, add 2011/12/14 for tp power off
      //tpd_power(0);
 	#ifndef SUPPORT_DOUBLE_TAP
 	tpd_power(0);
@@ -2274,7 +2274,7 @@ static void synaptics_ts_early_suspend(struct early_suspend *h)
 	}
 	#endif	
 	 
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 }
 
 static void synaptics_ts_late_resume(struct early_suspend *h)
@@ -2302,7 +2302,7 @@ static void synaptics_ts_late_resume(struct early_suspend *h)
     }
 #endif	
 	
-#ifdef VENDOR_EDIT//hsy@oppo.com, add 2011/12/14 for tpd power off
+#ifdef OPPO_R819//hsy@oppo.com, add 2011/12/14 for tpd power off
 	#ifndef SUPPORT_DOUBLE_TAP
 	tpd_power(1);
     //yongjun.wu@Prodrv,add for unlock screen two times
@@ -2320,7 +2320,7 @@ static void synaptics_ts_late_resume(struct early_suspend *h)
 	  tpd_power(1);	
 	}
 	#endif
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 	synaptics_ts_resume(ts->client);
 }
 #endif

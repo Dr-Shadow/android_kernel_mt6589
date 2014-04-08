@@ -467,7 +467,7 @@ static void lcm_get_params(LCM_PARAMS *params)
 		params->dsi.PLL_CLOCK = LCM_DSI_6589_PLL_CLOCK_260;
 }
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 volatile int oppo_lcd_status = 1;
 #endif
 extern int gbtecnt;
@@ -485,7 +485,7 @@ static void lcm_init(void)
 	 
 	 push_table(lcm_jdi_initialization_setting, sizeof(lcm_jdi_initialization_setting) / sizeof(struct LCM_setting_table), 1);
 	 #endif
-    #ifdef VENDOR_EDIT
+    #ifdef OPPO_R819
 	oppo_lcd_status = 1;
 	#endif
 }
@@ -562,7 +562,7 @@ static void lcm_suspend(void)
         mt_set_gpio_out(79,0) ;
 	 }
 	#endif
-	#ifdef VENDOR_EDIT
+	#ifdef OPPO_R819
 	oppo_lcd_status = 0;
 	#endif
 }
@@ -595,7 +595,7 @@ static void lcm_resume(void)
           gbtecnt=60;
     }
     #endif
-	#ifdef VENDOR_EDIT
+	#ifdef OPPO_R819
 	oppo_lcd_status = 1;
 	#endif
   

@@ -249,7 +249,7 @@ typedef enum
   SENSOR_FEATURE_SET_MAX_FRAME_RATE_BY_SCENARIO,
   SENSOR_FEATURE_GET_DEFAULT_FRAME_RATE_BY_SCENARIO,
   SENSOR_FEATURE_GET_AE_AWB_LOCK_INFO,
-  #ifdef VENDOR_EDIT
+  #ifdef OPPO_R819
   //feng.hu@mtk camera team modified for ms2r continuous af
   SENSOR_FEATURE_DO_YUV_CAF,
   //LiuBin@MtkCamera, 2012/10/23, Add for get MS2R brightness to control CAF
@@ -269,7 +269,7 @@ typedef enum
   #endif /* QUICK_CAPTURE */
   //LiuBin@MtkCamera, 2013/04/23, Add for set isp to capture
   SENSOR_FEATURE_SET_ISP_CAPTURE,
-  #endif /* VENDOR_EDIT */
+  #endif /* OPPO_R819 */
   SENSOR_FEATURE_MAX
 } ACDK_SENSOR_FEATURE_ENUM;
 
@@ -770,7 +770,7 @@ typedef struct
     MUINT32 drvIndex[KDIMGSENSOR_MAX_INVOKE_DRIVERS]; /* max 2 driver sumultaneously */
 } SENSOR_DRIVER_INDEX_STRUCT, *PSENSOR_DRIVER_INDEX_STRUCT;
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //LiuBin@MtkCamera, 2013/03/05, Add for isp debug info
 typedef struct
 {
@@ -778,7 +778,7 @@ typedef struct
 	MINT32 ISPRawDataEnable;
 	MINT32 ISPDebugEnable;
 }ISP_DEBUG_INFO;
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
 //hardcode by GPIO module, should be sync with.(cust_gpio_usage.h)
 #define GPIO_CAMERA_INVALID 0xFF

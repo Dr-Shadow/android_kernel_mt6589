@@ -501,17 +501,17 @@ void bq24156a_dump_register(void)
     printk("\n");
 }
 
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 extern int g_enable_high_vbat_spec;
 #endif
 extern int g_pmic_cid;
 void bq24156a_hw_init(void)
 {    
-    #ifdef VENDOR_EDIT
+    #ifdef OPPO_R819
 	oppo_DC_charger_init_sign=0;
     #endif
 	
-    #if 0//def VENDOR_EDIT
+    #if 0//def OPPO_R819
     mt_set_gpio_mode(GPIO_BQ24156A_STAT_NUM,GPIO_BQ24156A_STAT_MODE);
     mt_set_gpio_dir(GPIO_BQ24156A_STAT_NUM,GPIO_BQ24156A_STAT_DIR);
     mt_set_gpio_out(GPIO_BQ24156A_STAT_NUM,GPIO_BQ24156A_STAT_ON_OUT);
@@ -530,7 +530,7 @@ void bq24156a_hw_init(void)
     #endif
     
     bq24156a_set_mchrg(0xa); // max range = 1.55A
-    #ifdef VENDOR_EDIT
+    #ifdef OPPO_R819
     #ifdef OPPO_HIGH_BATTERY_VOLTAGE
     if(oppo_high_battery_status == 1) 
 		bq24156a_set_mreg(0x07);// max volt = 4.34V
@@ -539,7 +539,7 @@ void bq24156a_hw_init(void)
 		bq24156a_set_mreg(0x01);// max volt = 4.22V
     #endif
 	
-	#ifdef VENDOR_EDIT
+	#ifdef OPPO_R819
 	oppo_DC_charger_init_sign=1;
     #endif
 }
@@ -559,7 +559,7 @@ static int bq24156a_driver_probe(struct i2c_client *client, const struct i2c_dev
     new_client = client;    
 
     //---------------------
-    #ifdef VENDOR_EDIT
+    #ifdef OPPO_R819
     //do not delete,or regist 0x06 will can not write???(need to check)
     bq24156a_dump_register();
     #endif

@@ -26,7 +26,7 @@
 extern int excharger_read_byte(kal_uint8 cmd, kal_uint8 *returnData);
 extern int excharger_write_byte(kal_uint8 cmd, kal_uint8 writeData);
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 #define GPIO_BQ24156A_STAT_NUM           GPIOEXT26
 #define GPIO_BQ24156A_STAT_MODE          GPIO_MODE_GPIO
 #define GPIO_BQ24156A_STAT_DIR           GPIO_DIR_OUT

@@ -1,6 +1,6 @@
 /************************************************************************************
 ** File: - mediatek\custom\common\kernel\touchpanel\synaptics\synaptics_s3200.c
-** VENDOR_EDIT
+** OPPO_R819
 ** Copyright (C), 2008-2012, OPPO Mobile Comm Corp., Ltd
 ** 
 ** Description: 
@@ -65,7 +65,7 @@
 #define TPD_DEVICE "mtk-tpd"
 static unsigned int tp_multi_finger=0; 
 static unsigned int tp_debug = 0; 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 int Disable_key_during_touch =0;
 #endif
 #define TPD_DEBUG(a,arg...)\
@@ -1625,13 +1625,13 @@ static int tp_write_func (struct file *file,const char *buffer, unsigned long co
 	{
         printk("tp_write_func:Handle erro point start!!!!!!!!!!! \n");
         tp_multi_finger=0;
-	#ifndef VENDOR_EDIT
+	#ifndef OPPO_R819
 		//Fuchun.Liao@wxkfDrv,2013/05/14,delete for tp forcecal baseline in calling
 		if(ts->no_erroponit_exist == 0)
-	#endif /*VENDOR_EDIT*/
+	#endif /*OPPO_R819*/
 		{
 			TPD_DEBUG("tp_write_func:find ERRO point!!!!!!!!!!\n  is_touch = %d, finger_num = %d\n",atomic_read(&is_touch),ts->finger_num);
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //Fuchun.Liao@wxkfdDrv,2013/05/14,modify for tp reset
 //forcecal baseline when report serval points
 			ret = i2c_smbus_write_byte_data(ts->client, 0xff, 0x01); 
@@ -1643,7 +1643,7 @@ static int tp_write_func (struct file *file,const char *buffer, unsigned long co
 				}
 					//ret = i2c_smbus_write_byte_data(ts->client, F11_2D_CMD00, 0x01); 
 					//msleep(50);
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 				TPD_DEBUG("tp_write_func:tp_multi_finger,rezero successed!\n");
 
 		}
@@ -1652,7 +1652,7 @@ static int tp_write_func (struct file *file,const char *buffer, unsigned long co
 		{
 			TPD_DEBUG("tp_write_func:when no touch rezero again!\n is_touch = %d, finger_num = %d\n",atomic_read(&is_touch),ts->finger_num);
 			ts->no_erroponit_exist = 1;
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 //Fuchun.Liao@wxkfdDrv,2013/05/14,modify for tp reset
 //reset pannel when no touch
 			ret = i2c_smbus_write_byte_data(ts->client, 0xff, 0x01); 
@@ -1681,7 +1681,7 @@ static int tp_write_func (struct file *file,const char *buffer, unsigned long co
 				     printk("tp_write_func:no touch,cannot enable interrupt \n");	        
 			         goto err;		
 					}
-#endif /*VENDOR_EDIT*/			
+#endif /*OPPO_R819*/			
 
 			TPD_DEBUG("tp_write_func: no touch,rezero successed!\n");
 		  }
@@ -1710,7 +1710,7 @@ static int init_synaptics_proc(void)
 	
 	return ret;
 }
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //Fuchun.Liao@wxkfDrv,2013/04/22,add for modem version detect by GPIO
 char *modem_ver_buffer[1]={0};
 
@@ -1738,7 +1738,7 @@ static int __init proc_modem_ver_init(void) {
         modem_ver_file->write_proc = proc_wirte_modem_ver;
         return 0;
 }
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 static int synaptics_ts_probe(
 	struct i2c_client *client, const struct i2c_device_id *id)
 {
@@ -1751,7 +1751,7 @@ static int synaptics_ts_probe(
 	uint8_t bootloader_mode = 0;
 	uint8_t fw_cnt = 0;
 	//bTP_Id_Detect_probe=TP_Detect_ID();
-	#ifdef VENDOR_EDIT
+	#ifdef OPPO_R819
 	//Fuchun.Liao@wxkfDrv,2013/04/21,add for modem version detect by GPIO
 	int tmp0,tmp1;
 	mt_set_gpio_mode(GPIO132,0); 
@@ -1774,7 +1774,7 @@ static int synaptics_ts_probe(
 	modem_ver_buffer[0]="UNKNOWN";
 	printk("lfc modem ver detect GPIO132=%d,GPIO133=%d,modem_ver=%s\n",tmp0,tmp1,modem_ver_buffer[0]);
     proc_modem_ver_init();
-	#endif /*VENDOR_EDIT*/
+	#endif /*OPPO_R819*/
 	TPD_DEBUG("synaptics_ts_probe: enter !!!!!!!!!!!!!!\n");
 	tpd_power(1);
 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
@@ -2053,9 +2053,9 @@ err_input_dev_alloc_failed:
 err_alloc_data_failed:
 err_check_functionality_failed:
 synaptics_ts_probe_end:
-#ifdef VENDOR_EDIT//hsy@oppo.com, add 2011/12/14 for tpd power off
+#ifdef OPPO_R819//hsy@oppo.com, add 2011/12/14 for tpd power off
 	tpd_power(0);
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 	return ret;
 }
 
@@ -2188,10 +2188,10 @@ static void synaptics_ts_late_resume(struct early_suspend *h)
 	ts = container_of(h, struct synaptics_ts_data, early_suspend);
 	tpd_power(1);
 	
-	#ifdef VENDOR_EDIT
+	#ifdef OPPO_R819
 	//Fuchun.Liao@wxkfDrv,2013/05/07 add for tp i2c error after resume
 	msleep(20);
-	#endif /*VENDOR_EDIT*/
+	#endif /*OPPO_R819*/
 	
 	//yongjun.wu@Prodrv,add for unlock screen two times
 	input_report_key(ts->input_dev, BTN_TOUCH, 0);

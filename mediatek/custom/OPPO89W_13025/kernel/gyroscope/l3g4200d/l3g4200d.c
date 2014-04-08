@@ -404,7 +404,7 @@ static int L3G4200D_ReadGyroData(struct i2c_client *client, char *buf, int bufsi
 	return 0;
 }
 
-#ifdef VENDOR_EDIT	// zhangqiang add for carmer focusing
+#ifdef OPPO_R819	// zhangqiang add for carmer focusing
 
 //  for carmer preview open gyro
 static int gyro_static_befor_preview = 0;

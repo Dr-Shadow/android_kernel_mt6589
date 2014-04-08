@@ -72,13 +72,13 @@
 #define MMCFUNC(func)
 #endif
 
-#ifdef VENDOR_EDIT//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/8/13 for mensor debug
+#ifdef OPPO_R819//mingqiang.guo@Prd.BasicDrv.Sensor, add 2012/8/13 for mensor debug
 	#if  0
 		#define MSEN_DBG(x...) printk(x)
 	#else
 		#define MSEN_DBG(x...) 
 	#endif 
-#endif /* VENDOR_EDIT*/
+#endif /* OPPO_R819*/
 
 static struct i2c_client *this_client = NULL;
 
@@ -141,10 +141,10 @@ struct mmc328x_i2c_data {
 #if defined(CONFIG_HAS_EARLYSUSPEND)    
     struct early_suspend    early_drv;
 #endif 
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
     atomic_t suspend;
     atomic_t enable_before_resume; 
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 };
 /*----------------------------------------------------------------------------*/
 static struct i2c_driver mmc328x_i2c_driver = {
@@ -168,11 +168,11 @@ static struct platform_driver mmc_sensor_driver = {
 	.probe      = mmc_probe,
 	.remove     = mmc_remove,    
 	.driver     = {
-	#ifndef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/8/6 for muti msensor
+	#ifndef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/8/6 for muti msensor
 		.name  = "msensor",
 	#else
 		.name  = "msensor_mmc328x",
-	#endif /*VENDOR_EDIT*/
+	#endif /*OPPO_R819*/
 		//.owner = THIS_MODULE,
 	}
 };
@@ -180,12 +180,12 @@ static struct platform_driver mmc_sensor_driver = {
 
 /*----------------------------------------------------------------------------*/
 static atomic_t dev_open_count;
-#ifdef VENDOR_EDIT//Shaoyu.Huang@BadicDrv.Sensor, add 2012/6/4 for sensor debuging
+#ifdef OPPO_R819//Shaoyu.Huang@BadicDrv.Sensor, add 2012/6/4 for sensor debuging
 /*----------------------------------------------------------------------------*/
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
 static int I2C_RxData(char *rxData, int length);
 static int I2C_TxData(char *txData, int length);
-#endif /*VENDOR_EDIT*/
+#endif /*OPPO_R819*/
 static debugflag = 0;
 static ssize_t debugflag_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
 {	
@@ -225,7 +225,7 @@ static struct file_operations debug_fops = {
 	.read = debugflag_read,
 	.write = debugflag_write,
 };
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 
 static int mmc328x_SetPowerMode(struct i2c_client *client, bool enable)
@@ -235,7 +235,7 @@ static int mmc328x_SetPowerMode(struct i2c_client *client, bool enable)
 	u8 addr = MMC328x_REG_CTRL;
 	struct mmc328x_i2c_data *obj = i2c_get_clientdata(client);
 
-#ifndef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for sensor suspend
+#ifndef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for sensor suspend
 	if(hwmsen_read_byte(client, addr, databuf))
 	{
 		printk("mmc328x: read power ctl register err and retry!\n");
@@ -245,14 +245,14 @@ static int mmc328x_SetPowerMode(struct i2c_client *client, bool enable)
 		   return -1;
 	    }
 	}
-#else/*VENDOR_EDIT*/
+#else/*OPPO_R819*/
 	databuf[0] = addr;
 	if (I2C_RxData(databuf, 1) < 0)
 	{
 		printk("hsy: read power ctl register retry err!\n");
 		return -1;
 	}
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 	databuf[0] &= ~MMC328x_CTRL_TM;
 	
@@ -267,13 +267,13 @@ static int mmc328x_SetPowerMode(struct i2c_client *client, bool enable)
 	databuf[1] = databuf[0];
 	databuf[0] = MMC328x_REG_CTRL;
 	
-#ifndef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for sensor enable
+#ifndef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for sensor enable
 	res = i2c_master_send(client, databuf, 0x2);
 	if(res <= 0)
-#else/*VENDOR_EDIT*/
+#else/*OPPO_R819*/
 	res = I2C_TxData(databuf, 2);
 	if (res < 0)
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 	{
 		printk("mmc328x: set power mode failed!\n");
 		return -1;
@@ -290,7 +290,7 @@ static int mmc328x_SetPowerMode(struct i2c_client *client, bool enable)
 static void mmc328x_power(struct mag_hw *hw, unsigned int on) 
 {
 	static unsigned int power_on = 0;
-#ifndef VENDOR_EDIT//Shaoyu.Huang@BasicDrv.Sensor, modify 2012/5/24 for msensor power
+#ifndef OPPO_R819//Shaoyu.Huang@BasicDrv.Sensor, modify 2012/5/24 for msensor power
 	if(hw->power_id != MT65XX_POWER_NONE)
 	{        
 		MMCDBG("power %s\n", on ? "on" : "off");
@@ -314,9 +314,9 @@ static void mmc328x_power(struct mag_hw *hw, unsigned int on)
 		}
 	}
 	power_on = on;
-#else/*VENDOR_EDIT*/
+#else/*OPPO_R819*/
 	hw->power(hw, on, NULL);
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 }
 static int I2C_RxData(char *rxData, int length)
 {
@@ -527,7 +527,7 @@ time1 = current_kernel_time();
 
 if (!(read_idx % MMC328x_RESET_INTV))
 	{
-		#ifndef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for FAE request	
+		#ifndef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for FAE request	
 			/* RM */
 			data[0] = MMC328x_REG_CTRL;
 			data[1] = MMC328x_CTRL_RM;
@@ -535,7 +535,7 @@ if (!(read_idx % MMC328x_RESET_INTV))
 			I2C_TxData(data, 2);
 			/* wait external capacitor charging done for next RM */
 			msleep(MMC328X_DELAY_RM);
-		#else/*VENDOR_EDIT*/
+		#else/*OPPO_R819*/
 			/* 2RM */
 			data[0] = MMC328x_REG_CTRL;
 			data[1] = MMC328x_CTRL_RM;
@@ -556,7 +556,7 @@ if (!(read_idx % MMC328x_RESET_INTV))
 			I2C_TxData(data, 2);
 			msleep(10); 
 
-		#endif/*VENDOR_EDIT*/		
+		#endif/*OPPO_R819*/		
 	}
 	time3 = current_kernel_time();
 	/* send TM cmd before read */
@@ -592,9 +592,9 @@ if (!(read_idx % MMC328x_RESET_INTV))
 	vec[0] = data[1] << 8 | data[0];
 	vec[1] = data[3] << 8 | data[2];
 	vec[2] = data[5] << 8 | data[4];
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for FAE request
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for FAE request
 		vec[2] = 8192 - vec[2];
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 //printk("111:   [X - %04d] [Y - %04d] [Z - %04d]\n", vec[0], vec[1], vec[2]);
 #if DEBUG
 	if(atomic_read(&clientdata->trace) & MMC_DATA_DEBUG)
@@ -786,7 +786,7 @@ static ssize_t show_daemon_name(struct device_driver *ddri, char *buf)
 	sprintf(strbuf, "memsicd");
 	return sprintf(buf, "%s", strbuf);		
 }
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msesensor auto test
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msesensor auto test
 #define abs(a) (((a) < 0) ? -(a) : (a))
 int data_initial[3] = {0, 0, 0};
 int data_magnet_close[3] = {0, 0, 0};
@@ -963,7 +963,7 @@ static ssize_t show_autotest_get_ic_modle(struct device_driver *ddri, char *buf)
 	printk("msensor is mmc328x\n");
 	return 0;
 }
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 /*----------------------------------------------------------------------------*/
 static DRIVER_ATTR(daemon,      S_IRUGO, show_daemon_name, NULL);
 static DRIVER_ATTR(chipinfo,    S_IRUGO, show_chipinfo_value, NULL);
@@ -972,12 +972,12 @@ static DRIVER_ATTR(posturedata, S_IRUGO, show_posturedata_value, NULL);
 static DRIVER_ATTR(direction,      S_IRUGO | S_IWUSR, show_direction_value, store_direction_value );
 static DRIVER_ATTR(status,      S_IRUGO, show_status_value, NULL);
 static DRIVER_ATTR(trace,       S_IRUGO | S_IWUSR, show_trace_value, store_trace_value);
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor auto test
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor auto test
 static DRIVER_ATTR(test_id,       S_IRUGO, show_autotest_testID, NULL);
 static DRIVER_ATTR(magnet_close,  S_IRUGO, show_autotest_magnetclose, NULL);
 static DRIVER_ATTR(magnet_leave,  S_IRUGO, show_autotest_magnetleave, NULL);
 static DRIVER_ATTR(get_ic_modle,  S_IRUGO, show_autotest_get_ic_modle, NULL);
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 /*----------------------------------------------------------------------------*/
 static struct driver_attribute *mmc328x_attr_list[] = {
     &driver_attr_daemon,
@@ -987,12 +987,12 @@ static struct driver_attribute *mmc328x_attr_list[] = {
 	&driver_attr_direction,
 	&driver_attr_status,
 	&driver_attr_trace,
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor auto test
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor auto test
 	&driver_attr_test_id,
 	&driver_attr_magnet_close,
 	&driver_attr_magnet_leave,
 	&driver_attr_get_ic_modle,	
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 };
 /*----------------------------------------------------------------------------*/
 static int mmc328x_create_attr(struct device_driver *driver) 
@@ -1100,11 +1100,11 @@ static int mmc328x_unlocked_ioctl(struct file *file, unsigned int cmd,unsigned l
 			
 		case MMC31XX_IOC_SET:
 			data[0] = MMC328x_REG_CTRL;
-		#ifndef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 to make msensor work better
+		#ifndef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 to make msensor work better
 			data[1] = MMC328x_REG_DS;
-		#else/*VENDOR_EDIT*/
+		#else/*OPPO_R819*/
 			data[1] = MMC328x_CTRL_RM;
-		#endif/*VENDOR_EDIT*/
+		#endif/*OPPO_R819*/
 			if(I2C_TxData(data, 2) < 0)
 			{
 				printk(KERN_ERR "MMC328x_IOC_SET failed\n");
@@ -1116,11 +1116,11 @@ static int mmc328x_unlocked_ioctl(struct file *file, unsigned int cmd,unsigned l
 			
 		case MMC31XX_IOC_RESET:
 			data[0] = MMC328x_REG_CTRL;
-		#ifndef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 to make msensor work better
+		#ifndef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 to make msensor work better
 			data[1] = MMC328x_REG_DS;
-		#else/*VENDOR_EDIT*/
+		#else/*OPPO_R819*/
 			data[1] = MMC328x_CTRL_RRM;
-		#endif/*VENDOR_EDIT*/
+		#endif/*OPPO_R819*/
 			if(I2C_TxData(data, 2) < 0)
 			{
 				printk(KERN_ERR "MMC328x_IOC_RESET failed\n");
@@ -1333,7 +1333,7 @@ static int mmc328x_unlocked_ioctl(struct file *file, unsigned int cmd,unsigned l
 			} 
 			
 			break;
-	#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor self test
+	#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor self test
 		case MMC328X_IOC_READID:
 		{
 			unsigned id[2];
@@ -1353,7 +1353,7 @@ static int mmc328x_unlocked_ioctl(struct file *file, unsigned int cmd,unsigned l
 			}
 			break;
 		}
-	#endif/*VENDOR_EDIT*/			
+	#endif/*OPPO_R819*/			
 		default:
 			printk(KERN_ERR "%s not supported = 0x%04x", __FUNCTION__, cmd);
 			return -ENOIOCTLCMD;
@@ -1363,7 +1363,7 @@ static int mmc328x_unlocked_ioctl(struct file *file, unsigned int cmd,unsigned l
 
 	return 0;    
 }
-#ifdef VENDOR_EDIT//mingqiang.guo@prd.BasicDrv.Sensor, 2012/11/12 add for read_ic_model,in msensor auto test 
+#ifdef OPPO_R819//mingqiang.guo@prd.BasicDrv.Sensor, 2012/11/12 add for read_ic_model,in msensor auto test 
 static ssize_t read_ic_model(struct file *file, char __user *buf, size_t count, loff_t *pos)
 {	
 
@@ -1388,7 +1388,7 @@ static ssize_t read_ic_model(struct file *file, char __user *buf, size_t count, 
 static struct file_operations ic_model_fops = {
     .read = read_ic_model,
 };
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 /*----------------------------------------------------------------------------*/
 static struct file_operations mmc328x_fops = {
 	//.owner = THIS_MODULE,
@@ -1421,7 +1421,7 @@ int mmc328x_operate(void* self, uint32_t command, void* buff_in, int size_in,
 		MMCFUNC("mmc328x_operate");
 	}	
 #endif
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
 	if (atomic_read(&data->suspend))
 	{
 		if (SENSOR_ENABLE == command)
@@ -1445,7 +1445,7 @@ int mmc328x_operate(void* self, uint32_t command, void* buff_in, int size_in,
 		}
 		return 0;
 	}
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 	switch (command)
 	{
 		case SENSOR_DELAY:
@@ -1512,14 +1512,14 @@ int mmc328x_operate(void* self, uint32_t command, void* buff_in, int size_in,
 				msensor_data->status = sensor_data[7];
 				msensor_data->value_divide = CONVERT_M_DIV;
 					
-			#ifdef VENDOR_EDIT//Shaoyu.Huang@BasicDrv.Sensor, add 2012/6/4 for sensor debuging
+			#ifdef OPPO_R819//Shaoyu.Huang@BasicDrv.Sensor, add 2012/6/4 for sensor debuging
 				if (debugflag){
 					printk(KERN_ALERT"[msensor]: x =%d, y = %d, z = %d\n", 
 							msensor_data->values[0],
 							msensor_data->values[1],
 							msensor_data->values[2]);		
 				}	
-			#endif/*VENDOR_EDIT*/
+			#endif/*OPPO_R819*/
 				mutex_unlock(&sensor_data_mutex);
 #if DEBUG
 				if(atomic_read(&data->trace) & MMC_HWM_DEBUG)
@@ -1558,7 +1558,7 @@ int mmc328x_orientation_operate(void* self, uint32_t command, void* buff_in, int
 		MMCFUNC("mmc328x_orientation_operate");
 	}	
 #endif
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
 	if (atomic_read(&data->suspend))
 	{
 		if (SENSOR_ENABLE == command)
@@ -1582,7 +1582,7 @@ int mmc328x_orientation_operate(void* self, uint32_t command, void* buff_in, int
 		}
 		return 0;
 	}
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 
 	switch (command)
 	{
@@ -1647,14 +1647,14 @@ int mmc328x_orientation_operate(void* self, uint32_t command, void* buff_in, int
 				osensor_data->values[2] = sensor_data[10] * CONVERT_O;
 				osensor_data->status = sensor_data[11];					
 				osensor_data->value_divide = CONVERT_O_DIV;
-			#ifdef VENDOR_EDIT//Shaoyu.Huang@BasicDrv.Sensor, add 2012/6/4 for sensor debuging
+			#ifdef OPPO_R819//Shaoyu.Huang@BasicDrv.Sensor, add 2012/6/4 for sensor debuging
 				if (debugflag){
 					printk(KERN_ALERT"[osensor]: x =%d, y = %d, z = %d\n", 
 							osensor_data->values[0],
 							osensor_data->values[1],
 							osensor_data->values[2]);		
 				}	
-			#endif/*VENDOR_EDIT*/
+			#endif/*OPPO_R819*/
 
 				mutex_unlock(&sensor_data_mutex);
 #if DEBUG
@@ -1718,10 +1718,10 @@ static void mmc328x_early_suspend(struct early_suspend *h)
 		printk("mmc328x: write power control fail!!\n");
 		return;
 	}
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for sensor power off
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for sensor power off
 	atomic_set(&obj->suspend, 1);	
 	mmc328x_power(obj->hw, 0);
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 	       
 }
 /*----------------------------------------------------------------------------*/
@@ -1737,14 +1737,14 @@ static void mmc328x_late_resume(struct early_suspend *h)
 	}
 
 	mmc328x_power(obj->hw, 1);
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
 	if (atomic_read(&obj->enable_before_resume))
 	{
 		wake_up(&open_wq);	
 		atomic_set(&obj->enable_before_resume, 0);
 	}
 	atomic_set(&obj->suspend, 0);
-#endif/*VENDOR_EDIT*/	
+#endif/*OPPO_R819*/	
 }
 /*----------------------------------------------------------------------------*/
 #endif /*CONFIG_HAS_EARLYSUSPEND*/
@@ -1778,10 +1778,10 @@ static int mmc328x_i2c_probe(struct i2c_client *client, const struct i2c_device_
 
         atomic_set(&data->layout, data->hw->direction);
         atomic_set(&data->trace, 0);
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
 	atomic_set(&data->suspend, 0);
 	atomic_set(&data->enable_before_resume, 0);
-#endif/*VENDOR_EDIT*/	
+#endif/*OPPO_R819*/	
 
 	mutex_init(&sensor_data_mutex);
 	mutex_init(&read_i2c_xyz);
@@ -1844,10 +1844,10 @@ static int mmc328x_i2c_probe(struct i2c_client *client, const struct i2c_device_
 	data->early_drv.resume   = mmc328x_late_resume,    
 	register_early_suspend(&data->early_drv);
 #endif
-#ifndef VENDOR_EDIT//Shaoyu.Huang@BasicDrv.Sensor, add 2012/6/4 for sensor debuging
+#ifndef OPPO_R819//Shaoyu.Huang@BasicDrv.Sensor, add 2012/6/4 for sensor debuging
 	hwmsen_make_debug_flag(&debug_fops, "mmc328xma_msensor");
 	hwmsen_make_debug_flag(&ic_model_fops, "read_msensor_model");
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 	MMCDBG("%s: OK\n", __func__);
 	return 0;
 
@@ -1857,9 +1857,9 @@ static int mmc328x_i2c_probe(struct i2c_client *client, const struct i2c_device_
 	kfree(data);
 	exit:
 	printk(KERN_ERR "%s: err = %d\n", __func__, err);
-#ifdef VENDOR_EDIT//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
+#ifdef OPPO_R819//mingqiang.guo@BasicDrv.Sensor, add 2012/6/6 for msensor power off
 	mmc328x_power(hw_probe, 0);
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 	return err;
 }
 /*----------------------------------------------------------------------------*/

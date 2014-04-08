@@ -1,6 +1,6 @@
 /************************************************************************************
 ** File: - camera_spi_driver.c
-** VENDOR_EDIT
+** OPPO_R819
 ** Copyright (C), 2008-2012, OPPO Mobile Comm Corp., Ltd
 ** 
 ** Description: 

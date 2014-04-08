@@ -22,7 +22,7 @@ typedef enum
 	Cust_CC_0MA	   = 0xDD
 }cust_charging_current_enum;
 
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 typedef struct{	
 	unsigned int BattVolt;
 	unsigned int BattPercent;
@@ -42,14 +42,14 @@ typedef struct{
 #define USB_CHARGER_CURRENT_SUSPEND			Cust_CC_0MA		// def CONFIG_USB_IF
 #define USB_CHARGER_CURRENT_UNCONFIGURED	Cust_CC_70MA	// def CONFIG_USB_IF
 #define USB_CHARGER_CURRENT_CONFIGURED		Cust_CC_450MA	// def CONFIG_USB_IF
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 #define USB_CHARGER_CURRENT					Cust_CC_450MA
 #define AC_CHARGER_CURRENT					Cust_CC_650MA	
 #endif
 
 /* Battery Meter Solution */
 #define CONFIG_ADC_SOLUTION 	1
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 /* Battery Voltage and Percentage Mapping Table */
 VBAT_TO_PERCENT Batt_VoltToPercent_Table[] = {
 	/*BattVolt,BattPercent*/
@@ -71,7 +71,7 @@ VBAT_TO_PERCENT Batt_VoltToPercent_Table[] = {
 //#define BATTERY_AVERAGE_SIZE   3
 
 /* Common setting */
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 #define R_CURRENT_SENSE 2				// 0.2 Ohm
 #endif
 #define R_BAT_SENSE 4					// times of voltage
@@ -84,7 +84,7 @@ VBAT_TO_PERCENT Batt_VoltToPercent_Table[] = {
 #define V_CHARGER_ENABLE 0				// 1:ON , 0:OFF
 
 /* Teperature related setting */
-#ifndef VENDOR_EDIT
+#ifndef OPPO_R819
 #define RBAT_PULL_UP_R             39000
 #define RBAT_PULL_UP_VOLT          1800
 #define TBAT_OVER_CRITICAL_LOW     68237

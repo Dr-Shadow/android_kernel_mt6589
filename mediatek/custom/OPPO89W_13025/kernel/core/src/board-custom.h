@@ -11,7 +11,7 @@
 #define CFG_DEV_MSDC0
 #endif
 
-#ifndef VENDOR_EDIT  
+#ifndef OPPO_R819  
 //rendong.shi@prd.BasicDrv.SD, modify 2012/12/11 to remove MSDC1
 #define CFG_DEV_MSDC1
 #else

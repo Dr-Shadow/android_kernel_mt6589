@@ -37,7 +37,7 @@
 #include <cust_alsps.h>
 #include <mach/mt_pm_ldo.h>
 
-#ifdef VENDOR_EDIT//Shaoyu.Huang@Prd.BasicDrv.Sensor,add 2012/5/28 for alsps power
+#ifdef OPPO_R819//Shaoyu.Huang@Prd.BasicDrv.Sensor,add 2012/5/28 for alsps power
 #include <linux/delay.h>
 #include <mach/mt_gpio.h>
 
@@ -64,7 +64,7 @@ static int power(struct alsps_hw *hw, unsigned int on, char *devname)
 	status = on;
 	return 0;
 }
-#endif/*VENDOR_EDIT*/
+#endif/*OPPO_R819*/
 static struct ps_adjust_para cust_ps_adjust_para_tmd2772 = {
     .ps_up = 60,
     .ps_thd_low_notrend = 40,

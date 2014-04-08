@@ -113,10 +113,10 @@ FID_PRE_BEGIN = 0,
         FID_ISP_SAT, 
         FID_ISP_BRIGHT, 
         FID_ISP_CONTRAST, 
-        #ifdef VENDOR_EDIT
+        #ifdef OPPO_R819
 		//lanhe@MTKCamera add for HDR captrue ctl path
         FID_AE_HDR,
-        #endif /*VENDOR_EDIT*/
+        #endif /*OPPO_R819*/
     ), 
     //YUV-only feature id.
     ENUM_YUV_ONLY_SD            (

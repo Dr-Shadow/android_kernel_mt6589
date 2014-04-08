@@ -185,14 +185,14 @@ int Audio_eamp_command(unsigned int type, unsigned long args, unsigned int count
 
 kal_int32 Sound_ExtFunction(const char* name, void* param, int param_size);
 
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 /* xiang.fei@BasicDrv.Audio, 2012/12/22, Add for Audio */
 void DAC_Sound_Speaker_Turnon(void);
 void DAC_Sound_Speaker_Turnoff(void);
 void DAC_Sound_Headset_Turnon(void);
 void DAC_Sound_Headset_Turnoff(void);
 void DAC_SetPlayFreq(int iFreq);
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
 #endif
 

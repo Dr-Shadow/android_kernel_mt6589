@@ -1,6 +1,6 @@
 /************************************************************************************
 ** File: - ms2ryuv_Sensor.c
-** VENDOR_EDIT
+** OPPO_R819
 ** Copyright (C), 2008-2012, OPPO Mobile Comm Corp., Ltd
 ** 
 ** Description: 
@@ -1005,7 +1005,7 @@ static void MS2R_capture_sequence(void)
 
 	bCaptureStart = true;
 
-	#ifdef VENDOR_EDIT
+	#ifdef OPPO_R819
 	//LiuBin@MtkCamera, 2012/11/08, Add for avoid caputure bad picture
 	//If status is focusing now, Please wait a while to capture
 	int nAFstatus = 0;
@@ -1036,7 +1036,7 @@ static void MS2R_capture_sequence(void)
 			return;
 		}	
 	}
-	#endif /* VENDOR_EDIT */
+	#endif /* OPPO_R819 */
 	
 	//set still capture mode
 	if (KAL_TRUE == g_bHDREnable)  //HDR enable 
@@ -1415,7 +1415,7 @@ UINT32 MS2ROpen(void)
 	#endif
     MS2R_Sensor_Init();
 	
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //feng.hu@mtk camera team modified for ms2r continuous af
 	mmIsCAFin = false;
 	mdelayDetectCnt = ANTI_WDV_SHAKE_DELAY;
@@ -1477,12 +1477,12 @@ UINT32 MS2RClose(void)
 	#ifdef USE_IRQ
 	mt65xx_eint_mask(EINT_NUM);
 	#endif
-	#ifdef VENDOR_EDIT
+	#ifdef OPPO_R819
 	//LiuBin@MtkCamera, 2012/11/09, Add for close flashlight, need to sleep 10ms for ISP send closing flashlight command
 	MS2R_write_category_parameter_ram(0x0B, 0x1F, 0x00);
 	MS2R_write_category_parameter_ram(0x0D, 0x28, 0x00);
 	Sleep(10);
-	#endif /* VENDOR_EDIT */
+	#endif /* OPPO_R819 */
 
 	if (g_bGyroOpened)
 	{
@@ -2397,7 +2397,7 @@ static void MS2R_set_scene_mode(UINT16 uPara)
 			MS2R_write_category_parameter_ram(0x02, 0x59, 0x06);
 			break;
 		}
-		#ifdef VENDOR_EDIT
+		#ifdef OPPO_R819
 		//ZhangZhengrong@MtkCamera, 2013/03/19, Add for scene detect
 		case SCENE_MODE_INDOOR:
 		{
@@ -2417,7 +2417,7 @@ static void MS2R_set_scene_mode(UINT16 uPara)
 			MS2R_write_category_parameter_ram(0x02, 0x59, 0x09);
 			break;
 		}
-		#endif /* VENDOR_EDIT */
+		#endif /* OPPO_R819 */
 		case SCENE_MODE_HDR:
 		{
 			MS2R_HDR_captrue(uPara);
@@ -2830,7 +2830,7 @@ static void MS2R_AF_single_focus(void)
 
 	MS2R_write_category_parameter_ram(0x0A, 0x49, 0x02);
 	MS2R_write_category_parameter_ram(0x0A, 0x02, 0x01);
-	#ifdef VENDOR_EDIT
+	#ifdef OPPO_R819
 	//hufeng@mtk camera team modified 20121227 for continuous af
 	m3ASingleAFLock = true;
 	m3ASingleFrameCnt = 0;
@@ -2847,7 +2847,7 @@ static void MS2R_start_face_AE(UINT8 *puZone)
 	SENSORDB("MS2R_start_face_AE--------> IN \r\n");
 	
 	//set touch AE strength
-    #ifdef VENDOR_EDIT	//lxl@camera team modify
+    #ifdef OPPO_R819	//lxl@camera team modify
 		MS2R_write_category_parameter_ram(0x02, 0x49, 0x08);
     #else		
 	    MS2R_write_category_parameter_ram(0x02, 0x49, 0x0F);
@@ -3082,7 +3082,7 @@ static void MS2R_get_brightness(UINT16 *puBrightness)
 	
 	SENSORDB("MS2R_get_brightness-----[%d]---> OUT \r\n", *puBrightness);
 }
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //ZhangZhengrong@MtkCamera, 2013/03/19, Add for scene detect
 static void MS2R_get_AE_gain_shutter(UINT32 *pAEparameter)
 {
@@ -3110,7 +3110,7 @@ static void MS2R_get_AF_position(UINT16 *pAFposition)
 	
 	SENSORDB("MS2R_get_AF_position-----[%d]---> OUT \r\n", *pAFposition);
 }
-#endif /* VENDOR_EDIT */
+#endif /* OPPO_R819 */
 
 static void MS2R_get_whitebalance(UINT16 *puWhiteBalance)
 {
@@ -3124,7 +3124,7 @@ static void MS2R_get_whitebalance(UINT16 *puWhiteBalance)
 	
 	SENSORDB("MS2R_get_whitebalance-----[%d]---> OUT \r\n", *puWhiteBalance);
 }
-#ifdef VENDOR_EDIT
+#ifdef OPPO_R819
 //feng.hu@mtk camera team modified for ms2r continuous af
 static void MS2R_get_wavedetectvalue(UINT32 *wdv)    
 {
@@ -3714,7 +3714,7 @@ UINT32 MS2RFeatureControl(MSDK_SENSOR_FEATURE_ENUM FeatureId,
 			*pFeatureParaLen=2;
 			break;
 		}
-		#ifdef VENDOR_EDIT
+		#ifdef OPPO_R819
 		//ZhangZhengrong@MtkCamera, 2013/03/19, Add for scene detect
 		case SENSOR_FEATURE_GET_WDV:
 		{
@@ -3736,7 +3736,7 @@ UINT32 MS2RFeatureControl(MSDK_SENSOR_FEATURE_ENUM FeatureId,
 			*pFeatureParaLen = 2;
 			break;
 		}
-		#endif /* VENDOR_EDIT */
+		#endif /* OPPO_R819 */
 		case SENSOR_FEATURE_GET_WB:
 		{
 			MS2R_get_whitebalance(pFeatureReturnPara16);
@@ -3782,7 +3782,7 @@ UINT32 MS2RFeatureControl(MSDK_SENSOR_FEATURE_ENUM FeatureId,
 	        break;
         case SENSOR_FEATURE_SET_TEST_PATTERN:
             break;
-	#ifdef VENDOR_EDIT
+	#ifdef OPPO_R819
 	//feng.hu@mtk camera team modified for ms2r continuous af
         case SENSOR_FEATURE_DO_YUV_CAF:
 			g_bHasFaces = MS2R_check_if_has_faces();
