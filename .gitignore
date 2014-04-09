@@ -88,3 +88,12 @@ GTAGS
 
 #specific blob for GSLx680 driver
 !gsl_point_id.o_shipped
+#specific zImage for mtk build system
+/arch/arm/boot/zImageOld
+#specific mediatek config file
+/mediatek-configs
+#out directories
+/mediatek/config/out/*/autoconfig
+/mediatek/custom/out/*/hal/
+/mediatek/custom/out/*/kernel/
+/out/
