@@ -6,6 +6,9 @@ export CROSS_COMPILE="ccache /home/dr-shadow/tmp/arm-eabi-4.8/bin/arm-eabi-"
 #Target Product
 export TARGET_KERNEL_PRODUCT=e960
 
+#Workaround for + appended on kernelrelease
+export LOCALVERSION=
+
 #Create directory for your device
 mkdir -p out/$TARGET_KERNEL_PRODUCT/
 
