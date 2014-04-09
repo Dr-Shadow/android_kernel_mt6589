@@ -8,3 +8,6 @@ CONFIG_POWER_EXT=n
 CONFIG_MTK_VIDEOCODEC_DRIVER=m
 # CONFIG_USB_MTK_OTG is not set
 # CONFIG_USB_MTK_HDRC_HCD is not set
+
+# Specific code for Oppo
+CONFIG_OPPO_R819=y
