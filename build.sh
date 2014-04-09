@@ -18,5 +18,5 @@ make INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=./out/$TARGET_KERNEL_PRODUCT/system IN
 
 #Repack part - You need to set PATH var correctly poiting to a directory with https://github.com/bgcngm/mtk-tools.git and chmod +x mkbootimg
 #You need ramdisk directory too
-repack-MT65xx.pl -boot out/$TARGET_KERNEL_PRODUCT/zImage ../ramdisk out/$TARGET_KERNEL_PRODUCT/boot.img
+repack-MT65xx.pl -boot out/$TARGET_KERNEL_PRODUCT/zImage ../ramdisk/$TARGET_KERNEL_PRODUCT out/$TARGET_KERNEL_PRODUCT/boot.img
 rm out/$TARGET_KERNEL_PRODUCT/zImage
