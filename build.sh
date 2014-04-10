@@ -22,7 +22,9 @@ CERTIFICATES_DIRECTORY=../.certificates
 
 #Create and clean out directory for your device
 mkdir -p $OUT_DIRECTORY
+if [ "$(ls -A $OUT_DIRECTORY)" ]; then
 rm $OUT_DIRECTORY/* -R
+fi
 
 #Kernel part
 make -j4
