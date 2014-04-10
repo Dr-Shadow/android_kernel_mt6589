@@ -1,26 +1,36 @@
-#Export CROSS_COMPILE to point toolchain
-#export CROSS_COMPILE=/home/dr-shadow/faea/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6/bin/arm-eabi-
-#export CROSS_COMPILE="ccache /home/jenkins/jobs/F2S-Omnirom/workspace/prebuilts/gcc/linux-x86/arm/arm-eabi-4.7/bin/arm-eabi-"
-export CROSS_COMPILE="ccache /home/dr-shadow/tmp/arm-eabi-4.8/bin/arm-eabi-"
+#!/bin/bash
+#Stop script if something is broken
+set -e
 
-#Target Product
-export TARGET_KERNEL_PRODUCT=e960
+#Export CROSS_COMPILE to point toolchain
+export CROSS_COMPILE="ccache ../toolchain/arm-eabi-4.8/bin/arm-eabi-"
+
+#Export target product
+export TARGET_KERNEL_PRODUCT=`cat DEVICE_TREE`
+
+#Echo actual vars
+echo "We are actually building for $TARGET_KERNEL_PRODUCT with $CROSS_COMPILE"
 
 #Workaround for + appended on kernelrelease
 export LOCALVERSION=
 
-#Create directory for your device
-mkdir -p out/$TARGET_KERNEL_PRODUCT/
+#Create vars for OUT and RAMDISK directories
+OUT_DIRECTORY=../out/$TARGET_KERNEL_PRODUCT
+RAMDISK_DIRECTORY=../ramdisk/$TARGET_KERNEL_PRODUCT
+
+#Create out directory for your device
+mkdir -p $OUT_DIRECTORY
 
 #Kernel part
-make -j16
-cp arch/arm/boot/zImage out/$TARGET_KERNEL_PRODUCT/zImage
+make -j4
+cp arch/arm/boot/zImage $OUT_DIRECTORY/zImage
 
 #Modules part
 make modules
-make INSTALL_MOD_STRIP=--strip-unneeded INSTALL_MOD_PATH=./out/$TARGET_KERNEL_PRODUCT/system INSTALL_MOD_DIR=./out/$TARGET_KERNEL_PRODUCT/system android_modules_install
+make INSTALL_MOD_STRIP=--strip-unneeded INSTALL_MOD_PATH=$OUT_DIRECTORY/system INSTALL_MOD_DIR=$OUT_DIRECTORY/system android_modules_install
 
-#Repack part - You need to set PATH var correctly poiting to a directory with https://github.com/bgcngm/mtk-tools.git and chmod +x mkbootimg
-#You need ramdisk directory too
-repack-MT65xx.pl -boot out/$TARGET_KERNEL_PRODUCT/zImage ../ramdisk/$TARGET_KERNEL_PRODUCT out/$TARGET_KERNEL_PRODUCT/boot.img
-rm out/$TARGET_KERNEL_PRODUCT/zImage
+#Repack part
+if [ -d "$RAMDISK_DIRECTORY" ]; then
+../mtk-tools/repack-MT65xx.pl -boot $OUT_DIRECTORY/zImage $RAMDISK_DIRECTORY $OUT_DIRECTORY/boot.img
+rm $OUT_DIRECTORY/zImage
+fi
