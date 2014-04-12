@@ -87,8 +87,6 @@ PVRSRV_ERROR OSPerProcessPrivateDataInit(IMG_HANDLE *phOsPrivateData)
 	OSSNPrintf(psEnvPerProc->azIonClientName, ION_CLIENT_NAME_SIZE, "pvr_ion_client-%d", OSGetCurrentProcessIDKM());
 	psEnvPerProc->psIONClient =
 		ion_client_create(psIonDev,
-						  1 << ION_HEAP_TYPE_SYSTEM_CONTIG |
-						  1 << ION_HEAP_TYPE_SYSTEM,
 						  psEnvPerProc->azIonClientName);
  
 	if (IS_ERR_OR_NULL(psEnvPerProc->psIONClient))

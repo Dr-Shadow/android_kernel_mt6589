@@ -159,7 +159,7 @@ static struct dbs_tuners {
     unsigned int cpu_down_avg_times;
     unsigned int cpu_num_limit;
     unsigned int cpu_num_base;
-    unsigned int cpu_hotplug_disable;
+    unsigned int cpufreq_hotplug_disable;
 } dbs_tuners_ins = {
     .up_threshold = DEF_FREQUENCY_UP_THRESHOLD,
     .sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR,
@@ -172,7 +172,7 @@ static struct dbs_tuners {
     .cpu_down_avg_times = CPU_DOWN_AVG_TIMES,
     .cpu_num_limit = 1,
     .cpu_num_base = 1,
-    .cpu_hotplug_disable = 1,
+    .cpufreq_hotplug_disable = 1,
 };
 
 static inline u64 get_cpu_idle_time_jiffy(unsigned int cpu, u64 *wall)
@@ -320,7 +320,7 @@ show_one(cpu_up_avg_times, cpu_up_avg_times);
 show_one(cpu_down_avg_times, cpu_down_avg_times);
 show_one(cpu_num_limit, cpu_num_limit);
 show_one(cpu_num_base, cpu_num_base);
-show_one(cpu_hotplug_disable, cpu_hotplug_disable);
+show_one(cpufreq_hotplug_disable, cpufreq_hotplug_disable);
 
 /**
  * update_sampling_rate - update sampling rate effective immediately if needed.
@@ -578,14 +578,14 @@ static ssize_t store_cpu_num_base(struct kobject *a, struct attribute *b,
 	return count;
 }
 
-static ssize_t store_cpu_hotplug_disable(struct kobject *a, struct attribute *b,
+static ssize_t store_cpufreq_hotplug_disable(struct kobject *a, struct attribute *b,
 				    const char *buf, size_t count)
 {
 	unsigned int input;
 	int ret;
 	ret = sscanf(buf, "%u", &input);
 
-	dbs_tuners_ins.cpu_hotplug_disable = input;
+	dbs_tuners_ins.cpufreq_hotplug_disable = input;
 	return count;
 }
 
@@ -602,7 +602,7 @@ define_one_global_rw(cpu_up_avg_times);
 define_one_global_rw(cpu_down_avg_times);
 define_one_global_rw(cpu_num_limit);
 define_one_global_rw(cpu_num_base);
-define_one_global_rw(cpu_hotplug_disable);
+define_one_global_rw(cpufreq_hotplug_disable);
 
 static struct attribute *dbs_attributes[] = {
     &sampling_rate_min.attr,
@@ -619,7 +619,7 @@ static struct attribute *dbs_attributes[] = {
     &cpu_down_avg_times.attr,
     &cpu_num_limit.attr,
     &cpu_num_base.attr,
-    &cpu_hotplug_disable.attr,
+    &cpufreq_hotplug_disable.attr,
     NULL
 };
 
@@ -649,7 +649,7 @@ static void dbs_freq_increase(struct cpufreq_policy *p, unsigned int freq)
 void hp_disable_cpu_hp(int disable)
 {
 	mutex_lock(&hp_mutex);
-	dbs_tuners_ins.cpu_hotplug_disable = disable;
+	dbs_tuners_ins.cpufreq_hotplug_disable = disable;
 	mutex_unlock(&hp_mutex);
 }
 EXPORT_SYMBOL(hp_disable_cpu_hp);
@@ -676,7 +676,7 @@ static void hp_work_handler(struct work_struct *work)
 {
 	if (mutex_trylock(&hp_onoff_mutex))
 	{
-		if (!dbs_tuners_ins.cpu_hotplug_disable)
+		if (!dbs_tuners_ins.cpufreq_hotplug_disable)
 		{
 			int onlines_cpu_n = num_online_cpus();
 			
@@ -857,7 +857,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 hp_check:
 
 	/* If Hot Plug policy disable, return directly */
-	if (dbs_tuners_ins.cpu_hotplug_disable)
+	if (dbs_tuners_ins.cpufreq_hotplug_disable)
 		return;
 
 	#ifdef CONFIG_SMP
@@ -1138,7 +1138,7 @@ static int __init cpufreq_gov_dbs_init(void)
 	dbs_tuners_ins.cpu_num_base = 1;
 
 	if (dbs_tuners_ins.cpu_num_limit > 1)
-		dbs_tuners_ins.cpu_hotplug_disable = 0;
+		dbs_tuners_ins.cpufreq_hotplug_disable = 0;
 
 	#ifdef CONFIG_SMP
 	INIT_DELAYED_WORK_DEFERRABLE(&hp_work, hp_work_handler);
@@ -1154,7 +1154,7 @@ static int __init cpufreq_gov_dbs_init(void)
 	printk("cpufreq_gov_dbs_init: dbs_tuners_ins.cpu_down_avg_times = %d\n", dbs_tuners_ins.cpu_down_avg_times);
 	printk("cpufreq_gov_dbs_init: dbs_tuners_ins.cpu_num_limit = %d\n", dbs_tuners_ins.cpu_num_limit);
 	printk("cpufreq_gov_dbs_init: dbs_tuners_ins.cpu_num_base = %d\n", dbs_tuners_ins.cpu_num_base);
-	printk("cpufreq_gov_dbs_init: dbs_tuners_ins.cpu_hotplug_disable = %d\n", dbs_tuners_ins.cpu_hotplug_disable);
+	printk("cpufreq_gov_dbs_init: dbs_tuners_ins.cpufreq_hotplug_disable = %d\n", dbs_tuners_ins.cpufreq_hotplug_disable);
 	#endif 
 
 	return cpufreq_register_governor(&cpufreq_gov_hotplug);

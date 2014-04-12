@@ -48,7 +48,6 @@
 #include "epautoconf.c"
 #include "composite.c"
 
-#include "f_audio_source.c"
 #include "f_fs.c"
 #include "f_audio_source.c"
 #include "f_mass_storage.c"

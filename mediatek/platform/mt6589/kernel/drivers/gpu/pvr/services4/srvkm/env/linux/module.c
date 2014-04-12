@@ -365,8 +365,6 @@ static int __devinit PVRSRVDriverProbe(LDM_DEV *pDevice, const struct pci_device
 
 #if defined(CONFIG_ION_OMAP)
 	gpsIONClient = ion_client_create(omap_ion_device,
-									 1 << ION_HEAP_TYPE_CARVEOUT |
-									 1 << OMAP_ION_HEAP_TYPE_TILER,
 									 "pvr");
 	if (IS_ERR_OR_NULL(gpsIONClient))
 	{
@@ -379,7 +377,7 @@ static int __devinit PVRSRVDriverProbe(LDM_DEV *pDevice, const struct pci_device
         PVR_DPF((PVR_DBG_WARNING, "PVRSRVDriverProbe: ion_client_create 1:%x",(unsigned int)g_ion_device));
    //     PVR_DPF((PVR_DBG_WARNING, "PVRSRVDriverProbe: ion_client_create 2:%x", (unsigned int)g_ion_device->lock));
 
-        gpsIONClient = ion_client_create(g_ion_device,-1, "pvr");
+        gpsIONClient = ion_client_create(g_ion_device,"pvr");
         PVR_DPF((PVR_DBG_WARNING, "PVRSRVDriverProbe: ion_client_create gpsIONClient...%x.", (unsigned int)gpsIONClient));
         if (IS_ERR_OR_NULL(gpsIONClient))
         {
