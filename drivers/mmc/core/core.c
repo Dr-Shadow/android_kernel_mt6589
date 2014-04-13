@@ -424,7 +424,6 @@ struct mmc_async_req *mmc_start_req(struct mmc_host *host,
             }
         }
 #endif
-		start_err = __mmc_start_req(host, areq->mrq);
 #ifdef MTK_IO_PERFORMANCE_DEBUG
 			if ((1 == g_mtk_mmc_perf_dbg) && (2 == g_mtk_mmc_dbg_range)){
 				if ((areq->mrq->cmd->arg >= g_dbg_range_start) && (areq->mrq->cmd->arg <= g_dbg_range_end) && (areq->mrq->data) && (areq->mrq->cmd->opcode == g_check_read_write)){ 
