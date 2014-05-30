@@ -31,7 +31,6 @@ make -j4
 cp arch/arm/boot/zImage $OUT_DIRECTORY/zImage
 
 #Modules part
-make modules
 make INSTALL_MOD_STRIP=--strip-unneeded INSTALL_MOD_PATH=$OUT_DIRECTORY/system INSTALL_MOD_DIR=$OUT_DIRECTORY/system android_modules_install
 
 #Repack part
