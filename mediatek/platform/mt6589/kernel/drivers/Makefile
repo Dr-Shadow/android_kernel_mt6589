@@ -45,7 +45,7 @@ obj-m	+= devinfo/
 obj-m	+= devapc/
 obj-$(CONFIG_THERMAL) += thermal/
 obj-$(CONFIG_MTK_ETM) += mt_etm/
-obj-y   += cpu_stress/
+#obj-y   += cpu_stress/
 
 ifeq ($(HAVE_CMMB_FEATURE),yes)
 obj-m += cmmbdrv/
